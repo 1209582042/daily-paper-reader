@@ -25,3 +25,76 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: vsr
+      description: 关注视觉语言模型中的2D语义与3D几何融合、几何可读性训练，以及长视频和流式场景下的有界空间记忆、跨视角一致性与历史证据问答。
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: spatial memory
+          keyword_cn: 空间记忆
+          query: spatial memory
+        - keyword: streaming video
+          keyword_cn: 流式视频
+          query: streaming video
+        - keyword: 2D-3D fusion
+          keyword_cn: 二维与三维融合
+          query: 2D-3D fusion
+        - keyword: geometric representations
+          keyword_cn: 几何表征
+          query: geometric representations
+        - keyword: vision-language models
+          keyword_cn: 视觉语言模型
+          query: vision-language models
+        - keyword: spatial reasoning
+          keyword_cn: 空间推理
+          query: spatial reasoning
+      intent_queries:
+        - query: >-
+            Maintain object identity, geometric consistency, and spatial relationships across viewpoints and temporal
+            windows, and retrieve temporally grounded historical or out of view evidence for spatial question answering.
+          query_cn: 寻找跨视角、跨时间保持对象与空间关系的方法，并准确读取历史或当前不可见的空间证据。
+          enabled: true
+          source: manual
+          note: ''
+        - query: >-
+            Build bounded causal memory for long and streaming videos through query agnostic online frame or token
+            selection, compression, retention, eviction, and question conditioned retrieval, including memory policies
+            learned from downstream question answering rewards.
+          query_cn: 寻找固定预算下的在线记忆方法，关注未知问题时如何保存信息，以及如何用最终问答效果训练记忆策略。
+          enabled: true
+          source: manual
+          note: ''
+        - query: >-
+            Train vision language models to interpret and use geometric information through geometry language alignment,
+            spatial descriptions, pose or depth supervision, and spatial question answering, with controlled evidence
+            that geometry improves the answers.
+          query_cn: 寻找让几何信息变得可理解、可用于回答的训练方法，关注监督设计和几何对最终答案的实际贡献。
+          enabled: true
+          source: manual
+          note: ''
+        - query: >-
+            Improve spatial reasoning in vision language models by aligning and fusing 2D semantic features with
+            explicit or implicit 3D geometric representations, including cross attention, intermediate layer fusion, and
+            question conditioned geometry readout.
+          query_cn: 寻找能让模型有效读取几何信息的2D＋3D融合机制，关注融合位置、交互方式和问题条件化读取。
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-10-21T08:02:48.515Z'
+source_backends:
+  arxiv:
+    papers_table: arxiv_papers
+    use_vector_rpc: true
+    vector_rpc: match_arxiv_papers
+    vector_rpc_exact: match_arxiv_papers_exact
+    use_bm25_rpc: true
+    bm25_rpc: match_arxiv_papers_bm25
+    sync_table: arxiv_sync_status
+    sync_success_value: success
+    schema: public
+    kind: supabase
+    enabled: true
+    url: https://lyucdwgefyfbmaiopjbk.supabase.co
+    anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq
