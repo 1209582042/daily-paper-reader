@@ -1,0 +1,518 @@
+Title: SpatialScout: Can VLM Agents Actively Explore and Map 3D Scenes?
+
+URL Source: https://arxiv.org/pdf/2610.26659v2
+
+Published Time: Wed, 21 Oct 2026 00:38:51 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# SpatialScout: Can VLM Agents Actively Explore and Map 3D Scenes? 
+
+## Zhaoxi Zhang 1*† Hao Liang 1† Linxuan Wu 2† Yiming Xu 1† Yifu Yuan 2† Kun Liang 1
+
+## Chenming Tang 1 Meiyi Qiang 1 Wentao Zhang 1 Weikang Li 1‡ Yunfang Wu 1‡ 
+
+> 1
+
+## Peking University 2 Tianjin University zhaoxizhang25@stu.pku.edu.cn 
+
+## Abstract 
+
+Spatial intelligence requires agents to actively acquire vi-sual evidence and integrate observations into a coher-ent representation of the three-dimensional world. How-ever, spatial question answering provides limited evi-dence of whether models can construct accurate met-ric maps through autonomous exploration. We introduce 
+
+SpatialScout , a benchmark for evaluating vision-language model (VLM) agents through active object-level 3D map-ping. SpatialScout comprises 80 diverse indoor scenes containing 3,140 target objects. Given an object inven-tory, RGB observations, and camera calibration and poses, agents control a camera to explore each scene and estimate object centers in a shared coordinate frame. This task re-quires sustained coordination of viewpoint selection, cross-view association, geometric estimation, and map revision under bounded interaction budgets. Our evaluation jointly measures localization accuracy and target coverage, using object-scale overlap scores that penalize missing predic-tions. Experiments with frontier VLMs reveal substantial limitations: the strongest evaluated model, Claude Opus 5.5, achieves a mean overlap of 41.71%, with only 47.23% of targets exceeding an IoU threshold of 0.5 and 3.25% ex-ceeding 0.9. These results expose a substantial gap between recovering coarse object layouts and constructing com-plete, precise metric maps. SpatialScout provides a quan-titative testbed for developing agents that build reliable 3D spatial representations through active perception. Code is available at https://github.com/JesseZZZZZ/SpatialScout. 
+
+## 1. Introduction 
+
+Spatial intelligence is fundamental to embodied agents’ ability to understand and act in 3D environments [16, 34]. It requires agents to actively observe their surroundings to 
+
+> *Project Lead.
+> †Equal Contribution
+> ‡Corresponding author.
+
+Figure 1. Overview of SpatialScout. A VLM agent observes, ex-plores, and localizes the position of objects in a 3D environment. 
+
+resolve occlusion and perspective ambiguities, infer object locations and spatial relationships, and integrate evidence across views into a consistent 3D representation [20, 21]. Evaluating this entire process is central to assessing the spa-tial capabilities of vision-language models (VLMs). Ex-isting spatial intelligence benchmarks widely adopt image-and video-based question answering (QA) to assess count-ing, direction, distance, and spatial relations [50, 55]. Al-though these evaluations have revealed substantial model limitations, answer accuracy imposes only limited con-straints on spatial understanding. Finite answer choices allow models to arrive at correct answers through guess-ing or elimination; language priors and biases in answer distributions may also enable correct responses based on non-spatial cues [1, 15]. More importantly, spatial QA does not fully capture real-world demands: agents must au-tonomously gather evidence, update spatial representations, and use them to guide subsequent actions [34, 62]. Evaluat-ing frontier VLMs therefore requires end-to-end assessment of this multi-step process, beyond answer accuracy alone. Bridging this gap requires evaluating autonomous infor-mation acquisition and spatial representation construction within a single task, forming a closed loop of observation, arXiv:2610.26659v2 [cs.CV] 20 Oct 2026 Table 1. Comparison with spatial intelligence and scene understanding benchmarks. T/F: true/false; MC: multiple choice; NA: numerical answer; OE: open-ended.                                                                     
+
+> Benchmark Output format Primary evaluation target Active Multi-round Explicit spatial Direct 3D interaction env. feedback construction coordinate scoring
+> VSR [31] T/F Answer correctness ××××
+> BLINK [13] MC Answer correctness ××××
+> VSI-Bench [55] MC, NA Answer correctness ××××
+> OpenEQA [34] OE Answer correctness ××××
+> E3VS-Bench [43] OE Answer correctness ✓✓××
+> ESI-Bench [21] T/F, MC, NA Answer correctness ✓✓××
+> S3-Bench [51] MC, NA Answer correctness ××××
+> Theory of Space [62] OE Map quality ✓✓✓×
+> IR3D-Bench [32] 3D Scene Parameters Layout and spatial relations ××✓×
+> SpatialScout 3D Coordinates Localization & Coverage ✓✓✓✓
+
+reasoning, and decision-making. Recent benchmarks such as ESI-Bench [21] and S 3-Bench [51] introduce active in-teraction into spatial QA, while Theory of Space [62] ex-amines the construction of discrete cognitive maps. Our key advance is to make the construction of object maps in con-tinuous 3D space through active interaction a direct eval-uation objective for spatial intelligence. Models must au-tonomously acquire visual evidence and recover the 3D po-sitions of a target set in a common coordinate frame. This task couples active perception, cross-view association, ge-ometric estimation, and scene modeling: the current spa-tial estimate determines what to observe next, while the se-lected viewpoint shapes the evidence available thereafter. Through spatial construction beyond QA, feedback-driven active exploration, and end-to-end task evaluation, we ex-amine whether VLMs can transform local observations into accurate and complete metric spatial representations. To this end, we introduce SpatialScout , a benchmark for evaluating the spatial intelligence of vision-language agents through active object-level 3D mapping. Starting from an initial observation and a target inventory, an agent au-tonomously explores the scene and progressively constructs a 3D map of target object centers in a common coordinate frame. The benchmark has three core features: 1⃝ Ex-plicit spatial construction. Models must output a set of 3D object positions, enabling quantitative evaluation of spatial representation quality through localization accuracy and tar-get coverage. 2⃝ Closed-loop active exploration. Models select subsequent viewpoints based on existing observations and the current map, then update position estimates using new evidence, forming a feedback loop between the active acquisition of perceptual evidence and spatial understand-ing. 3⃝ Long-horizon end-to-end capability evaluation. 
+
+Models coordinate observation planning, object recogni-tion, cross-view association, geometric estimation, and map updates across multiple interaction steps, with overall per-formance measured by final map quality. This sustained coordination goes beyond QA tasks with short reasoning chains and better reflects real-world spatial understanding. SpatialScout comprises 80 indoor scenes and 3,140 tar-get objects, with 30–40 targets per scene, spanning di-verse spatial layouts, object scales, and repeated category instances. The benchmark provides a unified set of camera-control and geometric assistance tools, along with camera intrinsics and poses, and requires models to infer object centers from autonomously acquired visual evidence. Eval-uation jointly measures geometric estimation error, local-ization accuracy relative to object scale, and target cover-age. We also record map updates under a limited interaction budget to analyze how object-level spatial representations emerge as exploration proceeds. We evaluate frontier VLMs, including GPT-6 Astra and Claude Opus 5.5. The results show that models can re-cover parts of object layouts through autonomous explo-ration, but comprehensive coverage and precise localization remain challenging. Models differ substantially in target omissions and center localization accuracy, while the pro-portion of targets meeting stringent scale-relative accuracy criteria remains low. These findings indicate that recog-nizing objects or making coarse spatial judgments does not necessarily translate into constructing reliable metric maps. By exposing these limitations through measurable localiza-tion and coverage metrics, SpatialScout provides a unified benchmark for studying how models construct and under-stand the 3D world through autonomous interaction. 
+
+## 2. SpatialScout Construction 
+
+SpatialScout evaluates active object-center mapping by VLM agents. Given an object inventory and calibrated cam-era poses, an agent selects RGB views, associates objects across observations, and maintains a three-dimensional map of their centers. The benchmark combines a fixed scene cat-Table 2. Shared agent interface. No tool reveals ground-truth tar-get positions or evaluation scores.           
+
+> Tool Effect or output
+> list_entities List targets and metadata.
+> get_camera_pose Return the camera pose.
+> get_camera_intrinsics Return camera calibration.
+> set_camera_position Set the camera position.
+> move_camera Translate the camera.
+> rotate_camera Rotate the camera.
+> capture_image Capture an RGB frame.
+> triangulate_ observations
+> Estimate a point from multiple views.
+> submit_positions Update the center map.
+> finish_mapping End the mapping episode.
+
+alog, a shared interaction interface, and object-level evalu-ation to measure the accuracy and completeness of the re-sulting map (Fig. 3). 
+
+2.1. Task Definition 
+
+Inventory and map. A scene contains N targets with public inventory E = {(i, c i, g i)}Ni=1 : instance identifier i,category ci, and equivalence group gi. During an episode, the agent maintains estimates bP = {bpi : i ∈ S} for sub-mitted identifiers S ⊆ { 1, . . . , N }. Evaluation compares multisets of center positions within each group, with identi-fiers serving as submission slots for individual estimates. 
+
+Geometric target. Each target center is the midpoint of the tight world-axis-aligned bounding box (AABB) of its rendered geometry. For an articulated object, the box en-closes the union of its rendered link geometries. Let b− 
+
+> i
+
+, b+
+
+> i
+
+denote the box corners and let o0, R 0 be the initial camera’s world position and camera-to-world rotation. The reference center in meters is 
+
+pi = R⊤
+
+> 0
+
+ b− 
+
+> i
+
++ b+
+
+> i
+
+2 − o0
+
+
+
+. (1) The box is constructed in world coordinates; Eq. (1) then expresses its midpoint in the task frame. This definition gives each asset a reproducible localization target, includ-ing assets whose internal origins are offset from their vis-ible geometry. Center inference combines correspondence geometry with the object’s observed spatial extent: a trian-gulated surface feature and the AABB center are generally different points. 
+
+Coordinate frame and inputs. The task uses a fixed right-handed frame with origin at the initial camera, +x
+
+along its initial optical forward direction, +y to its initial left, and +z along its initial up direction. All absolute map 
+
+> Figure 2. Wordcloud of the diverse objects in SpatialScout.
+
+positions and returned camera poses use this frame. An ini-tially pitched camera gives a task up axis tilted relative to world vertical. The agent receives RGB images, the inven-tory, camera intrinsics, poses, and the target-region radius 
+
+r = max i ∥pi∥2. Reference centers, boxes, and asset ge-ometry remain in the evaluator. The supplied camera geom-etry and scene-level search bound support metric estima-tion, while the agent selects views, establishes correspon-dences, and infers object centers. 
+
+2.2. Benchmark Construction 
+
+Scene diversity. Explicit geometric annotations and re-producible configurations support object-level scene evalu-ation [32, 64]. We assemble 80 indoor scenes rendered with SAPIEN [52] through ManiSkill3 [46]: 32 iTHOR [28], 12 RoboTHOR [8], 10 ArchitecTHOR [9], 6 Replica-CAD [45], and 30 ProcTHOR [9] scenes. The catalog spans individual rooms and apartments, retaining the source lay-outs and target placements; each source scene appears once. 
+
+Complexity. Each scene contributes 30–40 targets. The catalog contains 12 scenes with 35 targets, and 68 with 40, totaling 3,410 instances. The target-region radius ranges from 1.95 to 9.23 m. Across the catalog, 1,489 targets (43.3%) belong to equivalence groups with multiple in-stances in the same scene. Target count controls inventory scale, while spatial extent and repeated categories vary the localization and association demands. 
+
+Selection and initialization. Preparation prioritizes can-didates with known semantic categories, then orders them by distance to the initial camera, using identifier order to break ties. This rule aligns the inventory with recognizable categories and concentrates targets around the exploration origin. Candidates must have rendered geometry, and each scene must supply the requested target count. Candidates outside the selected target subset are hidden in rendered ob-servations; selected targets retain their source placements. Figure 3. Evaluation of VLM agents on SpatialScout. A VLM agent navigates through the 3D space by controlling a camera, and applies observation and mapping tools to finally submit the positions of identified objects. 
+
+Loaded object counts are checked against the source con-figuration with scene-builder exclusions accounted for. Each catalog entry fixes the source configuration, initial pose, and target count. Preparation saves the inventory, geo-metric annotations, and initial view, and verifies agreement between the camera-pose axes and projection matrix. Ap-pendix A specifies the manifest and cache checks. 
+
+## 3. Evaluation 
+
+3.1. Evaluation Protocol 
+
+Setup We evaluate seven models on a common set of 80 catalog scenes, with one episode per model–scene pair: GPT-6 Astra [38], GPT-6 Sol [39], Claude Opus 5.5 [2], Claude Sonnet 5.5 [3], Kimi-K3 [47], Qwen3.8-Max [41], and DeepSeek-V4.1-Flash [11]. We impose no explicit limit on output or reasoning tokens. 
+
+Interaction All agents use the ten tools in Table 2 through a shared interface [56]. Starting from one RGB image, the agent queries the inventory and calibration, acquires further views, and submits or revises object centers (see Fig. 3). Each accepted submission replaces the previous estimate for that identifier. The validator checks identifiers, finite coordinates, and the public bound ∥bpi∥2 ≤ r + 0 .5 m. All agents receive the same task prompt and tool descriptions. The prompt requests visually supported estimates and, for multi-view episodes, encourages submission after the first two views, followed by additions and revisions during ex-ploration. Submissions return the current accepted map, which the agent can also inspect with an empty batch. 
+
+Camera movement Relative translations follow the cur-rent horizontal forward/right directions and world vertical; positive yaw is counterclockwise viewed from above, and positive pitch looks upward. New RGB observations are acquired through explicit captures; movement bounds are specified in Appendix A. 
+
+Image coordinates Explicit captures render 512 × 512 
+
+RGB images, delivered as JPEGs with longest side at most 384 pixels. Correspondences are expressed on the original image grid. Let (W, H ) and (Wd, H d) denote the origi-nal and delivered dimensions. Both grids use zero-indexed pixel centers, increasing rightward and downward. Each image message specifies the conversion 
+
+u =  ud + 12
+
+ WWd
+
+− 12 , v =  vd + 12
+
+ HHd
+
+− 12 . (2) Triangulation pairs the converted pixel with the original in-trinsic matrix K. Each captured frame is stored with its identifier, pose, dimensions, and intrinsics. 
+
+Geometric support The triangulation tool estimates a 3D point from agent-marked correspondences in at least two calibrated frames [20]. For camera origins ok and unit viewing directions dk in the task frame, define Ak =
+
+I − dkd⊤ 
+
+> k
+
+. The tool minimizes squared distances to the viewing lines: 
+
+bptri = arg min 
+
+> p
+
+X
+
+> k
+
+∥Ak(p − ok)∥22. (3) Queries failing baseline, conditioning, or forward-ray checks are rejected; Appendix B.1 gives the thresholds. The tool reports the root-mean-square perpendicular line resid-ual and maximum pairwise ray angle, with cautions for weak parallax, large residuals, or estimates outside the pub-lic range. These diagnostics measure the geometric con-sistency of the supplied correspondences. The agent must still determine whether the marked pixels identify the same object feature and how the estimated point relates to the ob-ject’s center; a low residual alone establishes neither. 
+
+Budgets and stopping. Each episode allows B = 100 
+
+model calls and V = 100 acquired images, including the initial image. A model call may request multiple tools, exe-cuted sequentially without additional model calls; captures from the batch can inform the next call. Reaching the cap-ture cap leaves the remaining model calls available for rea-soning and submission. The final accepted map is scored Table 3. Object-micro localization results on 80 scenes. All values are percentages, and threshold columns use strict IoU comparisons. The                                                                                          
+
+> > k %columns measure the percentage of box overlaps that are greater than k%.
+> Model Effort All targets Submitted targets Mean IoU >0% >50% >90% Mean IoU >0% >50% >90%
+> Claude Opus 5.5 xhigh 41.71 77.36 47.23 3.25 46.69 86.60 52.87 3.64
+> Claude Sonnet 5.5 xhigh 32.26 67.13 33.60 1.40 38.99 81.14 40.61 1.69
+> GPT-6 Astra xhigh 33.16 67.79 35.15 1.62 41.16 83.86 42.69 2.09
+> GPT-6 Astra medium 31.18 67.73 31.55 1.27 37.16 80.72 37.60 1.52
+> GPT-6 Sol xhigh 20.83 51.85 18.95 0.48 28.65 71.31 26.06 0.66
+> Kimi-K3 xhigh 4.22 19.36 2.77 0.00 6.55 30.03 4.29 0.00
+> Qwen3.8 Max xhigh 6.80 24.36 4.52 0.00 12.14 43.49 8.07 0.00
+> DeepSeek V4.1 Flash xhigh 3.48 19.04 0.92 0.00 5.80 31.74 1.54 0.00
+
+when the agent calls finish_mapping , responds with-out tool calls, or exhausts B. Calling finish_mapping 
+
+freezes the map and skips subsequent tools in the same re-sponse. Service and runtime failures are logged separately and excluded from aggregate scores. 
+
+Attempt records. Each attempt records its model and reasoning configuration, prompt, tool schema, and budgets. Appendix A details request accounting, rerun storage, and completion and failure reporting. 
+
+Map traces and replay. Each successful submission call records the full accepted map and model-call index. The trace also retains capture events, frame calibration, tool ar-guments and results, and termination records. An offline replay can score these snapshots to recover changes in cen-ter error and coverage as model calls and acquired images accumulate. Reference-based scores are computed after the episode and are never returned to the agent. 
+
+3.2. Evaluation Metrics 
+
+We report mean center error (meters) after minimum-distance one-to-one matching within equivalence groups [7], together with inventory coverage. For scale-sensitive localization, we compute 3D IoU by trans-lating each candidate target’s reference box to the predicted center. Mean IoU uses the distance assignment; hit rates use a separate within-group hit-maximizing assignment at each strict threshold τ ∈ { 0, 0.5, 0.9}. Overlap scores are pooled across scenes and reported over all targets (omis-sions count as zero) and submitted targets. Appendix B.2 gives the scoring details. 
+
+## 4. Results 
+
+4.1. Quantitative Results 
+
+Localization and completeness. Table 3 reports object-micro overlap scores for the common 80-scene compar-ison. Claude Opus 5.5 achieves an all-target mean IoU of 41.71%, compared with 33.16% for GPT-6 Astra; their submitted-object means are 46.69% and 41.76%, respec-tively. Claude Opus 5.5 has higher mean overlap both over the full inventory and among accepted estimates. The de-crease from submitted-object to all-target mean IoU shows how omissions reduce each model’s overall mapping score. 
+
+Localization precision. Positive-overlap recall is 77.36% for Claude Opus 5.5 and 67.79% for GPT-6 Astra. At IoU 
+
+> 0.5, recall is 47.23% and 35.15%, respectively; at IoU 
+
+> 0.9, it is 3.25% and 1.62%. These differences distinguish coarse placement from precise center alignment relative to object extent. High-IoU matches remain uncommon even among submitted objects, with hit rates at IoU > 0.9 of 3.64% for Claude Opus 5.5 and 2.09% for GPT-6 Astra. 
+
+4.2. Qualitative Analysis 
+
+Figure 4 contrasts accurate, incomplete, and mislocalized maps. For each comparison, the evaluator places position-matched reference meshes at predicted centers, preserves their shapes and orientations, and hides omitted targets. Views at the initial yaw and offsets of −55 ◦ and +55 ◦ dis-play the resulting placement and completeness from three directions. In example A, Claude Opus 5.5 submits all 35 targets with a center error of 0.073 m and an all-target mean IoU of 0.530. The reconstructed views closely align with the reference arrangement. Example B illustrates omis-sions: the GPT-6 Astra statistics cover two scenes with 65 of 80 targets submitted and a center error of 0.141 m among submitted objects. The comparison views make these omissions explicit. Example C illustrates mislocal-ization: DeepSeek V4.1 Flash submits all 40 targets, but the center error is 1.000 m and all-target mean IoU is 0.034. Together, these cases show why complete submission and accurate placement must be evaluated jointly. A 
+
+> Accurate
+> Claude Opus 5.5 Center error 0.073 m
+
+GT · 0° Recon · 0° GT · −55° Recon · −55° GT · +55° Recon · +55° 
+
+B 
+
+> Incomplete
+> GPT-6 Astra Center error 0.141 m
+
+C 
+
+> Mislocalized
+> DeepSeek V4.1 Flash Center error 1.000 m
+
+Figure 4. Examples of accurate, incomplete, and mislocalized object-center maps. The red arrows indicate a missing or mislocalized object in the reconstructed scene. 1 20 40 60 80 100 
+
+> Model step
+> 050 100 150 200 250
+> Tool calls
+
+GPT-6 Astra      
+
+> 120 40 60 80 100
+> Model step
+> 050 100 150 200 250
+> Tool calls
+
+Claude Opus 5.5      
+
+> 120 40 60 80 100
+> Model step
+> 050 100 150 200 250
+> Tool calls
+
+DeepSeek V4.1 Flash      
+
+> 120 40 60 80 100
+> Model step
+> 050 100 150 200 250
+> Tool calls
+
+Qwen3.8-Max 
+
+observe move camera mapping others 
+
+Figure 5. Tool-use patterns across interaction steps for four models. Claude Opus 5.5 makes the most tool calls, whereas GPT-6 Astra achieves competitive mapping performance with fewer calls. GPT-6 Astra Claude Opus 5.5 DS V4.1 Flash Qwen3.8-Max trangulate_observe capture_image rotate_camera set_camera_position move_camera submit_positions get_camera_pose list_entities finish_mapping get_camera_intrinsics                               
+
+> 29.5% 30.0% 21.5% 34.2% 25.7% 26.9% 29.0% 22.9% 14.4% 19.4% 24.5% 20.2% 17.8% 13.1% 15.1% 8.9% 0.9% 5.9% 3.1% 7.2% 8.5% 2.7% 2.2% 1.9% 0.8% 0.6% 2.4% 1.3% 0.8% 0.5% 0.7% 1.2% 0.8% 0.5% 0.7% 1.2% 0.8% 0.5% 0.7% 1.0%
+> 0% 5% 10% 15% 20% 25% 30% 35%
+
+Figure 6. Illustration of tool-call frequency of multiple models. 
+
+## 5. Discussions 
+
+Tool-calling Analysis We present the models’ tool-calling behaviors in Fig. 5 and Fig. 6. These visualizations reveal differences in behaviors that provide insight into their ability to understand 3D space. First, Claude-Opus-5.5 makes the largest number of tool calls. We cap each trajectory at 100 tool-calling turns, and a single turn may include multiple tool calls. Its exten-sive tool use appears to benefit its performance on Spa-tialScout by allowing it to gather and integrate more infor-mation about the scene. Second, GPT-6 Astra and Claude-Opus-5.5 maintain rel-atively balanced use of observation, camera movement, and mapping. By contrast, DS-V4.1-Flash and Qwen3.8-Max tend to observe less as the interaction progresses. This pat-Table 4. Success factors and failure patterns across 40 trajectories. Each trajectory may exhibit multiple factors (non-exclusive). 
+
+Outcome Factor Total 
+
+Success Sufficient multi-view grounding 6
+
+Incremental submission with continued coverage expansion 6
+
+Continued refinement 6Failure Incomplete object coverage 26 
+
+Suspected correspondence errors despite low triangulation residuals 21 
+
+Unresolved inconsistencies in geometric measurements 13 
+
+Early termination before coverage 13 
+
+Position estimates lacking triangulation support 6
+
+Extensive observation with limited local-ization progress 5
+
+Late-stage refinement without recover-ing missing objects 3
+
+tern may indicate difficulty maintaining and updating a reli-able spatial representation: without observing consistently, a model must rely on earlier views, which may not contain sufficient information about newly encountered objects. Third, DeepSeek-V4.1-Flash and Qwen3.8-Max spend many turns moving the camera but relatively few observing and mapping. This suggests that they have greater difficulty selecting informative viewpoints and converting visual ob-servations into a coherent map. Such behavior adds inter-action overhead, while uninformative views also consume context because images require substantial context length. Taken together, these behavioral differences suggest that SpatialScout distinguishes models not only by their final lo-calization accuracy, but also by how effectively they per-ceive, explore, and represent the 3D scene. 
+
+Failure Analysis We analyze 40 trajectories from GPT-6 Astra, Claude Opus 5.5, DeepSeek V4.1 Flash, and Qwen3.8-Max on the same ten selected tasks, all using xhigh reasoning effort. We present the results in Table 4. For this case study, reconstruction success requires at least 90% object coverage and a mean center error of at most 0.2 m over matched submitted objects. Six trajectories meet both criteria. All six exhibit extensive multi-view geometric grounding, incremental submission that expands coverage, and subsequent refinement of submitted positions. Among the 34 unsuccessful trajectories, incomplete coverage is the most common failure pattern, appearing in 26 cases. In 21 cases, at least one submitted position remains substantially inaccurate despite a low triangulation residual, suggesting incorrect visual correspondences or object-center selection that geometric consistency alone cannot resolve. Thirteen 
+
+Table 5. Geometric grounding on 80 shared tasks. Both models use the xhigh setting. Triangulation support is measured over sub-mitted objects, warnings over successful triangulation calls, and median center error over submitted objects. 
+
+Metric Astra DS-V4.1 
+
+Submitted objects with prior successful triangulation 
+
+99.33% 63.48% 
+
+Triangulation with geometric warnings 2.69% 38.65% 
+
+Mean image captures per task 32.41 39.63 
+
+Median object center error (cm) 7.08 68.17 $0.1 $1 $10 Cost per task (USD, log scale) 0% 10% 20% 30% 40% IoU  
+
+> GPT-6 Astra (xhigh) GPT-6 Astra (medium) GPT-6 Sol (xhigh) Claude Opus 5.5 Claude Sonnet 5.5 DS V4.1 Flash Qwen3.8-Max Kimi K3
+> Pareto Frontier
+> Reconstruction IoU VS Cost per Task
+
+Figure 7. All-target mean IoU vs. average inference cost per task. 
+
+cases retain inaccurate positions associated with geometric inconsistency warnings, while another overlapping set of 13 cases terminates with insufficient coverage despite having at least ten response rounds remaining. Six cases submit a substantial fraction of positions without recorded tool-based triangulation, five involve extensive observation but limited localization progress, and three end with revisions to ex-isting estimates without recovering missing objects. These patterns suggest that effective mapping depends on convert-ing observations into reliable object correspondences, and checking uncertain estimates before the final termination. 
+
+Trajectory Analysis We use Codex powered by GPT-6 Astra to analyze both models’ trajectories across 80 shared tasks, as summarized in Table 5. We select GPT-6 As-tra and DeepSeek-V4.1-flash because they make similar numbers of tool calls but achieve substantially different lo-calization performance. GPT-6 Astra captures fewer im-ages yet provides triangulation support for more submit-ted objects, with fewer geometric warnings. The triangula-tion tool requires fine-grained spatial perception to identify corresponding image points across views; DeepSeek-V4.1-Flash’s inconsistent measurements suggest difficulty meet-ing this requirement, despite capturing more images. These findings suggest that more effective geometric tool use con-tributes to GPT-6 Astra’s stronger localization performance. Cost Analysis Figure 7 plots the mean IoU across all tar-gets against the average inference cost (in USD, on a log-arithmic scale), together with the Pareto frontier. Claude Opus 5.5 achieves the highest IoU, but also incurs the high-est cost (28.85 USD per task), consistent with findings from other long-horizon agentic benchmarks [25, 63]. Over-all, the evaluated open-source models offer limited advan-tages in the accuracy–cost trade-off. Among them, only DeepSeek-V4.1-Flash costs less than GPT-6 Sol; Qwen3.8-Max and Kimi-K3 are both more expensive and achieve lower scores on all IoU metrics (Table 3). 
+
+## 6. Related Work 
+
+Agentic inverse graphics and scene construction. 
+
+IR3D-Bench evaluates scene understanding by reconstruct-ing a scene from a supplied image [32]. BlenderGym studies code-based graphics editing, including how gener-ation, verification, and their compute allocation affect per-formance [17]. BlenderAlchemy combines edit genera-tion with visual evaluation [22], while VIGA and Blender-Bench examine interleaved execution, inspection, memory, and exploratory editing [60]. SceneActBench evaluates ex-ecutable multi-object outputs across several tasks; its recon-struction task builds furniture meshes in an initially empty scene from supplied calibrated views [64]. These works es-tablish construction and editing as meaningful tests of vi-sual understanding. Our setting emphasizes acquisition of new evidence from a hidden target environment and inspec-tion and revision of an explicit object-center map. 
+
+Active reconstruction and next-best-view planning. 
+
+Selecting informative observations has a substantial his-tory in three-dimensional perception. SCONE predicts sur-face coverage gain [18], and MACARONS couples RGB-based mapping with online coverage anticipation [19]. GenNBV learns a generalizable view-selection policy [6]. NARUTO, ActiveSplat, and ActiveGAMER integrate ex-ploration with neural scene mapping [5, 12, 29]; Fish-erRF uses information-based view selection for radiance fields [24]. More directly, AIR-Embodied uses multimodal reasoning to plan reconstruction actions [40]. AREA3D combines geometric perception and vision-language guid-ance, and introduces an evaluation covering object- and scene-level active reconstruction [54]. SightCAD connects feasible view selection to executable CAD generation for scene-embedded objects [4]. These systems provide im-portant planning and reconstruction references. Our bench-mark compares general-purpose agents under shared tools and observation and model-call budgets, recording how their evidence acquisition and map updates interact. 
+
+Spatial and embodied benchmarks. VSI-Bench and SITE assess spatial reasoning from supplied visual ob-servations [50, 55]. OpenEQA includes both episodic-memory and active-exploration settings [34], and Explore until Confident studies exploration and stopping for em-bodied question answering [42]. E3VS-Bench evaluates viewpoint-dependent evidence acquisition through camera control [43]; ESI-Bench covers spatial tasks that require ac-tive observation and interaction [21]. S 3-Bench combines streaming spatial questions with memory and additional exploration [51]. EmbodiedBench evaluates visual agents across multiple environments and action levels [56]. Our evaluation complements these tasks by scoring the explicit object-center map maintained over an episode. Compared with QA pairs, our tasks require VLM agents to output the precise 3D coordinates of the objects. 
+
+Memory, geometry tools, and process diagnosis. Con-ceptFusion and ConceptGraphs build semantically rich three-dimensional representations through multimodal fu-sion and cross-view association [16, 23]. 3D-Mem uses scene memory for embodied exploration and reason-ing [57], while SpaMEM separates perceptual grounding from temporal state maintenance [30]. DUSt3R and VGGT provide geometric inference tools [48, 49], and NeRF and Gaussian splatting offer scene representations for render-ing and reconstruction [26, 37]. Alongside BlenderGym, 3DCodeBench investigates inference-time computation in graphics tasks [14, 17]. Building on these perspectives, we control image acquisition and model calls with separate budgets. Shared tools, inventory-only reference policies, and replay of accepted-map updates support comparisons of final localization. 
+
+Long-horizon agentic benchmarks. Long-horizon agen-tic tasks require sustained reasoning and repeated tool use, often over multiple interaction rounds, and remain a ma-jor challenge for deploying LLM-based systems in real-world settings. AgentBench and GAIA evaluate interac-tive decision-making and general-purpose tool use [33, 36]. WebShop and WebArena focus on web interaction, while VisualWebArena and OSWorld extend evaluation to vi-sually grounded web and desktop environments [27, 53, 58, 65]. The τ -bench and DySQL-Bench examine tool use in settings with evolving user interactions [44, 59]. SWE-bench, Terminal-Bench, NL2Repo, and RepoZero as-sess repository repair, command-line problem solving, and repository generation using executable checks [10, 25, 35, 63]. AgenticRAGTracer complements these benchmarks with hop-level diagnosis of agentic retrieval processes [61]. SpatialScout is one of the benchmarks evaluating the spatial understanding and long-horizon capability of VLM agents. 7. Conclusion 
+
+We introduced SpatialScout, a benchmark for evaluating the spatial intelligence of VLM agents through active object-level 3D mapping. By requiring agents to au-tonomously select viewpoints, integrate visual evidence, and estimate object positions in a shared coordinate frame, SpatialScout evaluates the complete process of constructing metric spatial representations. Our experiments reveal that frontier VLMs can recover partial scene layouts but still struggle to achieve both comprehensive coverage and precise localization. Even the strongest evaluated model attains a mean IoU of 41.71%, with only 3.25% of targets exceeding an IoU of 0.9. These findings highlight the difficulty of translating visual observations into reliable geometric estimates through sustained interaction. Spa-tialScout provides a testbed for advancing active perception, cross-view reasoning, and persistent spatial memory, sup-porting the development of agents capable of building accurate and complete representations of 3D environments. 
+
+## References 
+
+[1] Aishwarya Agrawal, Dhruv Batra, Devi Parikh, and Anirud-dha Kembhavi. Don’t just assume; look and answer: Over-coming priors for visual question answering. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pat-tern Recognition , pages 4971–4980, 2018. 1 [2] Anthropic. Introducing opus 5.5. https : / / www . anthropic.com/claude- opus- 5- 5 , 2026. Ac-cessed: 2026-04-23. 4 [3] Anthropic. Introducing sonnet 5.5. https://www. anthropic.com/claude-sonnet-5-5 , 2026. Ac-cessed: 2026-04-23. 4 [4] Kartik Bali, Mahish Guru, Yiderigun Borjigin, Alexandra Starostina, Christian J. Cyron, and Roland Aydin. Look Where You Can: Active View Selection for CAD Recon-struction under Occlusion, 2026. 8 [5] Liyan Chen, Huangying Zhan, Kevin Chen, Xiangyu Xu, Qingan Yan, Changjiang Cai, and Yi Xu. ActiveGAMER: Active GAussian Mapping through Efficient Rendering, 2025. 8 [6] Xiao Chen, Quanyi Li, Tai Wang, Tianfan Xue, and Jiang-miao Pang. GenNBV: Generalizable Next-Best-View Policy for Active 3D Reconstruction, 2024. 8 [7] D. F. Crouse. On implementing 2D rectangular assignment algorithms. IEEE Transactions on Aerospace and Electronic Systems , 52(4):1679–1696, 2016. 5 [8] Matt Deitke, Winson Han, Alvaro Herrasti, Aniruddha Kembhavi, Eric Kolve, Roozbeh Mottaghi, Jordi Salvador, Dustin Schwenk, Eli VanderBilt, Matthew Wallingford, Luca Weihs, Mark Yatskar, and Ali Farhadi. RoboTHOR: An Open Simulation-to-Real Embodied AI Platform. In Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2020. 3 [9] Matt Deitke, Eli VanderBilt, Alvaro Herrasti, Luca Weihs, Kiana Ehsani, Jordi Salvador, Winson Han, Eric Kolve, Aniruddha Kembhavi, and Roozbeh Mottaghi. ProcTHOR: Large-Scale Embodied AI Using Procedural Generation. In 
+
+Advances in Neural Information Processing Systems , 2022. 3[10] Jingzhe Ding, Shengda Long, Changxin Pu, Huan Zhou, Hongwan Gao, Xiang Gao, Chao He, Yue Hou, Fei Hu, Zhaojian Li, et al. Nl2repo-bench: Towards long-horizon repository generation evaluation of coding agents. arXiv preprint arXiv:2512.12730 , 2025. 8 [11] DS. Introducing deepseek v4.1 flash. http : / / deepseek . com / en / news / deepseek - v4 - 1 -flash/ , 2026. Accessed: 2026-04-23. 4 [12] Ziyue Feng, Huangying Zhan, Zheng Chen, Qingan Yan, Xiangyu Xu, Changjiang Cai, Bing Li, Qilun Zhu, and Yi Xu. NARUTO: Neural Active Reconstruction from Uncer-tain Target Observations, 2024. 8 [13] Xingyu Fu, Yushi Hu, Bangzheng Li, Yu Feng, Haoyu Wang, Xudong Lin, Dan Roth, Noah A. Smith, Wei-Chiu Ma, and Ranjay Krishna. BLINK: Multimodal large language models can see but not perceive. In Proceedings of the European Conference on Computer Vision , 2024. 2 [14] Yipeng Gao, Lei Shu, Genzhi Ye, Xi Xiong, Ameesh Makadia, Meiqi Guo, Laurent Itti, and Jindong Chen. 3DCodeBench: Benchmarking Agentic Procedural 3D Mod-eling Via Code, 2026. 8 [15] Yash Goyal, Tejas Khot, Douglas Summers-Stay, Dhruv Ba-tra, and Devi Parikh. Making the V in VQA matter: El-evating the role of image understanding in visual question answering. In Proceedings of the IEEE Conference on Com-puter Vision and Pattern Recognition , pages 6325–6334, 2017. 1 [16] Qiao Gu, Alihusein Kuwajerwala, Sacha Morin, Kr-ishna Murthy Jatavallabhula, Bipasha Sen, Aditya Agarwal, Corban Rivera, William Paul, Kirsty Ellis, Rama Chellappa, Chuang Gan, Celso Miguel de Melo, Joshua B. Tenenbaum, Antonio Torralba, Florian Shkurti, and Liam Paull. Concept-Graphs: Open-Vocabulary 3D Scene Graphs for Perception and Planning, 2023. 1, 8 [17] Yunqi Gu, Ian Huang, Jihyeon Je, Guandao Yang, and Leonidas Guibas. BlenderGym: Benchmarking Founda-tional Model Systems for Graphics Editing, 2025. 8 [18] Antoine Guédon, Pascal Monasse, and Vincent Lepetit. SCONE: Surface Coverage Optimization in Unknown En-vironments by Volumetric Integration, 2022. 8 [19] Antoine Guédon, Tom Monnier, Pascal Monasse, and Vin-cent Lepetit. MACARONS: Mapping And Coverage Antici-pation with RGB Online Self-Supervision, 2023. 8 [20] Richard I. Hartley and Andrew Zisserman. Multiple View Geometry in Computer Vision . Cambridge University Press, second edition, 2004. 1, 4 [21] Yining Hong, Jiageng Liu, Han Yin, Manling Li, Leonidas Guibas, Li Fei-Fei, Jiajun Wu, and Yejin Choi. ESI-Bench: Towards Embodied Spatial Intelligence that Closes the Perception-Action Loop, 2026. 1, 2, 8 [22] Ian Huang, Guandao Yang, and Leonidas Guibas. Blender-Alchemy: Editing 3D Graphics with Vision-Language Mod-els, 2024. 8 [23] Krishna Murthy Jatavallabhula, Alihusein Kuwajerwala, Qiao Gu, Mohd Omama, Tao Chen, Alaa Maalouf, Shuang Li, Ganesh Iyer, Soroush Saryazdi, Nikhil Keetha, Ayush Tewari, Joshua B. Tenenbaum, Celso Miguel de Melo, Mad-hava Krishna, Liam Paull, Florian Shkurti, and Antonio Tor-ralba. ConceptFusion: Open-set Multimodal 3D Mapping, 2023. 8 [24] Wen Jiang, Boshu Lei, and Kostas Daniilidis. FisherRF: Ac-tive View Selection and Uncertainty Quantification for Radi-ance Fields using Fisher Information, 2023. 8 [25] Carlos E. Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, and Karthik Narasimhan. SWE-bench: Can Language Models Resolve Real-World GitHub Issues?, 2023. 8 [26] Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis. 3D Gaussian Splatting for Real-Time Radiance Field Rendering, 2023. 8 [27] Jing Yu Koh, Robert Lo, Lawrence Jang, Vikram Duvvur, Ming Chong Lim, Po-Yu Huang, Graham Neubig, Shuyan Zhou, Ruslan Salakhutdinov, and Daniel Fried. VisualWe-bArena: Evaluating Multimodal Agents on Realistic Visual Web Tasks, 2024. 8 [28] Eric Kolve, Roozbeh Mottaghi, Winson Han, Eli VanderBilt, Luca Weihs, Alvaro Herrasti, Matt Deitke, Kiana Ehsani, Daniel Gordon, Yuke Zhu, Aniruddha Kembhavi, Abhinav Gupta, and Ali Farhadi. AI2-THOR: An Interactive 3D En-vironment for Visual AI, 2017. 3 [29] Yuetao Li, Zijia Kuang, Ting Li, Qun Hao, Zike Yan, Guyue Zhou, and Shaohui Zhang. ActiveSplat: High-Fidelity Scene Reconstruction through Active Gaussian Splatting, 2024. 8 [30] Chih-Ting Liao, Xi Xiao, Chunlei Meng, Zhangquan Chen, Yitong Qiao, Weilin Zhou, Tianyang Wang, Xu Zheng, and Xin Cao. SpaMEM: Benchmarking Dynamic Spatial Rea-soning via Perception-Memory Integration in Embodied En-vironments, 2026. 8 [31] Fangyu Liu, Guy Emerson, and Nigel Collier. Visual spa-tial reasoning. Transactions of the Association for Computa-tional Linguistics , 11:635–651, 2023. 2 [32] Parker Liu, Chenxin Li, Zhengxin Li, Yipeng Wu, Wuyang Li, Zhiqin Yang, Zhenyuan Zhang, Yunlong Lin, Sirui Han, and Brandon Y. Feng. IR3D-Bench: Evaluating Vision-Language Model Scene Understanding as Agentic Inverse Rendering, 2025. 2, 3, 8 [33] Xiao Liu, Hao Yu, Hanchen Zhang, Yifan Xu, Xuanyu Lei, Hanyu Lai, Yu Gu, Hangliang Ding, Kaiwen Men, Kejuan Yang, Shudan Zhang, Xiang Deng, Aohan Zeng, Zhengx-iao Du, Chenhui Zhang, Sheng Shen, Tianjun Zhang, Yu Su, Huan Sun, Minlie Huang, Yuxiao Dong, and Jie Tang. AgentBench: Evaluating LLMs as Agents, 2023. 8 [34] Arjun Majumdar, Anurag Ajay, Xiaohan Zhang, Pranav Putta, Sriram Yenamandra, Mikael Henaff, Sneha Sil-wal, Paul Mcvay, Oleksandr Maksymets, Sergio Arnaud, Karmesh Yadav, Qiyang Li, Ben Newman, Mohit Sharma, Vincent Berges, Shiqi Zhang, Pulkit Agrawal, Yonatan Bisk, Dhruv Batra, Mrinal Kalakrishnan, Franziska Meier, Chris Paxton, Alexander Sax, and Aravind Rajeswaran. OpenEQA: Embodied Question Answering in the Era of Foundation Models. In Proceedings of the IEEE/CVF Con-ference on Computer Vision and Pattern Recognition , 2024. 1, 2, 8 [35] Mike A. Merrill, Alexander G. Shaw, Nicholas Carlini, Box-uan Li, Harsh Raj, Ivan Bercovich, Lin Shi, Jeong Yeon Shin, Thomas Walshe, E. Kelly Buchanan, Junhong Shen, Guang-hao Ye, Haowei Lin, Jason Poulos, Maoyu Wang, Marianna Nezhurina, Jenia Jitsev, Di Lu, Orfeas Menis Mastromicha-lakis, Zhiwei Xu, Zizhao Chen, Yue Liu, Robert Zhang, Leon Liangyu Chen, Anurag Kashyap, Jan-Lucas Uslu, Jef-frey Li, Jianbo Wu, Minghao Yan, Song Bian, Vedang Sharma, Ke Sun, Steven Dillmann, Akshay Anand, An-drew Lanpouthakoun, Bardia Koopah, Changran Hu, Etash Guha, Gabriel H. S. Dreiman, Jiacheng Zhu, Karl Krauth, Li Zhong, Niklas Muennighoff, Robert Amanfu, Shangyin Tan, Shreyas Pimpalgaonkar, Tushar Aggarwal, Xiangn-ing Lin, Xin Lan, Xuandong Zhao, Yiqing Liang, Yuanli Wang, Zilong Wang, Changzhi Zhou, David Heineman, Hange Liu, Harsh Trivedi, John Yang, Junhong Lin, Manish Shetty, Michael Yang, Nabil Omi, Negin Raoof, Shanda Li, Terry Yue Zhuo, Wuwei Lin, Yiwei Dai, Yuxin Wang, Wen-hao Chai, Shang Zhou, Dariush Wahdany, Ziyu She, Jiaming Hu, Zhikang Dong, Yuxuan Zhu, Sasha Cui, Ahson Saiyed, Arinbjörn Kolbeinsson, Jesse Hu, Christopher Michael Ryt-ting, Ryan Marten, Yixin Wang, Alex Dimakis, Andy Kon-winski, and Ludwig Schmidt. Terminal-Bench: Benchmark-ing Agents on Hard, Realistic Tasks in Command Line Inter-faces, 2026. 8 [36] Grégoire Mialon, Clémentine Fourrier, Craig Swift, Thomas Wolf, Yann LeCun, and Thomas Scialom. GAIA: a bench-mark for General AI Assistants, 2023. 8 [37] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng. NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis, 2020. 8 [38] OpenAI. Introducing gpt-6-astra. https://openai. com/zh- Hans- CN/index/gpt- 6- astra/ , 2026. Accessed: 2026-04-23. 4 [39] OpenAI. Introducing gpt-6. https://openai.com/ zh-Hans-CN/index/introducing-gpt-6-sol-and-luna/ , 2026. Accessed: 2026-04-23. 4 [40] Zhenghao Qi, Shenghai Yuan, Fen Liu, Haozhi Cao, Tianchen Deng, Jianfei Yang, and Lihua Xie. AIR-Embodied: An Efficient Active 3DGS-based Interaction and Reconstruction Framework with Embodied Large Language Model, 2024. 8 [41] Qwen. Introducing qwen 3.8 max. https://qwen.ai/ blog?id=qwen3.8 , 2026. Accessed: 2026-04-23. 4 [42] Allen Z. Ren, Jaden Clark, Anushri Dixit, Masha Itkina, Anirudha Majumdar, and Dorsa Sadigh. Explore until Confi-dent: Efficient Exploration for Embodied Question Answer-ing, 2024. 8 [43] Koya Sakamoto, Taiki Miyanishi, Daichi Azuma, Shuhei Kurita, Shu Morikuni, Naoya Chiba, Motoaki Kawanabe, Yusuke Iwasawa, and Yutaka Matsuo. E3VS-Bench: ABenchmark for Viewpoint-Dependent Active Perception in 3D Gaussian Splatting Scenes, 2026. 2, 8 [44] Linzhuang Sun, Tianyu Guo, Hao Liang, Yuying Li, Qifeng Cai, Jingxuan Wei, Bihui Yu, Wentao Zhang, and Bin Cui. Rethinking Text-to-SQL: Dynamic Multi-turn SQL Interac-tion for Real-world Database Exploration, 2025. 8 [45] Andrew Szot, Alex Clegg, Eric Undersander, Erik Wijmans, Yili Zhao, John Turner, Noah Maestre, Mustafa Mukadam, Devendra Chaplot, Oleksandr Maksymets, Aaron Gokaslan, Vladimir Vondrus, Sameer Dharur, Franziska Meier, Woj-ciech Galuba, Angel Chang, Zsolt Kira, Vladlen Koltun, Ji-tendra Malik, Manolis Savva, and Dhruv Batra. Habitat 2.0: Training Home Assistants to Rearrange their Habitat, 2021. 3[46] Stone Tao, Fanbo Xiang, Arth Shukla, Yuzhe Qin, Xander Hinrichsen, Xiaodi Yuan, Chen Bao, Xinsong Lin, Yulin Liu, Tse-kai Chan, Yuan Gao, Xuanlin Li, Tongzhou Mu, Nan Xiao, Arnav Gurha, Viswesh Nagaswamy Rajesh, Yong Woo Choi, Yen-Ru Chen, Zhiao Huang, Roberto Calandra, Rui Chen, Shan Luo, and Hao Su. ManiSkill3: GPU Parallelized Robotics Simulation and Rendering for Generalizable Em-bodied AI, 2024. 3 [47] Kimi Team, Tongtong Bai, Yifan Bai, Yiping Bao, Jianfeng Cai, Xinyuan Cai, Peizhou Cao, Yuxuan Cao, Ziwei Chai, Y Charles, et al. Kimi k3: Open frontier intelligence. arXiv preprint arXiv:2607.24653 , 2026. 4 [48] Jianyuan Wang, Minghao Chen, Nikita Karaev, Andrea Vedaldi, Christian Rupprecht, and David Novotny. VGGT: Visual Geometry Grounded Transformer, 2025. 8 [49] Shuzhe Wang, Vincent Leroy, Yohann Cabon, Boris Chidlovskii, and Jerome Revaud. DUSt3R: Geometric 3D Vision Made Easy, 2023. 8 [50] Wenqi Wang, Reuben Tan, Pengyue Zhu, Jianwei Yang, Zhengyuan Yang, Lijuan Wang, Andrey Kolobov, Jianfeng Gao, and Boqing Gong. SITE: towards Spatial Intelligence Thorough Evaluation, 2025. 1, 8 [51] Yuxi Wei, Wei Huang, Qirui Chen, Lu Hou, and Xiaojuan Qi. See, Remember, Explore: A Benchmark and Baselines for Streaming Spatial Reasoning, 2026. 2, 8 [52] Fanbo Xiang, Yuzhe Qin, Kaichun Mo, Yikuan Xia, Hao Zhu, Fangchen Liu, Minghua Liu, Hanxiao Jiang, Yifu Yuan, He Wang, Li Yi, Angel X. Chang, Leonidas J. Guibas, and Hao Su. SAPIEN: A SimulAted Part-Based Interactive EN-vironment. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2020. 3 [53] Tianbao Xie, Danyang Zhang, Jixuan Chen, Xiaochuan Li, Siheng Zhao, Ruisheng Cao, Toh Jing Hua, Zhoujun Cheng, Dongchan Shin, Fangyu Lei, Yitao Liu, Yiheng Xu, Shuyan Zhou, Silvio Savarese, Caiming Xiong, Victor Zhong, and Tao Yu. OSWorld: Benchmarking Multimodal Agents for Open-Ended Tasks in Real Computer Environments, 2024. 8 [54] Tianling Xu, Shengzhe Gan, Leslie Gu, Yuelei Li, Fangneng Zhan, and Hanspeter Pfister. AREA3D: Active Reconstruc-tion Agent with Unified Feed-Forward 3D Perception and Vision-Language Guidance, 2025. 8 [55] Jihan Yang, Shusheng Yang, Anjali W. Gupta, Rilyn Han, Li Fei-Fei, and Saining Xie. Thinking in Space: How Multi-modal Large Language Models See, Remember, and Recall Spaces, 2024. 1, 2, 8 [56] Rui Yang, Hanyang Chen, Junyu Zhang, Mark Zhao, Cheng Qian, Kangrui Wang, Qineng Wang, Teja Venkat Koripella, Marziyeh Movahedi, Manling Li, Heng Ji, Huan Zhang, and Tong Zhang. EmbodiedBench: Comprehensive Benchmark-ing Multi-modal Large Language Models for Vision-Driven Embodied Agents, 2025. 4, 8 [57] Yuncong Yang, Han Yang, Jiachen Zhou, Peihao Chen, Hongxin Zhang, Yilun Du, and Chuang Gan. 3D-Mem: 3D Scene Memory for Embodied Exploration and Reasoning, 2024. 8 [58] Shunyu Yao, Howard Chen, John Yang, and Karthik Narasimhan. WebShop: Towards Scalable Real-World Web Interaction with Grounded Language Agents, 2022. 8 [59] Shunyu Yao, Noah Shinn, Pedram Razavi, and Karthik Narasimhan. τ -bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains, 2024. 8 [60] Shaofeng Yin, Jiaxin Ge, Zora Zhiruo Wang, Chenyang Wang, Xiuyu Li, Michael J. Black, Trevor Darrell, Angjoo Kanazawa, and Haiwen Feng. Vision-as-Inverse-Graphics Agent via Interleaved Multimodal Reasoning, 2026. 8 [61] Qijie You, Wenkai Yu, Hao Liang, Zhen Hao Wong, and Wentao Zhang. AgenticRAGTracer: A hop-aware bench-mark for diagnosing multi-step retrieval reasoning in agen-tic RAG. In Findings of the Association for Computational Linguistics: ACL 2026 , pages 1301–1335, San Diego, Cal-ifornia, United States, 2026. Association for Computational Linguistics. 8 [62] Pingyue Zhang, Zihan Huang, Yue Wang, Jieyu Zhang, Letian Xue, Zihan Wang, Qineng Wang, Keshigeyan Chan-drasegaran, Ruohan Zhang, Yejin Choi, Ranjay Krishna, Ji-ajun Wu, Li Fei-Fei, and Manling Li. Theory of Space: Can Foundation Models Construct Spatial Beliefs through Active Exploration? In International Conference on Learning Rep-resentations , 2026. 1, 2 [63] Zhaoxi Zhang, Yiming Xu, Jiahui Liang, Weikang Li, Xi-aoshuai Chen, Liwei Qian, Xin Pei, Jizhou Huang, Run Sun, and Yunfang Wu. RepoZero: Can LLMs Generate a Code Repository from Scratch?, 2026. 8 [64] Yifei Zhao, Xiangxin Zhou, Wenhao Yang, Jiaqi Tang, Pu Jian, Huanjin Yao, Jiarui Yao, Haowei Lin, Chunchao Guo, Zhuo Chen, Wenkai Lyu, Jianzhu Ma, Xueqian Wang, and Wenxi Zhu. SceneActBench: Can Agents Act on the 3D Scenes They See?, 2026. 3, 8 [65] Shuyan Zhou, Frank F. Xu, Hao Zhu, Xuhui Zhou, Robert Lo, Abishek Sridhar, Xianyi Cheng, Tianyue Ou, Yonatan Bisk, Daniel Fried, Uri Alon, and Graham Neubig. We-bArena: A Realistic Web Environment for Building Au-tonomous Agents, 2023. 8 Residential layout 30 Kitchen 6Living room 6Bedroom 6Bathroom 6Furnished room 12 Apartment 8Apartment 6
+
+# 80 scenes 
+
+(a) Scene sources and room types 
+
+> ProcTHOR (30) iTHOR (24) RoboTHOR (12) ArchitecTHOR (8) ReplicaCAD (6)
+
+Figure 8. Visualization of scene distribution in SpatialScout 
+
+## A. Protocol 
+
+Scene preparation. Catalog entries identify the scene builder, source configuration, initial world position and yaw–pitch, and target count. The preparation script verifies the loaded source identity and applies the target-selection rule in Sec. 2.2. The default configuration uses seed 0, 
+
+512 × 512 rendering, CPU simulation and rendering back-ends, and the minimal shader setting. The delivered im-age uses JPEG quality 82 and the pixel mapping in Eq. (2). The preparation manifest records the random seed, render size, simulation and rendering backends, input-image en-coding, dependency versions, and SHA-256 fingerprints of the source configuration, benchmark and simulator code, and asset tree. Cached preparations are reused only when their fingerprints, initial camera poses, and target counts agree with the requested configuration. Each run records the preparation fingerprint, linking the attempt to its scene and data configuration. The public entity inventory, evaluator annotations, and initial view are saved as separate artifacts. Each frame also retains its original-image filename. The overall data distribution is presented in Fig. 8 and Fig. 9. 
+
+Movement. Absolute positions are transformed from the task frame to world coordinates by o0 + R0p, with each world coordinate bounded by ±15 m. Relative translations have length at most 1 m; yaw and pitch increments have magnitude at most 180 ◦ per axis, final pitch is clamped to 
+
+[−85 ◦, 85 ◦], and roll remains fixed. Section 3.1 specifies the movement axes and explicit capture interface. Chair 247 Table 154 Cabinet 93 Drawer 43 Other 196 Window 94 Doorway 63 Faucet 38 Sink 35 Other 203 Painting 173 Book 125 Bowl 70 Plant 62 Other 1,544 
+
+# 3,140 objects 
+
+> (b) Target object categories
+> Furniture (733) Fixtures (433) Other objects (1,974)
+
+Figure 9. Visualization of object distribution in SpatialScout 
+
+Prompts and budgets. Chat Completions and Responses use a shared episode loop, task prompt, and tool descrip-tions. Section 3.1 describes the common submission guid-ance and map-inspection interface. The prompt also spec-ifies the actual model-call and capture budgets, the fixed task axes, and the world-AABB center convention. When 
+
+V = 1 , it requests estimates from the initial image and its calibration. Budget reminders are added before model re-quests with 10 and 3 calls remaining. Actions within a sin-gle response are specified before the corresponding visual feedback is seen. Rejected capture requests do not consume additional images. The default user prompt and the tool de-scriptions are presented in Fig. 10 and Fig. 11. 
+
+Attempt accounting. The standard batch uses a 180-second timeout per HTTP request, with no explicit temper-ature setting. Each episode attempt records the model iden-tifier, API mode, reasoning configuration, full task prompt, tool schema, and actual budgets. Retriable HTTP or net-work failures receive up to three request attempts with 1-and 2-second backoffs. Logical model calls and HTTP re-quest attempts have separate counters. The batch runner stores reruns in distinct attempt directories, preserving pre-vious maps and traces. Completed episodes are labeled by explicit finish, a response without tool calls, or turn-budget exhaustion. Service and runtime failures retain available maps and diagnostic records under the accounting policy in Sec. 3.1. Batch reports retain completed-episode counts and failure counts and rates alongside aggregate scores. Com-parisons use a specified scene list and report the completed count for each model. B. Reproducibility Details 
+
+B.1. Multi-view Point Estimation 
+
+For a marked original-image pixel (uk, v k), the for-ward/left/up camera convention gives 
+
+qk =
+
+ 1
+
+−(uk − cx,k )/f x,k 
+
+−(vk − cy,k )/f y,k 
+
+ , dk = Rkqk
+
+∥Rkqk∥2
+
+, (4) where Rk maps camera axes into the fixed task frame. Us-ing the task-frame origins ok and projections Ak defined in Sec. 3.1, the normal equations of Eq. (3) give 
+
+bptri = X
+
+> k
+
+Ak
+
+!−1 X
+
+> k
+
+Akok. (5) A valid query requires at least two observations, maximum camera separation of at least 5 cm, condition number of P 
+
+> k
+
+Ak at most 10 6, and d⊤ 
+
+> k
+
+(bptri − ok) > 0 for every con-tributing ray. Queries failing these checks are rejected. The tool reports the root-mean-square perpendicular line resid-ual and maximum pairwise ray angle. Valid solutions carry a caution when the angle is below 3◦, the residual exceeds 0.1 m, or the point lies beyond r + 0 .5 m. 
+
+B.2. Scoring and Trace Replay 
+
+For a scene with N > 0 targets, let M be the number of distinct target IDs in the current accepted map. The po-sition evaluator uses groupwise minimum-total-Euclidean-distance assignment. Mean, median, RMSE, and mean IoU use that assignment. Before assignment, predictions are or-dered lexicographically by task-frame coordinates and tar-gets by task-frame center and world-box side lengths, with identifiers breaking ties between geometrically identical en-tries. This canonical ordering makes tied assignments re-producible under permutations of same-group submission identifiers. The target-conditioned overlap evaluator floors each reference side length at ϵ = 0 .01 m while preserv-ing its center. For each prediction–target pair it translates the candidate target’s box to the prediction, giving a score determined by the predicted center, candidate center, and candidate extent. At each threshold, one-to-one matching first maximizes strict threshold hits and then total overlap. Thresholds are τ ∈ { 0, 0.5, 0.9}, with separate assignments for each threshold. The scorer saves the metric version, minimum side length, matched IoU sum Q, hit counts Hτ ,and denominators M, N .
+
+Aggregation and completeness. For evaluated scenes D,object-micro means use P 
+
+> s∈D
+
+Qs/ P 
+
+> s
+
+Ms for submitted objects and P 
+
+> s
+
+Qs/ P 
+
+> s
+
+Ns for all targets. Replacing Qs
+
+with Hτ,s gives the corresponding hit rate and recall. Scene-macro summaries instead average the per-scene ratios with equal weight. Both mean IoU variants and overlap rates are zero for an empty map; submitted-object center errors are undefined and excluded from averages of those errors. IoU and overlap-rate aggregates with zero denominators are also set to zero. At scene level, and under object-micro aggrega-tion with C = P 
+
+> s
+
+Ms/ P 
+
+> s
+
+Ns,
+
+Jall = CJ sub , Recall τ = C HitRate τ . (6) For scene-macro reports these identities apply within each scene before averaging. 
+
+Omission penalty. With coverage C = M/N , the auxil-iary full-scene localization loss is 
+
+Lscene =
+
+PMi=1 ei + λ(N − M )
+
+N , (7) where ei is the matched center error in meters and λ is a fixed penalty per omitted target, also in meters. The penalty is configurable; we use the evaluator’s default λ = 5 m, so each omitted target adds 5 m to the summed error be-fore normalization by N . A larger λ gives omissions more weight relative to matched localization error. For an empty map, Lscene = λ. For a nonempty map, the loss decom-poses as Lscene = C ¯e+(1 −C)λ, where ¯e is mean center er-ror. Reporting coverage and center error alongside the loss makes the contribution of omissions explicit. The main-table mean IoU and overlap hit/recall scores are indepen-dent of λ.
+
+Object scale. Across the 80 evaluation scenes, 210 of 3,140 targets (6.7%) have at least one world-box side shorter than 1 cm and use the minimum-side regularization. The median shortest side before regularization is 11.7 cm. For two identical regularized world-axis-aligned boxes dis-placed by d along one axis of length ℓ, with the other axes aligned and |d| < ℓ ,
+
+J = ℓ − | d|
+
+ℓ + |d| , J > τ ⇐⇒ | d| < ℓ 1 − τ
+
+1 + τ . (8) At IoU > 0.9, the permitted displacement is below ℓ/ 19 ,approximately 5.26% of that axis length. At the 1 cm mini-mum side length, the single-axis tolerance is approximately 0.526 mm. Center error complements these scale-relative scores by measuring displacement in meters. 
+
+Inventory-only references. The origin policy submits 
+
+bpi = 0 for every inventory item. The uniform-ball policy samples a unit direction from a normalized three-dimensional Gaussian vector and a radius rU 1/3, U ∼
+
+Uniform[0 , 1] , using seed 0. Both policies use the same groupwise scoring and cover the full inventory. Across the same 80 evaluation scenes, their scene-macro full-scene losses are 3.113 m and 4.701 m, respectively. These values provide RGB-free localization baselines using the public in-ventory and range prior. 
+
+Map-update replay. The replay in Sec. 3.1 reconstructs the acquired-image count from the initial capture and sub-sequent successful capture events. It scores the full map returned by every successful submission call, including empty batches used to inspect the map. The same ac-cepted maps can also be evaluated with omission penalties 
+
+λ ∈ { 1, 2, 5, 10 } m, separating the effect of the reporting trade-off from changes in predictions without further model inference. Model text and captured-image files accompany the calibrated frames and tool records. Resource records in-clude request and execution times, counts of model calls, acquired images and tool calls, and provider-reported token usage when available. 
+
+## C. Limitations 
+
+SpatialScout currently relies on data generated using a physics simulation engine. Although our results support the conclusions drawn in this work, simulated environments may not fully capture the complexity and variability of real-world scenes. To address this limitation, we plan to re-lease a dataset collected in real-world scenes within the next month. We welcome any forms of collaboration. Task Prompt 
+
+Explore this furnished scene and estimate the center of each entity’s world-axis-aligned bounding box in the supplied library. Define the box in simulator world axes, take the midpoint of its bounds, then express that point in the task frame; do not recompute an axis-aligned box in the task frame. All submitted coordinates use a fixed initial-camera frame: origin at the camera’s initial position, +x its initial optical forward, +y its initial left, +z its initial up. Camera pose tools return transforms in this same frame. Absolute 
+
+set_camera_position arguments use this frame. Relative move_camera uses current horizontal heading and world-vertical up. A silhouette center can shift between views and a surface point differs from the object’s bounding-box center. Use the observed object extent to infer its bounding-box center. triangulate_observations accepts ORIGINAL PNG pixel_xy , with zero-based pixel centers, u right and v down. Each image message gives original/displayed dimensions and the exact displayed-to-original conversion. Only submit a position when you have visual evidence; do not invent locations for occluded items. The library includes equivalence groups. IDs within the same group are interchangeable for scoring, so submit one distinct valid ID per observed instance without worrying about their order. Submit estimates in batches using submit_positions , then call 
+
+finish_mapping . finish_mapping immediately freezes the map; later tools in that response are skipped. The architectural stage mesh and robot are outside the target library; some furniture and fixtures are separate target instances. This benchmark keeps a selected subset of targets visible; map only IDs returned by list_entities . Use multiple images and camera poses. Triangulate the same physical feature seen from different positions. Start submitting visible objects after the first two views, then update and add estimates as you explore. You have at most 100 model calls; one call may request multiple sequential tools. You have at most 100 RGB captures including the initial image. After this capture cap, use the remaining model calls to reason from existing images, submit, and finish. Figure 10. The user prompt provided to the visual mapping agent for the default evaluation with B = V = 100 .Tool Instructions 
+
+get_camera_pose . Read camera position and full rotation matrix in the ORIGINAL camera frame. 
+
+Parameters: No arguments. 
+
+get_camera_intrinsics . Read the actual 3x3 camera intrinsic matrix, image size, and clipping planes. 
+
+Parameters: No arguments. 
+
+set_camera_position . Teleport the camera to absolute x,y,z coordinates in the ORIGINAL camera frame, in meters. 
+
+Parameters: Required: x, y, z (numbers; meters). 
+
+move_camera . Move along the current yaw-horizontal forward/right axes and world-vertical up, in meters; vector length at most 1 meter. These relative axes differ from fixed task axes when the camera rotates or pitches. 
+
+Parameters: Required: forward , right , up (numbers; meters). 
+
+rotate_camera . Rotate the camera by relative yaw and pitch in degrees. Positive yaw turns counterclockwise viewed from above; positive pitch looks upward. 
+
+Parameters: Required: yaw_deg , pitch_deg (numbers; degrees). 
+
+capture_image . Capture the camera’s current RGB image. The PNG is saved locally and the image is sent to your vision input. 
+
+Parameters: No arguments. 
+
+list_entities . List every target entity ID and category in this room. No locations are revealed. 
+
+Parameters: No arguments. 
+
+triangulate_observations . Triangulate the same physical point marked in two or more captured frames taken from dif-ferent camera positions. Returns an absolute 3D point in the initial-camera frame and ray mismatch. A visible surface point or silhouette center need not be the object’s bounding-box center; infer the object center using its extent. 
+
+Parameters: Required: id (string) and observations (array of at least two observations). Each observation requires frame 
+
+(captured filename, such as frame_0001.png ) and pixel_xy (two numbers [u, v ] in original PNG coordinates, with zero-based pixel centers; convert displayed JPEG coordinates first). 
+
+submit_positions . Submit or update a batch of estimated geometric-center coordinates in the original-camera frame. Returns acceptance diagnostics and the current accepted map, without reference errors. Use exact entity IDs from the library. Call repeatedly to revise the map, or pass an empty batch to inspect it. 
+
+Parameters: Required: predictions (array). Each entry requires id (string) and xyz_m (three numbers). 
+
+finish_mapping . Immediately finish mapping with the current submitted positions. Later tool calls in this batch are not executed. Missing IDs count as missing predictions; scoring is performed after the episode. 
+
+Parameters: No arguments. Figure 11. Tool descriptions and summarized parameter schemas provided to the visual mapping agent.

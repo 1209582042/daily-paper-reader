@@ -1,0 +1,813 @@
+Title: Frame Evidence:A Benchmark for Reference Frames and Visual Evidence in Multi-Image Spatial Reasoning
+
+URL Source: https://arxiv.org/pdf/2610.19564v2
+
+Published Time: Fri, 16 Oct 2026 00:37:25 GMT
+
+Number of Pages: 27
+
+Markdown Content:
+# FRAME EVIDENCE : A Benchmark for Reference Frames and Visual Evidence in Multi-Image Spatial Reasoning 
+
+Chunxi Luo 1,4,* Qishuai Ding 1,∗ Xingchen Peng 2,4,∗ Hengwei Ye 4 ke zhang 4
+
+Wenxin Lian 1 Tianyi Lu 3,4 Chunlong Yu 2,4 Zhenya Lin 4,†   
+
+> 1Shanghai University 2East China University of Science and Technology
+> 3Shanghai Ocean University 4Byaidata Chunxi Luo lcxshu@163.com
+
+Abstract 
+
+A spatial answer depends on the reference frame specified in language and its support-ing visual evidence. Item accuracy alone ob-scures whether correctness persists when either changes. We introduce F RAME EVIDENCE , a benchmark of 320 matched triplets and 960 Chi-nese multiple-choice questions from captured and rendered scenes. One family compares three grounded reference frames over fixed im-ages. The other pairs image deletion annotated as insufficient with answer-preserving addition. Joint metrics require correct answers across all three frames and paired evidence variants. Across 20 configurations on 288 held-out ques-tions, GPT three-shot reaches 50.00% item ac-curacy, but the best three-frame group accu-racy is 5/48 (10.42%), reached by GPT two-shot. Few-shot prompting and task-specific adaptation improve item accuracy without con-sistently improving joint correctness. Input con-trols show where images support matched suc-cess, while repeated executions reveal answer instability beneath similar scores. 
+
+1 Introduction 
+
+Spatial language describes an arrangement relative to a reference frame. An object on the left from a camera may be in front in another object’s frame. Models must identify the intended frame and as-sess whether partial views jointly support that de-scription. Spatial supervision has improved spa-tial question answering and regional reasoning in vision-language models (Chen et al., 2024; Cheng et al., 2024). Evaluation must therefore test both frame grounding and visual evidence use. Existing benchmarks test perceptual and three-dimensional spatial relations (Liu et al., 2023; Fu 
+
+> *Equal contribution.
+> †Corresponding author.
+
+et al., 2024; Ma et al., 2025), as well as reference-frame ambiguity and subject-centered judgments (Zhang et al., 2025; Premsri and Kordjamshidi, 2025; Liu et al., 2026). Multi-view and video eval-uations extend this coverage to evidence distributed across observations (Yang et al., 2026; Yeh et al., 2026; Yang et al., 2025). Yet item accuracy alone cannot establish correctness across matched inputs. A preferred answer can match a direction with-out reflecting the specified frame. Matched eval-uations distinguish these behaviors by changing selected input attributes (Thrush et al., 2022; Wang et al., 2025; Kim et al., 2026). The key is whether the correct answer should change or remain fixed .Figure 1 presents FrameEvidence’s two ques-tion families. The first (FQ1) fixes ordered images and the target–relatum pair while querying camera, object-anchor and scene-axis frames. The second (FQ2) pairs an annotated minimal sufficient set (MSS) with deletion and addition variants, labeled as insufficient and answer-preserving, respectively. We also analyze changes to image-order references after deletion. These comparisons extend ratio-nale, unanswerability and view-selection diagnos-tics of evidence dependence (DeYoung et al., 2020; Moratelli et al., 2026; Guo et al., 2026; Wang et al., 2026b). FQ1 joint scoring requires three correct frame answers. FQ2 separately requires a correct MSS answer together with a correct deletion or addition answer. Response transitions then distin-guish initial errors from failures after the change. The release contains 320 triplets and 960 ques-tions, with 96 triplets and 288 questions reserved for testing. We evaluate ten open-weight check-points, two adapted counterparts and two gateway aliases under zero- to three-shot prompting. The strongest item-level setting answers half the test correctly but solves only three of 48 frame groups. Images improve MSS–addition success for eleven 1arXiv:2610.19564v2 [cs.CV] 15 Oct 2026 I1 I2 I3 I4                                             
+
+> I1 I2 −I1 I2
+> I1 I2 +I3
+> FQ1 Reference-frame switching same evidence ·switch only the frame
+> QBowl relative to green mug?
+> OA Front ·B Behind ·C Left ·D Right
+> Camera · I1 heading
+> CLeft
+> Object · mug center→logo
+> DRight
+> Scene · I3 arrow
+> AFront
+> FQ2 Evidence intervention forward = I1 camera heading ·right = observer's right
+> QSculpture relative to chair? OA Right-behind ·B Right-front ·C Insu ffi cient ·D Left-behind
+> Base {I1, I2} BRight-front Remove I1 {I2} CInsu ffi cient Add I3 {I1, I2, I3} BRight-front
+
+Figure 1: Matched protocols. FQ1 changes the queried frame while fixing the images. FQ2 deletes an annotated required view or adds a hard non-MSS view. The crossed-out image is withheld, and I1–I4 mark original positions for display. After I1 is deleted, “the first image” refers to I2. 
+
+of twelve open-weight configurations, but item ac-curacy for only six. We compare low-rank adap-tation (LoRA) across three seeds and pair option rotations with same-order repeats to separate order sensitivity from execution variability. 
+
+2 Related Work 
+
+Reference frames and frame-conditioned rea-soning. Spatial and matched-contrast bench-marks probe relational judgments (Liu et al., 2023; Fu et al., 2024; Thrush et al., 2022). COM-FORT, FoREST, and ViewSpatial-Bench examine reference-frame ambiguity (Zhang et al., 2025; Premsri and Kordjamshidi, 2025; Li et al., 2026). SCOPE, All-Angles, and CityCube address cross-view and scale variation (Kim et al., 2026; Yeh et al., 2026; Xu et al., 2026), while MirrorQA targets subject-centered left–right judgments (Liu et al., 2026). COMFORT compares explicit frames on matched synthetic scenes and measures prob-abilistic consistency. Our frame protocol evalu-ates joint correctness across three multi-view frame prompts, distinguishing a correct switch from an answer change alone. 
+
+Multi-image reasoning and evidence interven-tions. MIRB, ReMI, MMIU, and MuirBench as-sess multi-image reasoning, while MIMIC probes controlled failure cases (Zhao et al., 2024; Kazemi et al., 2024; Meng et al., 2025; Wang et al., 2025; Das et al., 2026). MMSI-Bench, CrossView Suite, MultiView-Bench, and cross-view relation learn-ing focus on spatial integration (Yang et al., 2026; Wang et al., 2026a; Zhang et al., 2026; Jeong et al., 2026). Evidence-centered diagnostics ex-amine input dependence through rationale suffi-ciency, paired unanswerability, view selection, evi-dence sensitivity, and multi-view necessity (DeY-oung et al., 2020; Moratelli et al., 2026; Wang et al., 2025; Guo et al., 2026; Wang et al., 2026b; Bhat and Yamasaki, 2026; Yu et al., 2026). SSMNBench adds and removes views of minimal necessary sets to measure view-wise accuracy and distraction de-cay. These measures characterize supporting views and average sensitivity to evidence changes. Ta-ble 1 summarizes our requirement for paired cor-rectness before and after an intervention on the same instance. Comparing models on shared, cor-rectly answered MSSs then separates initial cover-age from subsequent intervention errors. 
+
+3 Problem Formulation 
+
+Each item is x = ( I, q, O), where I = ( I1, . . . , I m)
+
+contains one to five images, q is a Chinese ques-tion, and O = ( oA, o B , o C , o D) is a four-option 2Table 1: Comparison of evaluation protocols most relevant to FrameEvidence.                                                                                            
+
+> Benchmark Src. MI Match FoR SMin Ev Del.
+> → ⊥ Hard +Joint Scale COMFORT (Zhang et al., 2025) Syn. –YY–––P58.3K English cases MuirBench (Wang et al., 2025) Mix. YY––––P2,600 instances MMSI-Bench (Yang et al., 2026) Real Y––P–––1,000 QA All-Angles (Yeh et al., 2026) Real YYP–––Y2,132 QA SCOPE (Kim et al., 2026) Mix. YYP–––P20,144 QA MultiView-Bench (Zhang et al., 2026) Syn. YP–––––500 main (+2K var.) SSMNBench (Guo et al., 2026) Real YY–Y–P–3,300 QA View-Level Evidence (Wang et al., 2026b) Real YP–P––P122 QA
+> FrameEvidence Mix. YYYYYYY960 QA (320 triplets)
+> Legend. Y/P/– denote explicit, partial, and unspecified coverage in the reported protocols. MI, Match, FoR-S, and Min-Ev abbreviate multi-image, item matching, frame switching, and minimal evidence. Del. → ⊥ denotes deletion to insufficiency, Hard +denotes truth-preserving hard non-MSS addition, and Joint denotes correctness across matched variants. Partial Joint coverage includes response consistency or joint view–answer prediction. Scales use source units.
+
+answer set. A model returns ˆy = hθ(I, q, O) ∈{A, B, C, D }. Spatial answers use axial (front, back, left, right) or quadrant directions (front-left, front-right, back-left, back-right). FQ2 includes in-sufficient information. Metric reconstruction, verti-cal relations and motion are excluded. 
+
+Reference-frame intervention (FQ1). Each group queries the same target–relatum relation in three frames F = {cam , obj , scene }. The camera frame uses a specified camera heading, the object frame a named object’s orientation, and the scene frame an environmental axis. The question speci-fies the anchor, which need not be the relatum, and its forward or backward convention. Ordered im-ages, entity identities, relation ontology and option meanings remain fixed. Only the frame instruc-tion and its implied answer change. At least two gold answers differ, so repeating one answer cannot solve the group. 
+
+Evidence intervention (FQ2). The base set Mg
+
+is an annotated MSS supporting spatial answer yg
+
+when no proper subset does. Deletion removes an annotated required image rg. Addition restores the MSS and adds a hard, truth-preserving im-age dg /∈ Mg. The annotated responses to Mg,
+
+Mg \ { rg} and Mg ∪ { dg} are respectively yg, ⊥
+
+and yg, where ⊥ means insufficient information. This definition requires subset-minimality, not min-imum cardinality. The target–relatum text stays fixed, but deletion can change image-ordinal bind-ings, as analyzed in Section 5. 
+
+Group-level evaluation. Let cvg = ⊮[ˆ yvg = yvg ]
+
+denote correctness for variant v, and nk = |G k| the number of groups in family k. FQ1 Group Exact Match scores the three frame answers jointly, 
+
+FQ1 -GEM = n−11
+
+X
+
+> g∈G 1
+
+Y 
+
+> f∈F
+
+cfg . (1) For FQ2, Necessity Transition Success is NTS = 
+
+n−12
+
+P 
+
+> g
+
+cMg c− 
+
+> g
+
+, and Distractor Invariance Success is DIS = n−12
+
+P 
+
+> g
+
+cMg c+ 
+
+> g
+
+, with both sums over G2.NTS scores agreement with both the MSS and dele-tion labels, while DIS requires the spatial answer to remain correct after addition. 
+
+4 FrameEvidence Construction 
+
+4.1 Scene Acquisition and Group Assembly 
+
+FrameEvidence combines 126 captured-image and 194 rendered-image groups of static layouts span-ning indoor tabletop, indoor large-space and out-door public-space scenes. An object inventory iden-tifies the target, relatum and any bridge objects connecting views. Construction criteria require un-ambiguous identity matches, unchanged layouts, grounded frame anchors and evidence that must be combined across views. FQ1 reuses two to four ordered images across its three questions. FQ2 starts from two to four MSS images, then changes the set size by one. Each fam-ily contains 53 two-image, 54 three-image and 53 four-image base sets. Hard additions supply com-peting context but preserve the annotated answer. 
+
+4.2 Annotation and Quality Control 
+
+Controlled Chinese questions specify the queried entities and reference frame. Answer placement maps semantic answers to A–D while fixing option order within groups. Each letter occurs 240 times overall and 40 per condition. 3Table 2: Dataset composition by split. All entries count questions except the Groups row.                                                         
+
+> Category Train Dev Test Total Groups 192 32 96 320 Questions 576 96 288 960 FQ1 288 48 144 480 FQ2 288 48 144 480 Tabletop 195 27 102 324 Indoor large 192 33 93 318 Outdoor public 189 36 93 318 Axial 291 45 144 480 Quadrant 285 51 144 480 Raw label types Groups with label 020 40 60 80 Chair 74 Table 70 Mirror 51 Bed 35 Sofa 35 Clothes rack 27 Potted plant 24 Ball 22 Guitar 18 Suitcase 18
+
+Figure 2: Object-label counts per group. The other 116 labels contribute 586 of the 960 label occurrences. 
+
+Each group has approval from a separate re-viewer account with answers visible. The check-list covers scenes, bindings, directions, each MSS image’s necessity and answer preservation. Ap-pendix A documents this review and the automated schema and consistency checks. 
+
+4.3 Split and Validation Scope 
+
+Table 2 allocates 192/32/96 complete groups to training/development/test. Matched variants and identical images stay together, keeping triplets in-tact across splits. Different views can share a scene across splits. Evaluation therefore concerns held-out groups, not necessarily unseen scenes. Table 4 reports one participant’s sampled blind-answer summary. Appendix A describes this refer-ence and the exact random baseline. 
+
+5 FrameEvidence Analysis 
+
+Composition and balance. Table 2 shows bal-anced relation ontologies and nearly equal scene strata, with 160 questions per condition. The ten labels in Figure 2 account for 374 of 960 group-level occurrences, with 116 further types retaining source names. Test A–D counts are 75, 70, 69 and 74. Macro-averaging gives each class equal weight. 
+
+Evidence structure and non-visual controls. 
+
+Figure 3a shows that extreme image counts iden-tify some FQ2 conditions. On 144 held-out FQ2 items, a train-fitted count-plus-schema rule achieves 37.50% accuracy, compared with 33.33% from always selecting insufficient information. NTS and DIS reach only 6.25% and 2.08%, so this advantage rarely extends to paired variants. A clas-sifier using character-level term frequency–inverse document frequency (TF-IDF) features from ques-tions and options reaches 23.96% accuracy on all 288 test items. Identical FQ2 text forces this deter-ministic model to repeat its answer, making NTS zero. Condition cues and item accuracy alone there-fore cannot establish sensitivity to changed evi-dence. Appendix F.3 specifies the text model. 
+
+Scene overlap and sensitivity. The release has 443 distinct images across 1,120 paths. Exact im-ages stay within one split, although views and ren-derings can share scenes across splits. An inferred scene/template ledger assigns 81 test groups to clus-ters shared with training and 15 to four clusters absent from both train and dev. On these 15 groups, Qwen LoRA lowers DIS from 4/8 to 2/8, matching the full-test direction. InternVL’s unchanged over-all NTS instead combines opposing changes across strata. The subset’s 13 rendered and two captured groups also differ in composition from the full test. Across the full test, rendered inputs yield higher DIS in 16/20 configurations and higher accuracy in 14. Appendices F.1 and G report both comparisons. 
+
+Ordinal references after deletion. Deletion re-moves the original referent in 36/48 FQ2 groups and shifts it in six. Under current-order presenta-tion, 38 ordinals resolve to another image and four fall out of range. Table 3 separates joint successes by reference change. Both InternVL checkpoints succeed only when the referent is removed. Their NTS scores therefore combine responses to evi-dence removal and reference changes. Camera headings also occur in 30/48 MSS prompts with non-camera tags. These tags define annotation strata, not distinct frame conditions. 4(a) Input-image counts (b) Held-out metadata controls      
+
+> FQ2 release: 160 groups / 480 items FQ2 test: 144 items / 48 groups; train-fitted
+> MSS (groups) MSS Deletion Addition
+> 2 images (53)
+
+2 1 3 
+
+> 3 images (54)
+
+3 2 4 
+
+> 4 images (53)
+
+4 3 5         
+
+> One matched MSS / deletion / addition triplet per group.
+> Acc. NTS DIS
+> 020 40 %
+> Majority letter 23.61 0.00 22.92
+> Image count 21.53 0.00 4.17
+> Count + schema 37.50 6.25 2.08
+
+Figure 3: FQ2 image counts across the release (a) and train-fitted metadata controls (b). Test accuracy uses 144 items and NTS/DIS 48 groups. Schema is the visible insufficient-information option’s letter. Table 3: Joint deletion successes by reference change.                                         
+
+> Model Removed Shifted Stable None Groups 36 624Qwen Base 1000Qwen LoRA 5010InternVL Base 4000InternVL LoRA 4000GPT 2-shot 8300GPT 3-shot 7210Claude 0-shot 4000Claude 3-shot 3100Joint MSS–deletion counts. Groups gives NTS denominators. Qwen/InternVL are primary 7B/8B checkpoints. None denotes no ordinal. Full results appear in Appendix E.
+
+6 Experiments 
+
+6.1 Evaluation Setup 
+
+Table 4 compares 20 configurations on 288 ques-tions. GPT-5.6 and Claude Fable 5.1 denote the requested gateway aliases. The main evaluation and input controls share checkpoints. Table 6 com-pares six adapters with separate Base runs, which agree with primary runs on 281/288 Qwen and 277/288 InternVL answers. Appendix G reports both paired comparisons. Queries preserve image order and request a sin-gle letter. Open-weight and Claude runs use tem-perature zero and 32 output tokens. GPT instead leaves temperature unset and allows 2,048 output tokens with reasoning effort set to low. Following MirrorQA (Liu et al., 2026), we eval-uate zero- to three-shot prompting. Demonstrations use nested prefixes of one training group per family, selected with seed 20260722, excluding test groups and exact test images. We report accuracy and macro-averaged preci-sion, recall and F1 over A–D on all 288 questions, with joint metrics over each family’s 48 groups. Ten LLaVA-OneVision responses are invalid and count as errors. All other main responses are valid. 
+
+6.2 Item Accuracy and Matched Success 
+
+Item accuracy and joint scores identify different leaders in Table 4. GPT three-shot reaches 50.00% 
+
+accuracy, while two-shot leads FQ1-GEM and NTS at 10.42% and 22.92% . MiniCPM-V-4.5 matches three-shot’s 47.92% DIS at 32.99% ac-curacy. GPT’s 1.74-point two-to-three-shot gain combines 48 newly correct and 43 newly incor-rect answers, masking substantial turnover. Its paired 95% interval [ −4.90 , 5.35 ] includes zero. Appendix G.3 compares all adjacent shot settings. This divergence depends on how errors align across variants. The product of variant accu-racies gives the expected joint rate under inde-pendent cross-group rearrangement. NTS falls below this reference in 19/20 configurations, while DIS exceeds it in all 20. An image-free majority control yields the same asymme-try because repeating an answer can succeed on answer-preserving addition but miss dele-tion’s insufficiency label. Appendix D.4 details this shared-answer contribution. 
+
+6.3 Input Controls and Adaptation 
+
+For twelve open-weight configurations and GPT zero-shot, text-only removes all images and single-image keeps the first. Questions, options and labels stay fixed in Table 14. Visual input improves addition-pair success more often than item accuracy. In Table 5, im-ages raise DIS for 11/12 open-weight configura-tions but accuracy for only six. Qwen2.5-VL-7B gains 43.8 DIS points , with a 95% interval of [29.2, 59.5], despite lower accuracy. GPT gains 8.7 ac-curacy points over text-only. Without images, it always selects insufficiency for FQ2. Using all im-5Table 4: All-images model results (%) on 288 questions, with 48 groups per family for joint metrics. 
+
+Classification Matched success Model Setting P R F1 Acc. GEM NTS DIS 
+
+Open-weight baselines 
+
+Qwen2.5-VL-7B Base 31.06 29.43 25.99 28.82 0.00 2.08 43.75 InternVL3-8B Base 29.72 29.84 28.65 29.51 2.08 8.33 20.83 Qwen3-VL-8B Base 34.60 34.30 33.83 34.03 0.00 14.58 39.58 LLaVA-OneVision-7B Base 30.56 29.33 29.04 29.17 0.00 0.00 37.50 MiniCPM-V 4.5 Base 33.48 33.33 32.27 32.99 0.00 4.17 47.92 
+
+Mistral Small 3.2 24B Base 26.99 25.96 24.82 25.69 0.00 2.08 8.33 Qwen2.5-VL-32B Base 33.29 33.56 32.15 33.33 0.00 6.25 35.42 InternVL3.5-14B Base 28.14 28.35 27.86 28.12 0.00 6.25 25.00 Phi-4-Multimodal Base 26.07 26.61 25.54 26.39 0.00 0.00 35.42 Kimi-VL-A3B Base 36.74 29.48 26.73 29.17 0.00 0.00 39.58 
+
+Task-adapted counterparts 
+
+Qwen2.5-VL-7B LoRA 35.45 35.53 34.81 35.42 0.00 12.50 12.50 InternVL3-8B LoRA 34.35 32.91 30.99 32.64 0.00 8.33 8.33 
+
+Gateway-served models 
+
+GPT-5.6 0-shot 40.57 40.72 40.43 40.62 4.17 14.58 35.42 1-shot 44.01 44.26 44.05 44.10 6.25 16.67 41.67 2-shot 48.53 48.29 48.34 48.26 10.42 22.92 43.75 3-shot 49.87 50.05 49.86 50.00 6.25 20.83 47.92 
+
+Claude Fable 5.1 0-shot 39.35 39.53 39.19 39.24 0.00 8.33 41.67 1-shot 40.55 40.30 40.26 40.28 6.25 2.08 37.50 2-shot 41.34 41.58 41.27 41.32 6.25 12.50 37.50 3-shot 41.75 41.76 41.64 41.67 2.08 8.33 39.58 
+
+Random and human references 
+
+Uniform random Expected 25.00 25.00 24.93 25.00 1.56 6.25 6.25 Human (reported) Sampled 98.56 98.40 98.48 98.40 – – –Model P/R/F1 are macro-averaged over A–D. GEM denotes FQ1-GEM. Bold marks model-column maxima. LoRA uses one checkpoint per family. Invalid answers count as incorrect. Random gives finite-test expectations for independent uniform A–D guesses. Human reports one participant’s sampled blind evaluation, as summarized by the authors. Dashes denote unreported joint scores. Appendix A details the reference rows. 
+
+Table 5: All-images minus text-only in percentage points, with questions and gold labels fixed. 
+
+Model ∆Acc. ∆NTS ∆DIS Qwen2.5-VL-7B −3.1 +2 .1 +43 .8
+
+Qwen2.5-VL-7B LoRA +3 .1 +12 .5 +12 .5
+
+InternVL3-8B −1.4 +8 .3 +12 .5
+
+InternVL3-8B LoRA +2 .4 +8 .3 +8 .3
+
+Qwen3-VL-8B +4 .5 +14 .6 +33 .3
+
+LLaVA-OneVision-7B +0 .0 +0 .0 −6.2
+
+MiniCPM-V 4.5 +3 .8 +4 .2 +14 .6
+
+Mistral Small 3.2 24B −3.8 +2 .1 +8 .3
+
+Qwen2.5-VL-32B +2 .4 +6 .2 +35 .4
+
+InternVL3.5-14B −2.1 +6 .2 +10 .4
+
+Phi-4-Multimodal −2.4 +0 .0 +16 .7
+
+Kimi-VL-A3B +4 .2 +0 .0 +4 .2
+
+GPT-5.6 / 0-shot +8.7 +14 .6 +35 .4
+
+Positive values favor all-images. Unmarked rows are Base, and LoRA uses primary adapters. Each comparison covers 288 questions and 48 groups per joint metric. Appendix D gives paired intervals. 
+
+ages instead of the first raises its DIS from 8.33% to 35.42%. Figure 5 separates initial MSS correct-ness from post-addition answer retention, both of which contribute to DIS. Adaptation improves item accuracy without pre-serving addition-pair success. Across three seeds in Table 6a, Qwen reaches 36.00 ±1.40% accuracy, yet every seed solves 6/48 addition pairs versus 22/48 for its control. For both primary LoRA– Base pairs, DIS intervals remain below zero under exact-image, scene and union clustering. NTS in-tervals include zero under the latter two schemes in Appendix D.6. 
+
+6.4 Option-Order Robustness 
+
+Following MirrorQA (Liu et al., 2026), we apply four cyclic option rotations while preserving im-ages and questions. Vanilla scores rotation zero. Circular requires four correct answers, whereas Consistency requires four valid answers with iden-tical decoded meanings, correct or incorrect. Table 6b distinguishes stability from correctness. GPT leads Circular at 18.75% , whereas Qwen LoRA is more consistent but reaches 16.20 ±0.53% 
+
+Circular accuracy. InternVL’s higher Vanilla accu-racy after adaptation accompanies lower Circular 6Table 6: Ordinary and Circular evaluation (%) on 288 questions. Open-weight controls are matched within panels. LoRA gives three-seed mean ± sample standard deviation. GPT is zero-shot. 
+
+(a) Ordinary all-images evaluation 
+
+Setting Acc. GEM NTS DIS 
+
+InternVL3-8B 
+
+Base 30.21 2.08 8.33 20.83 LoRA 32 .41 ±1.31 0 .69 ±1.20 9.72 ±1.20 12 .50 ±2.08 
+
+Qwen2.5-VL-7B 
+
+Base 29.17 0.00 2.08 45.83 LoRA 36 .00 ±1.40 0 .00 ±0.00 10 .42 ±3.61 12 .50 ±0.00 
+
+GPT-5.6 
+
+0-shot 40.62 4.17 14.58 35.42 
+
+(b) Four option rotations 
+
+Setting Vanilla Circular Consistency 
+
+InternVL3-8B 
+
+Base 30.21 7.64 23.61 LoRA 32 .75 ±1.31 6.02 ±1.12 17 .59 ±1.57 
+
+Qwen2.5-VL-7B 
+
+Base (S) 14.93 2.08 5.90 LoRA 35 .19 ±1.12 16.20 ±0.53 32 .64 ±1.25 
+
+GPT-5.6 
+
+0-shot 45.49 18.75 27.08 GEM is FQ1-GEM. Joint scores use 48 groups per family. Vanilla uses within-run predictions. Appendix A gives the source of the summary marked S and all per-seed metrics. (a) Repeated frame answers                             
+
+> QController relative to bottle?
+> Camera / mirror forward. Scene backward.
+> I1 anchor I2 I3
+> Frame Gold Pred.
+> I1 camera Front-left Front-left Mirror facing Front-right Front-left
+> Bottle–wall Back-right Front-left
+> (b) Commitment after deletion
+> QOven relative to chair?
+> Forward along original I1 camera heading.
+> I1 − deleted I2 I3 I4
+> Input views Gold Pred.
+> I1–I4 (MSS) Right Right I2–I4 (−I1) Insufficient Back
+> (c) Answer drift after addition
+> QController relative to bottle?
+> Forward along I2 camera heading.
+> I1 I2 anchor
+> I3 I4 + added
+> Input views Gold Pred.
+> I1–I3 (MSS) Front-left Front-left I1–I4 (+I4) Front-left Back-left
+
+Figure 4: Selected GPT three-shot errors with released gold labels. I1–I4 mark original positions for display. Inputs use unlabeled images in their current order. Deletion in (b) removes the original camera anchor. 
+
+accuracy and consistency. 
+
+Table 7: GPT paired runs (%, n = 288 ). Nearly half of consistent pairs share a wrong answer. Metric Repeat R1 R2 R3
+
+At least one correct 62.15 55.90 57.29 59.03 Both correct 28.47 31.25 30.56 28.12 Consistency 53.47 59.38 54.86 51.39 Consistently wrong 25.00 28.12 24.31 23.26 
+
+Columns pair R0 with a same-order repeat or rotation. Consistency measures agreement in answer meaning. 
+
+Responses also vary at fixed option order. A re-peated GPT run reaches 45.14% accuracy versus 45.49% for rotation zero, but changes 46.53% of answers. Two-run joint correctness is 28.47% at fixed order and 28.12–31.25% across rotations in Table 7. Circular scores therefore also reflect execu-tion variability. Appendix A quantifies uncertainty in these paired comparisons. 
+
+7 Stratified Results and Failure Analysis 
+
+Answer changes need not be correct. Figure 4 illustrates repeated frame answers, spatial commit-ment after anchor deletion and answer drift after addition. Each FQ1 triplet yields three pairs with different gold directions. Qwen3-VL-8B repeats a direction on 115/144 pairs. GPT three-shot changes 94 pairs but answers both correctly on only 27, distinguishing unchanged answers from incorrect switches. From two to three shots, GPT’s correct pairs rise from 26 to 27 but complete triplets fall from five to three. Pairwise gains need not con-centrate in complete groups. Pairwise accuracy can miss failure on the third frame. Appendix F.2 70 20 40 60             
+
+> Initially correct MSS groups (%)
+> 025 50 75 100
+> Conditional success (%)
+> (a) Correct after deletion
+> Base 1/22 LoRA 6/8 Base 4/15 LoRA 4/11
+> 020 40 60
+> Initially correct MSS groups (%)
+> 025 50 75 100
+> Conditional success (%)  4/4 12/12
+> (b) Correct after addition
+> Base 21/22 LoRA 6/8 Base 10/15 LoRA 4/11 Qwen2.5-VL Base →LoRA InternVL3 Base →LoRA Other open-weight Gateway
+
+Figure 5: Initial and conditional success across 20 primary configurations. Horizontal rates use all 48 FQ2 groups. Vertical rates use each configuration’s MSS-correct subset, with counts on highlighted points. Arrows link Base and LoRA, each with its own conditioning subset. Table 8: Insufficiency counts out of 48. 
+
+Model / setting MSS Del. Add. 
+
+Qwen2.5-VL-7B 2 3 2InternVL3-8B 13 16 12 Qwen3-VL-8B 7 23 7LLaVA-OneVision-7B 0 1 0MiniCPM-V 4.5 0 6 0Mistral Small 3.2 24B 29 24 21 Qwen2.5-VL-32B 9 18 8InternVL3.5-14B 11 16 9Phi-4-Multimodal 2 2 2Kimi-VL-A3B 1 3 2Qwen2.5-VL-7B LoRA 30 38 24 InternVL3-8B LoRA 22 30 21 GPT-5.6 / 0-shot 1 15 21-shot 1 14 22-shot 2 19 13-shot 2 18 1Claude Fable 5.1 / 0-shot 1 10 01-shot 2 5 22-shot 3 15 33-shot 2 15 3
+
+Unmarked open: Base. Del./Add.: deletion/addition. Counts /48 retain invalids: LLaVA addition 10; others 0. 
+
+compares all paired outcomes. 
+
+Insufficiency responses extend beyond deletion. 
+
+Both primary LoRA checkpoints increase insuffi-ciency responses across all conditions in Table 8. Qwen’s insufficiency recall rises from 6.25% to 79.17%, but precision changes from 42.86% to 41.30%. The extra deletion hits therefore come with more false insufficiency responses on answer-able MSS and addition inputs. Joint scoring ex-poses this trade-off by requiring success on both sides of the intervention. Mistral shows the oppo-site imbalance, selecting insufficiency more often on MSS than on deletion. Appendix G.4 gives the full count breakdown. 
+
+MSS coverage separates intervention outcomes. 
+
+Shared MSS-correct groups account for four of Qwen’s five net NTS gains. InternVL gains one on these groups, offset by changed MSS coverage. All InternVL joint deletion successes involve removed anchors in Table 3. Qwen loses fourteen DIS successes through changed MSS coverage and one among shared groups. InternVL loses three through each route. Qwen’s decline thus occurs mainly before addi-tion, whereas InternVL also fails to retain ini-tially correct answers. Similar DIS declines thus have different sources. Appendix D.3 provides the paired decomposition. 
+
+Prompt effects vary across executions. On twelve triplets excluding removed anchors, two randomized blocks yield 51.39% agreement with released labels under original wording and 52.78% under stable IDs. Yet NTS falls from 8/24 to 4/24 group–block observations, and 14–15/36 answers change at fixed wording. The small item-level gain thus does not carry over to matched deletion answers. Appendix E compares each block and condition. 88 Conclusion 
+
+FrameEvidence tests spatial reasoning under matched changes in reference frames and visual evidence. Prompting and adaptation improve item accuracy without consistent gains in joint success, whereas images most often benefit MSS–addition pairs. Paired analyses identify incorrect frame switches, changes in initial MSS coverage and execution instability. Together, these diagnostics distinguish isolated correct answers from success across matched changes. 
+
+Limitations 
+
+FrameEvidence evaluates static, Chinese, four-option spatial reasoning on 96 held-out groups. Scenes can overlap across the image-separated splits, limiting conclusions about unseen-scene generalization. Metadata cues and image-ordinal changes can influence responses alongside visual evidence. Production review does not constitute independent response-level validation of labels or every-member MSS necessity. NTS therefore as-sesses agreement with the released deletion labels. Model comparisons reflect the tested decoding settings, one demonstration pool and provider-reported gateway identities. The three-seed devia-tions describe training variation. Circular uses its own within-experiment controls. The human refer-ence is one participant’s sampled summary without individual answers or a documented sample size. 
+
+Ethical Considerations 
+
+The captured and rendered images were supplied by an external data provider with permission for pub-lic release. Language-model assistance supported editing, scripting and simulated review. The au-thors remain responsible for checking the evidence, citations and privacy of the released materials. 
+
+References 
+
+S. Divakar Bhat and Toshihiko Yamasaki. 2026. Con-sistent yet wrong: Evidence insensitivity in spa-tial vision-language models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pat-tern Recognition Workshops , pages 7463–7472. Boyuan Chen, Zhuo Xu, Sean Kirmani, Brian Ichter, Dorsa Sadigh, Leonidas Guibas, and Fei Xia. 2024. SpatialVLM: Endowing vision-language models with spatial reasoning capabilities. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pat-tern Recognition , pages 14455–14465. An-Chieh Cheng, Hongxu Yin, Yang Fu, Qiushan Guo, Ruihan Yang, Jan Kautz, Xiaolong Wang, and Sifei Liu. 2024. SpatialRGPT: Grounded spatial reasoning in vision-language models. In Advances in Neural Information Processing Systems , volume 37, pages 135062–135093. Anurag Das, Adrian Bulat, Alberto Baldrati, Ioan-nis Maniadis Metaxas, Bernt Schiele, Georgios Tz-imiropoulos, and Brais Martinez. 2026. More images, more problems? a controlled analysis of VLM failure modes. In Findings of the Association for Compu-tational Linguistics: ACL 2026 , pages 7423–7442. Association for Computational Linguistics. Jay DeYoung, Sarthak Jain, Nazneen Fatema Rajani, Eric Lehman, Caiming Xiong, Richard Socher, and Byron C. Wallace. 2020. ERASER: A benchmark to evaluate rationalized NLP models. In Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics , pages 4443–4458. Asso-ciation for Computational Linguistics. Xingyu Fu, Yushi Hu, Bangzheng Li, Yu Feng, Haoyu Wang, Xudong Lin, Dan Roth, Noah A. Smith, Wei-Chiu Ma, and Ranjay Krishna. 2024. BLINK: Multi-modal large language models can see but not perceive. In European Conference on Computer Vision .Tianchen Guo, Chen Liu, Ling Chen, and Xin Yu. 2026. SSMNBench: Diagnosing image-based cross-view human-object understanding via single-view suffi-ciency and multi-view necessity. arXiv preprint arXiv:2606.25634 .Suchae Jeong, Jaehwi Song, Haeone Lee, Hanna Kim, Jian Kim, Dongjun Lee, Dong Kyu Shin, Changyeon Kim, Dongyoon Hahm, Woogyeol Jin, Juheon Choi, and Kimin Lee. 2026. Learning multi-view spatial reasoning from cross-view relations. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 2570–2581. Mehran Kazemi, Nishanth Dikkala, Ankit Anand, Petar Devic, Ishita Dasgupta, Fangyu Liu, Bahare Fatemi, Pranjal Awasthi, Dee Guo, Sreenivas Gollapudi, and Ahmed Qureshi. 2024. ReMI: A dataset for reason-ing with multiple images. In Advances in Neural Information Processing Systems , volume 37. Yoonji Kim, Jieun Kim, Yujin Jeong, and Sung-Bae Cho. 2026. Diagnosing spatial consistency across perspectives and viewpoints in large vision-language models. In Proceedings of the 64th Annual Meet-ing of the Association for Computational Linguistics (Volume 1: Long Papers) , pages 32803–32827. Dingming Li, Hongxing Li, Zixuan Wang, Yuchen Yan, Hang Zhang, Siqi Chen, Guiyang Hou, Sheng-pei Jiang, Wenqi Zhang, Yongliang Shen, Weiming Lu, and Yueting Zhuang. 2026. ViewSpatial-Bench: Evaluating multi-perspective spatial localization in vision-language models. In Computer Vision – ECCV 2026 , volume 17062 of Lecture Notes in Computer Science , pages 95–111. Springer. 
+
+9Fangyu Liu, Guy Emerson, and Nigel Collier. 2023. Visual spatial reasoning. Transactions of the Associ-ation for Computational Linguistics , 11:635–651. Jingping Liu, Xingchen Peng, Yan Zhou, Ziyan Liu, Jie Zhai, Ronghao Chen, Huacan Wang, and Xiaofeng Jia. 2026. MirrorQA: Benchmarking multimodal LLMs on mirror-orientation reasoning. In Proceed-ings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) ,pages 40464–40476. Wufei Ma, Haoyu Chen, Guofeng Zhang, Yu-Cheng Chou, Jieneng Chen, Celso de Melo, and Alan Yuille. 2025. 3DSRBench: A comprehensive 3d spatial rea-soning benchmark. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 6924–6934. Fanqing Meng, Jin Wang, Chuanhao Li, Quanfeng Lu, Hao Tian, Tianshuo Yang, Jiaqi Liao, Xizhou Zhu, Jifeng Dai, Yu Qiao, Ping Luo, Kaipeng Zhang, and Wenqi Shao. 2025. MMIU: Multimodal multi-image understanding for evaluating large vision-language models. In International Conference on Learning Representations .Nicholas Moratelli, Christopher Davis, Leonardo F. R. Ribeiro, Bill Byrne, and Gonzalo Iglesias. 2026. Benchmarking deflection and hallucination in large vision-language models. In Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , pages 28348– 28370. Association for Computational Linguistics. Tanawan Premsri and Parisa Kordjamshidi. 2025. FoR-EST: Frame of reference evaluation in spatial reason-ing tasks. In Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing ,pages 34977–35003. Association for Computational Linguistics. Tristan Thrush, Ryan Jiang, Max Bartolo, Amanpreet Singh, Adina Williams, Douwe Kiela, and Candace Ross. 2022. Winoground: Probing vision and lan-guage models for visio-linguistic compositionality. In Proceedings of the IEEE/CVF Conference on Com-puter Vision and Pattern Recognition , pages 5238– 5248. Fei Wang, Xingyu Fu, James Y. Huang, Zekun Li, Qin Liu, Xiaogeng Liu, Mingyu Derek Ma, Nan Xu, Wenxuan Zhou, Kai Zhang, Tianyi Yan, Wenjie Mo, Hsiang-Hui Liu, Pan Lu, Chunyuan Li, Chaowei Xiao, Kai-Wei Chang, Dan Roth, Sheng Zhang, and 2 others. 2025. MuirBench: A comprehensive bench-mark for robust multi-image understanding. In Inter-national Conference on Learning Representations .Wei Wang, Yuqian Yuan, Tianwei Lin, Wenqiao Zhang, Siliang Tang, Jun Xiao, and Yueting Zhuang. 2026a. CrossView Suite: Harnessing cross-view spatial intel-ligence of mllms with dataset, model and benchmark. 
+
+arXiv preprint arXiv:2605.18621 .Yimu Wang, Yee Man Choi, Barry Zhang, Mozh-gan Nasr Azadani, Sean Sedwards, and Krzysztof Czarnecki. 2026b. Where does the answer come from? benchmarking view-level visual evidence iden-tification in multi-view mllms for autonomous driv-ing. arXiv preprint arXiv:2606.09644 .Haotian Xu, Yue Hu, Zhengqiu Zhu, Chen Gao, Ziyou Wang, Junreng Rao, Wenhao Lu, Weishi Li, Quanjun Yin, and Yong Li. 2026. CityCube: Benchmark-ing cross-view spatial reasoning on vision-language models in urban environments. In Proceedings of the 64th Annual Meeting of the Association for Compu-tational Linguistics (Volume 1: Long Papers) , pages 9190–9215. Jihan Yang, Shusheng Yang, Anjali W. Gupta, Rilyn Han, Li Fei-Fei, and Saining Xie. 2025. Thinking in space: How multimodal large language models see, remember, and recall spaces. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 10632–10643. Sihan Yang, Runsen Xu, Yiman Xie, Sizhe Yang, Mo Li, Jingli Lin, Chenming Zhu, Xiaochen Chen, Haodong Duan, Xiangyu Yue, Dahua Lin, Tai Wang, and Jiang-miao Pang. 2026. MMSI-Bench: A benchmark for multi-image spatial intelligence. In International Conference on Learning Representations .Chun-Hsiao Yeh, Chenyu Wang, Shengbang Tong, Ta-Ying Cheng, Ruoyu Wang, Tianzhe Chu, Yuexiang Zhai, Yubei Chen, Shenghua Gao, and Yi Ma. 2026. Seeing from another perspective: Evaluating multi-view understanding in MLLMs. In Proceedings of the AAAI Conference on Artificial Intelligence , vol-ume 40, pages 12000–12008. Leyuan Yu, Xiao Tang, Minghao Liu, Xinyuan Li, Xi-aokai Bai, Sheng Zhou, Qunshu Lin, Weihao Xuan, and Naoto Yokoya. 2026. MindEdit-Bench: Bench-marking object-level counterfactual spatial reason-ing in vlms from in-the-wild photos. arXiv preprint arXiv:2607.00491 .Hantao Zhang, Jinru Sui, Ed Li, Dirk Bergemann, and Zhuoran Yang. 2026. MultiView-Bench: A diagnos-tic benchmark for world-centric multi-view integra-tion in VLMs. arXiv preprint arXiv:2607.08970 .Zheyuan Zhang, Fengyuan Hu, Jayjun Lee, Freda Shi, Parisa Kordjamshidi, Joyce Chai, and Ziqiao Ma. 2025. Do vision-language models represent space and how? evaluating spatial frame of reference under ambiguities. In International Conference on Learn-ing Representations .Bingchen Zhao, Yongshuo Zong, Letian Zhang, and Timothy M. Hospedales. 2024. Benchmarking multi-image understanding in vision and language models: Perception, knowledge, reasoning, and multi-hop rea-soning. arXiv preprint arXiv:2406.12742 .
+
+10 Table 9: Model repositories and API aliases used in evaluation. Repositories identify model families. GPT and Claude names are provider-reported gateway aliases.              
+
+> Displayed name Configured repository or gateway identifier Qwen2.5-VL-7B Qwen/Qwen2.5-VL-7B-Instruct
+> InternVL3-8B OpenGVLab/InternVL3-8B-hf
+> Qwen3-VL-8B Qwen/Qwen3-VL-8B-Instruct
+> LLaVA-OneVision-7B llava-hf/llava-onevision-qwen2-7b-ov-hf
+> MiniCPM-V 4.5 openbmb/MiniCPM-V-4_5
+> Mistral Small 3.2 24B mistralai/Mistral-Small-3.2-24B-Instruct-2506
+> Qwen2.5-VL-32B Qwen/Qwen2.5-VL-32B-Instruct
+> InternVL3.5-14B OpenGVLab/InternVL3_5-14B-HF
+> Phi-4-Multimodal microsoft/Phi-4-multimodal-instruct
+> Kimi-VL-A3B moonshotai/Kimi-VL-A3B-Instruct
+> GPT-5.6 gpt-5.6-sol
+> Claude Fable 5.1 claude-fable-5-1
+
+A Implementation and Scoring Details 
+
+Evaluation inputs. Table 9 lists the evaluated checkpoints and aliases. Each public item contains ordered image references and a Chinese prompt asking for exactly one of A, B, C or D. Evaluation identifiers link predictions to a private mapping with the source sample and group, input mode, gold letter and option meanings. Group identifiers and gold metadata are not shown to models. Metrics are computed from the frozen predictions and their matching input records. All model–mode compar-isons use the full question and group counts. 
+
+Offline scoring companion. A self-contained Python standard-library scorer reproduces the 20 primary configurations in Table 4, eight ordinary multi-seed configurations in Table 11, and seven complete Circular rows in Table 12. It uses san-itized per-item records without model calls or image access, preserving all item and group de-nominators. Primary, multi-seed and rotation runs remain separate. It also reproduces GPT’s 1,152 Circular responses and 288 same-order re-peat responses, including all 16 entries in Table 7. Running python run_reproduction.py from its 
+
+offline_reproduction directory writes the re-computed tables and a verification report. The author-confirmed Qwen Base summary is reported separately from these recomputed results. 
+
+Production review and release correspondence. 
+
+The production database contains 323 PASS and three REWORK actions. Selecting the latest PASS per group covers all 320 groups and 960 questions. Distinct annotation and review account assign-ments are recorded for every group, with semantic answers visible in the review interface. These are production approvals rather than independently col-lected answer sheets. Automatic comments and checklists do not verify reviewer independence or the answerability of every single-view deletion. The task records exactly match the released anno-tations. Compared with the latest PASS snapshots, the release preserves all 960 semantic gold answers and option-meaning sets, and all 1,120 reviewed image files match. Raw fields nevertheless differ in 917 questions. Of 857 prompt changes, 856 re-place a recurring Chinese-character typo and one revises a training item’s anchor ( fce_test_00581 ). Option order changes in 540 items and answer let-ters in 416, without changing semantic gold. Two anchor fields also change. Author adjudication con-firms the scored inputs for the four flagged records. 
+
+Input and assembly consistency. A separate audit compares literal questions, ordered source-image bytes and options across all 960 items. It finds 959 distinct input signatures. The only re-peated signature belongs to two training items with the same gold answer. No signature crosses splits or conflicts in its gold letter. All 288 test inputs are distinct. Ignoring option placement alone also yields no conflicting selected option strings. All 320 triplets pass the encoded assembly rules. FQ1 preserves ordered images, options and entity fields across its three frame variants and has at least two distinct gold meanings. FQ2 preserves ques-tion and option strings, removes or adds exactly one image, and retains the order of the remain-ing images. No item repeats identical image con-tent. Assets match production records. Geometric checks lack camera poses and object coordinates. 
+
+Few-shot construction. The fixed pool uses training groups group_00152 for FQ1 and 
+
+group_00388 for FQ2. FQ1 demonstrations fol-11 low camera, object and scene order. FQ2 demon-strations follow MSS, deletion and addition order. One-, two- and three-shot conditions take the corre-sponding prefixes. The manifest verifies group and exact-image separation from test, although phys-ical scenes may overlap. All shot counts use this fixed demonstration pool. 
+
+Decoding and invalid answers. The common output parser extracts an allowed answer letter and records the raw response, parsing status and API failure separately. An invalid response is never con-verted to a guessed answer. In class-wise recall and accuracy it contributes a false negative for its gold class. Precision uses the predicted A–D counts, with zero for undefined per-class precision. Macro-F1 is the mean of the four classwise F1 scores. A separate full-response parser recovers all 5,750 valid answers among 5,760 main-table records. The ten empty API failures remain in-correct. Reconstructed answers and point estimates match the frozen results. 
+
+Random and human reference rows. Uniform random selects one of A–D independently for each question. The reference row gives exact finite-test expectations. Accuracy and macro-recall are 25%, while macro-F1 averages the expected classwise ratios under the actual supports 75, 70, 69 and 74, yielding 24.93%. The three-answer and two-answer joint expectations are respectively (1 /4) 3
+
+and (1 /4) 2. Separate binomial calculations and small-test enumeration verify the scorer. The human reference is an author-reported P/R/F1/Acc. summary from one participant an-swering sampled groups. The retained record con-tains aggregate scores without the sample size or item-level responses. We report these sample-level values and leave joint scores unreported. 
+
+Held-out metadata controls. The post-hoc con-trols in Table 10 fix three categorical majority rules before computing their held-out scores. They fit only on the 288 FQ2 training questions in 96 groups. Neither the 48 development questions nor the 144 test questions select rules or features. Ties use alphabetic letter order, and unseen feature val-ues fall back to the training-global majority. No held-out feature is unseen. The fixed features are image count alone and its pairing with the insuffi-ciency option’s letter. The count-plus-schema rule answers 54/144 test questions correctly but solves only 3/48 MSS/deletion pairs and 1/48 MSS/addition pairs. Conversely, always predicting the training-majority letter solves 11/48 addition pairs because the spa-tial answer letter is shared within each pair. Joint correctness therefore reveals differences between these rules beyond item accuracy, while the image-free control shows that shared answer preferences can also yield joint success. The reproduction ma-terials include fitted rules and predictions. 
+
+Adaptation configuration. The LoRA check-points in Table 4 belong to the primary comparison. The ordinary multi-seed experiment in Table 11 evaluates two matched base controls and six inde-pendently trained adapters. Table 6 and Table 12 use those adapted checkpoints in separate rotation runs. All three experiments use the same 288 test questions but separate predictions. Vanilla uses Circular’s own rotation-zero predictions. Training uses LoRA rank 32, alpha 16 and zero dropout, with the vision tower and multimodal projector frozen. It specifies a 4,096-token cut-off, learning rate 2 × 10 −5, six epochs, cosine schedule, warmup ratio 0.05, and batch size one per device with eight accumulation steps on two devices. This gives effective batch size 16. The training export contains 576 train and 96 devel-opment items and excludes test responses. Seeds 20260722–20260724 are used in the three-seed ex-periment. All six runs complete 216 optimization steps over six epochs. Development loss selects step 180 for Qwen seeds 20260722 and 20260723, and step 216 for the remaining runs. Training and development exports contain no test sample identi-fiers. The companion reproduces scores from saved predictions and records the training configuration. Circular records contain four option rotations per source item. Their prompts and image order match the ordinary inputs at rotation zero. Separate ex-ecutions nevertheless disagree on some items, so Vanilla uses the rotation run’s own predictions. 
+
+Circular metrics. Let air be the prediction for source item i at rotation r, mapped back to the original option identity, and let yi be its gold iden-tity. For each item, let Ci = Q3 
+
+> r=0
+
+⊮[air = yi]
+
+indicate correctness across all four rotations. Let 
+
+Si = ⊮[ai0 = ai1 = ai2 = ai3] indicate consis-tency. With N = 288 , we compute 
+
+Circular = 
+
+P 
+
+> i
+
+Ci
+
+N , Cons . =
+
+P 
+
+> i
+
+Si
+
+N . (2) 12 Table 10: Train-fitted FQ2 metadata controls (%). Fixed categorical majority rules use 288 training questions. Dev and test contain 48 and 144 questions, respectively. Joint test metrics use all 48 FQ2 groups. No pixels, question text or condition labels are used.                     
+
+> Input features Train Acc. Dev Acc. Test Acc. Test NTS Test DIS Majority letter 26.39 20.83 23.61 0.00 22.92 Image count 29.51 12.50 21.53 0.00 4.17 Count + insufficiency letter 47.92 43.75 37.50 6.25 2.08
+
+Table 11: Ordinary all-images multi-seed results (%). GEM denotes FQ1-GEM. Classification uses 288 questions and joint criteria use 48 groups per family. Means and sample deviations use three LoRA seeds. These ordinary runs are separate from Circular rotation zero.                                                                                 
+
+> Family Run PRF1 Acc. GEM NTS DIS InternVL3-8B Base 30.34 30.54 29.36 30.21 2.08 8.33 20.83 20260722 34.32 33.20 31.50 32.99 0.00 10.42 14.58 20260723 32.09 31.19 29.11 30.90 0.00 8.33 10.42 20260724 33.85 33.64 31.85 33.33 2.08 10.42 12.50 Mean 33 .42 ±1.17 32 .68 ±1.31 30 .82 ±1.49 32 .41 ±1.31 0.69 ±1.20 9.72 ±1.20 12 .50 ±2.08
+> Qwen2.5-VL-7B Base 30.87 29.77 26.35 29.17 0.00 2.08 45.83 20260722 35.74 35.88 35.00 35.76 0.00 8.33 12.50 20260723 35.10 34.85 33.99 34.72 0.00 8.33 12.50 20260724 37.53 37.57 37.10 37.50 0.00 14.58 12.50 Mean 36 .12 ±1.26 36 .10 ±1.37 35 .36 ±1.59 36 .00 ±1.40 0.00 ±0.00 10 .42 ±3.61 12 .50 ±0.00
+
+All four predictions must be valid for consistency to receive credit. The reference implementation additionally reports each rotation and the mean over rotations. Table 12 retains the per-seed scores. Family means and sample deviations are calculated from unrounded item counts. All six adapted check-points and the InternVL Base control have com-plete retained predictions. Qwen Base is reported from the final run summary rather than recomputed from the retained prediction copy. The GPT supple-ment adds 1,152 valid zero-shot responses over the same 288 source questions. Its four rotations yield 131, 120, 122 and 120 correct answers. There are 54 fully correct sets and 78 semantically consistent sets. Its Vanilla count is therefore 131/288, versus 117/288 in the primary all-images run. Qwen Base’s rounded summary also matches scores from the incomplete copy when its 446 failed calls count as incorrect. That copy cannot independently confirm completion. We retain the author-confirmed summary as a reference in Ta-bles 6 and 12. It is separate from the independently recomputed paired estimates. 
+
+GPT cross-run stability. Pairing ordinary all-images and Circular rotation zero on all 288 source items gives 79 correct in both executions, 38 cor-rect only in ordinary, 52 correct only in rotation zero, and 119 incorrect in both. Their answer letters differ on 136 items (47.22%). Prepared prompts, option order, ordered image references and retained decoding configurations match. Archived wire re-quests and backend revisions are unavailable, so this is a descriptive cross-run comparison, not an isolated decoding experiment. We resample whole clusters with replacement 20,000 times, using seed 20261010 and item-weighted ratios. Across the 13 union components defined in Appendix D.6, the 95% percentile interval for disagreement is [41.33, 56.61]%. The accuracy difference is 4.86 points with interval [ −3.67 , 16.67]. These intervals quan-tify sensitivity to item composition under this clus-tering, not repeated API execution. 
+
+Same-order control. We repeat the same 288 zero-shot all-images queries with identical GPT request settings. All responses are valid. The repeat yields 130 correct answers, with P/R/F1/Acc of 45.66/45.31/45.06/45.14%. Its FQ1-GEM, NTS and DIS are 4.17%, 20.83% and 31.25%. Paired with the primary run, 77 answers are correct in both, 40 only in the primary, 53 only in the repeat, and 118 in neither. Predictions change on 128/288 items. Pairing with rotation zero gives counts of 82, 49, 48 and 109, with 134 changed answers. Table 7 compares two-answer sets sharing the same rotation-zero output. The same-order pair is jointly correct on 82 items and semantically con-sistent on 154. Pairing rotation zero with rotations one, two and three gives joint counts of 90, 88 and 13 Table 12: Per-seed open-weight and zero-shot GPT Circular scores (%) for 288 items and four cyclic rotations. Drop uses percentage points. Qwen Base is summary-reported. Other rows use 1,152 retained valid responses each.                                                       
+
+> Family Seed / control Vanilla Mean rot. Circular Consistency Drop InternVL3-8B Base 30.21 28.04 7.64 23.61 22.57 20260722 33.33 31.42 7.29 19.10 26.04 20260723 33.68 31.08 5.56 17.71 28.12 20260724 31.25 30.30 5.21 15.97 26.04 Qwen2.5-VL-7B Base 14.93 18.75 2.08 5.90 12.85 20260722 34.38 35.76 16.67 33.68 17.71 20260723 34.72 35.42 15.62 32.99 19.10 20260724 36.46 36.81 16.32 31.25 20.14 GPT-5.6 0-shot 45.49 42.80 18.75 27.08 26.74
+
+Table 13: Paired GPT same-order control with 95% bootstrap intervals. Rates are percentages and differences are percentage points. Rotation contrasts subtract the corresponding R0–Rj pair from the R0–repeat pair.                                                    
+
+> Quantity Estimate 96 triplets 13 union components Repeat accuracy 45.14 [39.58, 50.69] [39.09, 50.56] Primary–repeat disagreement 44.44 [38.54, 50.69] [37.92, 54.49]
+> R0–repeat disagreement 46.53 [40.28, 52.78] [43.18, 51.96] Repeat minus primary accuracy 4.51 [−1.74 , 10.76] [−1.99 , 14.29] Repeat minus R0accuracy −0.35 [−6.94 , 6.25] [−12 .28 , 6.98] Same-order pair both correct 28.47 [23.26, 33.68] [23.50, 33.90] Same-order pair consistency 53.47 [47.22, 59.72] [48.04, 56.82] Both correct, difference from R0–R1−2.78 [−7.29 , 1.39] [−10 .12 , 1.55] Both correct, difference from R0–R2−2.08 [−6.60 , 2.43] [−8.84 , 3.03] Both correct, difference from R0–R30.35 [−4.17 , 4.86] [−7.21 , 5.51] Consistency, difference from R0–R1−5.90 [−13 .19 , 1.04] [−15 .33 ,−0.65 ]Consistency, difference from R0–R2−1.39 [−8.33 , 5.56] [−9.60 , 7.34] Consistency, difference from R0–R32.08 [−4.51 , 8.33] [−7.04 , 7.68]
+
+81 and consistency counts of 171, 158 and 148. Holding set size fixed removes the two-versus-four conjunction difference when assessing stability. We resample paired observations in 20,000 whole-cluster bootstrap draws with seed 20261010, using both 96 triplets and 13 image/scene union components. Table 13 reports estimates with both 95% intervals. Every joint-correctness con-trast with a rotation pair includes zero under both schemes. The consistency contrast with rotation one is below zero under union clustering but in-cludes zero under triplet clustering. These intervals describe question-composition sensitivity. The re-peat and rotation runs were executed at different times, so temporal service changes and decoding variation remain combined. 
+
+B Release Composition 
+
+Figure 6 shows condition balance and source object-label frequencies, counted once per group. The Other category aggregates labels outside the ten most frequent types. 
+
+C Complete Input Controls 
+
+Table 14 includes twelve open-weight configura-tions and GPT zero-shot. Original gold labels re-main fixed even when an ablation removes informa-tion needed to infer them. GPT retains 288 valid responses per mode and uses the primary table’s all-images predictions. Its companion provides san-itized per-item inputs, predictions and exact counts. 
+
+D Stratified Results and Paired Contrasts 
+
+Tables 16, 17 and 18 break down all-images results by image count, relation and scene. Each stratum contains different instances, so the contrasts are descriptive. Table 19 uses FQ2 annotation tags, not independently validated frame categories. A lexi-cal audit finds camera-heading references in 30/48 MSS prompts with non-camera tags, covering 14 of 16 object-tagged and all 16 world-tagged groups. 
+
+D.1 Geometry-associated differences 
+
+Table 15 shows that axial relations favor DIS across most configurations, but NTS has no median gap. Granularity is associated more consistently with 14 0 80 160    
+
+> Questions
+> Camera Object anchor Scene anchor MSS Deletion Addition
+> 160 160 160 160 160 160
+> (a) Protocol conditions
+> 0200 400 600
+> Label occurrences
+> Chair Table Mirror Bed Sofa Clothes rack Potted plant Ball Guitar Suitcase Other 74 70 51 35 35 27 24 22 18 18 586
+> (b) Object vocabulary
+
+Figure 6: Release composition. Each of six conditions contains 160 questions. Object-label occurrences are counted once per matched group across 126 distinct labels. Other pools labels outside the top ten. Table 14: Visual-input ablations on 288 test questions (%). Questions, options and gold answers are held fixed across all-images, first-image and text-only modes. 
+
+Model All images First image Text only Acc. GEM NTS DIS Acc. GEM NTS DIS Acc. GEM NTS DIS Qwen2.5-VL-7B Base 28.82 0.00 2.08 43.75 29.17 0.00 2.08 37.50 31.94 0.00 0.00 0.00 Qwen2.5-VL-7B LoRA 35.42 0.00 12.50 12.50 31.25 0.00 0.00 0.00 32.29 2.08 0.00 0.00 InternVL3-8B Base 29.51 2.08 8.33 20.83 27.78 0.00 6.25 29.17 30.90 2.08 0.00 8.33 InternVL3-8B LoRA 32.64 0.00 8.33 8.33 27.78 0.00 4.17 10.42 30.21 0.00 0.00 0.00 Qwen3-VL-8B Base 34.03 0.00 14.58 39.58 28.82 0.00 8.33 10.42 29.51 0.00 0.00 6.25 LLaVA-OneVision-7B Base 29.17 0.00 0.00 37.50 31.60 0.00 0.00 50.00 29.17 0.00 0.00 43.75 MiniCPM-V 4.5 Base 32.99 0.00 4.17 47.92 31.94 0.00 8.33 43.75 29.17 0.00 0.00 33.33 Mistral Small 3.2 24B Base 25.69 0.00 2.08 8.33 29.51 0.00 6.25 31.25 29.51 0.00 0.00 0.00 Qwen2.5-VL-32B Base 33.33 0.00 6.25 35.42 26.74 0.00 8.33 16.67 30.90 0.00 0.00 0.00 InternVL3.5-14B Base 28.12 0.00 6.25 25.00 24.65 0.00 8.33 8.33 30.21 0.00 0.00 14.58 Phi-4-Multimodal Base 26.39 0.00 0.00 35.42 28.12 0.00 4.17 37.50 28.82 2.08 0.00 18.75 Kimi-VL-A3B Base 29.17 0.00 0.00 39.58 30.21 2.08 6.25 31.25 25.00 0.00 0.00 35.42 GPT-5.6 / 0-shot 40.62 4.17 14.58 35.42 29.51 0.00 12.50 8.33 31.94 0.00 0.00 0.00 
+
+Table 15: Axial–quadrant gaps over 20 configurations (24 groups per stratum). Signs count positive, tied and negative gaps. Median ∆ is in percentage points. 
+
+Metric > = < Median ∆
+
+FQ1-GEM 2 13 5 0.0 NTS 5 8 7 0.0 DIS 17 3 0 +20.8 
+
+addition than deletion-label success. Shared scene-dependent groups preclude treating configurations as independent replications. 
+
+D.2 Unconditional response distributions 
+
+Table 8 counts insufficient-information responses in every condition, with all 48 groups retained. Option meanings, not letters, define this category. All 576 FQ2 predictions from the four primary Base/LoRA checkpoints are valid. For Qwen, the Base-to-LoRA spatial-to-insufficiency switches number 28, 35 and 22 for MSS, deletion and ad-dition, with no reverse switches. InternVL has 10, 14 and nine such switches, with one reverse switch in MSS and none elsewhere. The paired answers reveal a broader shift toward insufficiency across all three conditions. 
+
+Conditional failures. Table 20 conditions dele-tion and addition outcomes on an initially correct MSS answer, so denominators differ by model. Un-conditional NTS and DIS always use all 48 FQ2 groups. Together, these views separate errors on the initial question from failures after the intervention. 
+
+D.3 Common initially correct groups 
+
+To separate response changes from changes in conditional-set membership, we partition the 48 FQ2 groups by the primary Base and LoRA check-points’ MSS correctness. The both-correct, Base-only, LoRA-only and neither-correct counts are 4/18/4/22 for Qwen and 9/6/2/31 for InternVL. Ta-ble 21 compares intervention answers on the com-mon groups and reconstructs each full joint differ-ence. On those groups, deletion has four gains and 15 Table 16: Evidence-set size strata (%). Each column gives its group denominator n.
+
+Model FQ1-GEM NTS DIS 2
+
+n = 15 3
+
+n = 16 4
+
+n = 17 2
+
+n = 17 3
+
+n = 16 4
+
+n = 15 2
+
+n = 17 3
+
+n = 16 4
+
+n = 15 
+
+Claude Fable 5.1 (0-shot) 0.0 0.0 0.0 11.8 12.5 0.0 23.5 56.2 46.7 Claude Fable 5.1 (1-shot) 6.7 12.5 0.0 0.0 6.2 0.0 29.4 37.5 46.7 Claude Fable 5.1 (2-shot) 0.0 12.5 5.9 17.6 18.8 0.0 35.3 37.5 40.0 Claude Fable 5.1 (3-shot) 0.0 6.2 0.0 11.8 12.5 0.0 29.4 56.2 33.3 GPT-5.6 (0-shot) 6.7 0.0 5.9 17.6 25.0 0.0 35.3 25.0 46.7 GPT-5.6 (1-shot) 0.0 0.0 17.6 11.8 31.2 6.7 41.2 43.8 40.0 GPT-5.6 (2-shot) 0.0 12.5 17.6 23.5 43.8 0.0 41.2 56.2 33.3 GPT-5.6 (3-shot) 6.7 12.5 0.0 29.4 25.0 6.7 41.2 50.0 53.3 InternVL3-8B Base 6.7 0.0 0.0 5.9 6.2 13.3 17.6 25.0 20.0 InternVL3-8B LoRA 0.0 0.0 0.0 11.8 6.2 6.7 11.8 12.5 0.0 InternVL3.5-14B 0.0 0.0 0.0 5.9 6.2 6.7 17.6 18.8 40.0 Kimi-VL-A3B 0.0 0.0 0.0 0.0 0.0 0.0 41.2 43.8 33.3 LLaVA-OneVision-7B 0.0 0.0 0.0 0.0 0.0 0.0 41.2 43.8 26.7 MiniCPM-V 4.5 0.0 0.0 0.0 5.9 6.2 0.0 41.2 37.5 66.7 Mistral Small 3.2 24B 0.0 0.0 0.0 5.9 0.0 0.0 11.8 0.0 13.3 Phi-4-Multimodal 0.0 0.0 0.0 0.0 0.0 0.0 29.4 31.2 46.7 Qwen2.5-VL-32B 0.0 0.0 0.0 5.9 12.5 0.0 35.3 31.2 40.0 Qwen2.5-VL-7B Base 0.0 0.0 0.0 5.9 0.0 0.0 47.1 56.2 26.7 Qwen2.5-VL-7B LoRA 0.0 0.0 0.0 0.0 25.0 13.3 0.0 25.0 13.3 Qwen3-VL-8B 0.0 0.0 0.0 23.5 12.5 6.7 29.4 37.5 53.3 All configurations use the all-images test, with strata comparing different held-out groups. 
+
+Table 17: Axial and quadrant relation strata (%). Each column gives its group denominator n.
+
+Model FQ1-GEM NTS DIS Axial 
+
+n = 24 
+
+Quadrant 
+
+n = 24 Axial 
+
+n = 24 
+
+Quadrant 
+
+n = 24 Axial 
+
+n = 24 
+
+Quadrant 
+
+n = 24 
+
+Claude Fable 5.1 (0-shot) 0.0 0.0 16.7 0.0 54.2 29.2 Claude Fable 5.1 (1-shot) 4.2 8.3 0.0 4.2 45.8 29.2 Claude Fable 5.1 (2-shot) 4.2 8.3 12.5 12.5 54.2 20.8 Claude Fable 5.1 (3-shot) 0.0 4.2 8.3 8.3 50.0 29.2 GPT-5.6 (0-shot) 4.2 4.2 16.7 12.5 45.8 25.0 GPT-5.6 (1-shot) 8.3 4.2 8.3 25.0 41.7 41.7 GPT-5.6 (2-shot) 8.3 12.5 33.3 12.5 50.0 37.5 GPT-5.6 (3-shot) 4.2 8.3 25.0 16.7 58.3 37.5 InternVL3-8B Base 4.2 0.0 8.3 8.3 29.2 12.5 InternVL3-8B LoRA 0.0 0.0 8.3 8.3 12.5 4.2 InternVL3.5-14B 0.0 0.0 8.3 4.2 37.5 12.5 Kimi-VL-A3B 0.0 0.0 0.0 0.0 66.7 12.5 LLaVA-OneVision-7B 0.0 0.0 0.0 0.0 50.0 25.0 MiniCPM-V 4.5 0.0 0.0 0.0 8.3 58.3 37.5 Mistral Small 3.2 24B 0.0 0.0 0.0 4.2 8.3 8.3 Phi-4-Multimodal 0.0 0.0 0.0 0.0 54.2 16.7 Qwen2.5-VL-32B 0.0 0.0 4.2 8.3 50.0 20.8 Qwen2.5-VL-7B Base 0.0 0.0 0.0 4.2 50.0 37.5 Qwen2.5-VL-7B LoRA 0.0 0.0 12.5 12.5 12.5 12.5 Qwen3-VL-8B 0.0 0.0 12.5 16.7 50.0 29.2 All configurations use the all-images test, with strata comparing different held-out groups. 
+
+no losses for Qwen, versus one gain and no losses for InternVL. Addition loses one Qwen and three InternVL successes, with no gains. The remaining contribution comes from inter-vention successes in groups whose MSS only one checkpoint answers correctly. Groups that nei-ther answers correctly contribute zero to both joint scores, whatever their intervention answers. This exactly decomposes the original 48-group numer-ators. The common sets are small and selected by observed outcomes, so the paired changes describe these subsets rather than causal adaptation effects. Reproduction materials retain group assignments and paired outcomes. 
+
+D.4 Fixed-marginal joint-score diagnostic 
+
+Low conjunction rates can follow from low compo-nent accuracy. Independent uniform guesses give 16 Table 18: Scene-category strata (%). Each column gives its group denominator n.
+
+Model FQ1-GEM NTS DIS Large 
+
+n = 15 
+
+Tabletop 
+
+n = 17 Outdoor 
+
+n = 16 
+
+Large 
+
+n = 16 
+
+Tabletop 
+
+n = 17 Outdoor 
+
+n = 15 
+
+Large 
+
+n = 16 
+
+Tabletop 
+
+n = 17 Outdoor 
+
+n = 15 
+
+Claude Fable 5.1 (0-shot) 0.0 0.0 0.0 12.5 5.9 6.7 50.0 23.5 53.3 Claude Fable 5.1 (1-shot) 13.3 5.9 0.0 6.2 0.0 0.0 31.2 41.2 40.0 Claude Fable 5.1 (2-shot) 6.7 5.9 6.2 12.5 11.8 13.3 25.0 35.3 53.3 Claude Fable 5.1 (3-shot) 0.0 5.9 0.0 18.8 5.9 0.0 37.5 35.3 46.7 GPT-5.6 (0-shot) 0.0 11.8 0.0 18.8 17.6 6.7 37.5 41.2 26.7 GPT-5.6 (1-shot) 6.7 5.9 6.2 31.2 0.0 20.0 56.2 29.4 40.0 GPT-5.6 (2-shot) 13.3 17.6 0.0 50.0 5.9 13.3 75.0 17.6 40.0 GPT-5.6 (3-shot) 0.0 5.9 12.5 31.2 17.6 13.3 56.2 47.1 40.0 InternVL3-8B Base 0.0 5.9 0.0 6.2 5.9 13.3 37.5 11.8 13.3 InternVL3-8B LoRA 0.0 0.0 0.0 12.5 11.8 0.0 6.2 11.8 6.7 InternVL3.5-14B 0.0 0.0 0.0 6.2 5.9 6.7 25.0 23.5 26.7 Kimi-VL-A3B 0.0 0.0 0.0 0.0 0.0 0.0 31.2 29.4 60.0 LLaVA-OneVision-7B 0.0 0.0 0.0 0.0 0.0 0.0 25.0 29.4 60.0 MiniCPM-V 4.5 0.0 0.0 0.0 6.2 5.9 0.0 43.8 41.2 60.0 Mistral Small 3.2 24B 0.0 0.0 0.0 0.0 0.0 6.7 0.0 17.6 6.7 Phi-4-Multimodal 0.0 0.0 0.0 0.0 0.0 0.0 31.2 29.4 46.7 Qwen2.5-VL-32B 0.0 0.0 0.0 6.2 11.8 0.0 25.0 47.1 33.3 Qwen2.5-VL-7B Base 0.0 0.0 0.0 0.0 0.0 6.7 31.2 41.2 60.0 Qwen2.5-VL-7B LoRA 0.0 0.0 0.0 12.5 11.8 13.3 25.0 5.9 6.7 Qwen3-VL-8B 0.0 0.0 0.0 18.8 11.8 13.3 37.5 41.2 40.0 All configurations use the all-images test, with strata comparing different held-out groups. 
+
+Table 19: FQ2 annotation-tag strata (%). Each column gives its group denominator n.
+
+Model NTS DIS Camera tag 
+
+n = 16 
+
+Object tag 
+
+n = 16 
+
+World tag 
+
+n = 16 
+
+Camera tag 
+
+n = 16 
+
+Object tag 
+
+n = 16 
+
+World tag 
+
+n = 16 
+
+Claude Fable 5.1 (0-shot) 12.5 6.2 6.2 43.8 37.5 43.8 Claude Fable 5.1 (1-shot) 6.2 0.0 0.0 43.8 31.2 37.5 Claude Fable 5.1 (2-shot) 18.8 6.2 12.5 50.0 31.2 31.2 Claude Fable 5.1 (3-shot) 6.2 12.5 6.2 43.8 43.8 31.2 GPT-5.6 (0-shot) 12.5 12.5 18.8 37.5 31.2 37.5 GPT-5.6 (1-shot) 12.5 18.8 18.8 50.0 37.5 37.5 GPT-5.6 (2-shot) 25.0 12.5 31.2 50.0 37.5 43.8 GPT-5.6 (3-shot) 37.5 12.5 12.5 50.0 37.5 56.2 InternVL3-8B Base 6.2 12.5 6.2 12.5 31.2 18.8 InternVL3-8B LoRA 6.2 12.5 6.2 6.2 12.5 6.2 InternVL3.5-14B 12.5 6.2 0.0 31.2 37.5 6.2 Kimi-VL-A3B 0.0 0.0 0.0 31.2 43.8 43.8 LLaVA-OneVision-7B 0.0 0.0 0.0 50.0 25.0 37.5 MiniCPM-V 4.5 0.0 12.5 0.0 43.8 50.0 50.0 Mistral Small 3.2 24B 6.2 0.0 0.0 12.5 12.5 0.0 Phi-4-Multimodal 0.0 0.0 0.0 37.5 31.2 37.5 Qwen2.5-VL-32B 0.0 12.5 6.2 37.5 43.8 25.0 Qwen2.5-VL-7B Base 0.0 0.0 6.2 31.2 43.8 56.2 Qwen2.5-VL-7B LoRA 0.0 18.8 18.8 0.0 18.8 18.8 Qwen3-VL-8B 6.2 31.2 6.2 25.0 68.8 25.0 All-images test grouped by annotation tags. Thirty of 48 MSS prompts name a camera heading despite a non-camera tag. These tags have not been independently validated as frame categories. 
+
+expected rates of 1/64 for FQ1-GEM and 1/16 for NTS and DIS, but ignore the observed variant ac-curacies. We therefore add a descriptive reference that keeps each variant’s correct count fixed. Let 
+
+Cgj indicate correctness for variant j in group g,with cj = P 
+
+> g
+
+Cgj and n = 48 . The observed joint count is J = P
+
+> g
+
+Qkj=1 Cgj . Fixing one cor-rectness column and uniformly, independently re-arranging the others across groups gives the exact reference rate R = Qkj=1 (cj /n ). No sampled per-mutations are needed. The possible joint count lies between max(0 , P 
+
+> j
+
+cj − (k − 1) n) and min j cj .Tables 22 and 23 retain all 20 primary and eight ordinary configurations separately. Primary NTS is below the reference in 19 rows, with gaps of 17 Table 20: Failure profiles on the all-images test (%). Frame invariance is unchanged semantic output despite different gold directions.                                                                                                                                                                             
+
+> Model Frame mDeletion given MSS correct Addition Invalid invariant To ⊥Original Other Robust Drift Claude Fable 5.1 (0-shot) 47.9 26 15.4 57.7 26.9 41.7 12.5 0.0 Claude Fable 5.1 (1-shot) 27.1 23 4.3 60.9 34.8 37.5 10.4 0.0 Claude Fable 5.1 (2-shot) 22.9 27 22.2 48.1 29.6 37.5 18.8 0.0 Claude Fable 5.1 (3-shot) 25.0 23 17.4 56.5 26.1 39.6 8.3 0.0 GPT-5.6 (0-shot) 20.8 26 26.9 42.3 30.8 35.4 18.8 0.0 GPT-5.6 (1-shot) 18.8 28 28.6 35.7 35.7 41.7 16.7 0.0 GPT-5.6 (2-shot) 18.8 27 40.7 29.6 29.6 43.8 12.5 0.0 GPT-5.6 (3-shot) 12.5 30 33.3 23.3 43.3 47.9 14.6 0.0 InternVL3-8B Base 50.0 15 26.7 60.0 13.3 20.8 10.4 0.0 InternVL3-8B LoRA 68.8 11 36.4 36.4 27.3 8.3 14.6 0.0 InternVL3.5-14B 66.7 12 25.0 66.7 8.3 25.0 0.0 0.0 Kimi-VL-A3B 62.5 22 0.0 86.4 13.6 39.6 6.2 0.0 LLaVA-OneVision-7B 70.8 25 0.0 80.0 20.0 37.5 2.1 20.8 MiniCPM-V 4.5 56.2 26 7.7 80.8 11.5 47.9 6.2 0.0 Mistral Small 3.2 24B 66.7 425.0 50.0 25.0 8.3 0.0 0.0 Phi-4-Multimodal 75.0 18 0.0 72.2 27.8 35.4 2.1 0.0 Qwen2.5-VL-32B 58.3 19 15.8 78.9 5.3 35.4 4.2 0.0 Qwen2.5-VL-7B Base 70.8 22 4.5 81.8 13.6 43.8 2.1 0.0 Qwen2.5-VL-7B LoRA 60.4 875.0 25.0 0.0 12.5 4.2 0.0 Qwen3-VL-8B 72.9 21 33.3 52.4 14.3 39.6 4.2 0.0
+> mcounts correct MSS answers out of 48 and is the deletion denominator. Other percentages use 48 groups. Original/Other denote spatial answers after deletion.
+
+Table 21: Initial Base–LoRA comparisons on common MSS-correct groups. The full joint-success change equals the common-group change plus LoRA-only successes minus Base-only successes. All entries are counts.                                  
+
+> Family Metric Common groups Base →LoRA Common change LoRA-only successes Base-only successes Full change out of 48 Qwen2.5-VL-7B NTS 0/4→4/4+4 21+5
+> DIS 4/4→3/4−1317 −15
+> InternVL3-8B NTS 2/9→3/9+1 120
+> DIS 7/9→4/9−303−6
+
+−8.59 to +0 .65 percentage points. DIS exceeds it in every row, with gaps of +4 .51 to +23 .70 points. FQ1-GEM has five positive and 15 negative gaps, so it does not support a uniform direction. All eight ordinary configurations have negative FQ1-GEM and NTS gaps and positive DIS gaps. These config-urations share test groups and are not independent replications of a population-level effect. The train-fitted controls in Table 24 make this limitation concrete. Always predicting the train-ing majority letter B gives NTS of 0.00% against a 5.73% reference and DIS of 22.92% against a 5.25% reference. Thus the same negative-NTS/positive-DIS pattern can arise without images. This follows from the shared spatial answer in the addition pair and its change to insufficiency after deletion. Each control retains its train-fitted rule. The reference breaks the observed pairing while preserving variant accuracy. It therefore distin-guishes how successes align from how often they occur. However, heterogeneous groups are not exchangeable by design. Shared difficulty and repeated answers can both affect the observed alignment. We use the gaps and feasible bounds as descriptive measures of this alignment. All groups and invalid outputs remain in the cal-culations. The companion supplies component counts and feasible bounds. 
+
+D.5 Uncertainty 
+
+The paired contrasts in Table 25 resample exact-image connected components as blocks while re-taining paired outcomes within each contrast. It uses 10,000 bootstrap draws. These intervals con-dition on the held-out test and exact-image group-ing. They do not include provider nondeterminism, demonstration-selection variance or all scene reuse. A zero-width interval at zero indicates no observed group variation, not zero population performance. 18 Table 22: Observed (O) and fixed-marginal rearrangement-reference (R) joint-success percentages for all primary configurations. Each criterion uses 48 groups. R preserves variant accuracy while independently rearranging answers across groups. 
+
+Configuration FQ1-GEM NTS DIS O R O R O RQwen2.5-VL-7B (Base) 0.00 1.32 2.08 2.86 43.75 20.05 InternVL3-8B (Base) 2.08 1.88 8.33 10.42 20.83 8.46 Qwen3-VL-8B (Base) 0.00 0.80 14.58 20.96 39.58 17.32 LLaVA-OneVision-7B (Base) 0.00 1.11 0.00 1.09 37.50 19.53 MiniCPM-V 4.5 (Base) 0.00 0.98 4.17 6.77 47.92 28.21 Mistral Small 3.2 24B (Base) 0.00 1.56 2.08 4.17 8.33 1.74 Qwen2.5-VL-32B (Base) 0.00 1.14 6.25 14.84 35.42 17.32 InternVL3.5-14B (Base) 0.00 1.51 6.25 8.33 25.00 7.81 Phi-4-Multimodal (Base) 0.00 1.37 0.00 1.56 35.42 14.84 Kimi-VL-A3B (Base) 0.00 1.91 0.00 2.86 39.58 19.10 Qwen2.5-VL-7B (LoRA) 0.00 2.43 12.50 13.19 12.50 3.47 InternVL3-8B (LoRA) 0.00 2.79 8.33 14.32 8.33 3.82 GPT-5.6 (0-shot) 4.17 4.12 14.58 16.93 35.42 27.08 GPT-5.6 (1-shot) 6.25 5.53 16.67 17.01 41.67 35.24 GPT-5.6 (2-shot) 10.42 6.68 22.92 22.27 43.75 38.67 GPT-5.6 (3-shot) 6.25 8.23 20.83 23.44 47.92 40.36 Claude Fable 5.1 (0-shot) 0.00 2.40 8.33 11.28 41.67 31.60 Claude Fable 5.1 (1-shot) 6.25 6.79 2.08 4.99 37.50 23.96 Claude Fable 5.1 (2-shot) 6.25 3.26 12.50 17.58 37.50 28.12 Claude Fable 5.1 (3-shot) 2.08 4.48 8.33 14.97 39.58 24.96 
+
+Table 23: The same joint-score diagnostic for the separate ordinary multi-seed cohort. O denotes observed rates and R the fixed-marginal reference. Each row retains all 48 groups per criterion. 
+
+Configuration FQ1-GEM NTS DIS O R O R O RInternVL3-8B (matched control) 2.08 2.28 8.33 11.11 20.83 8.33 InternVL3-8B (LoRA 20260722) 0.00 2.63 10.42 15.10 14.58 5.73 InternVL3-8B (LoRA 20260723) 0.00 2.45 8.33 13.37 10.42 3.82 InternVL3-8B (LoRA 20260724) 2.08 3.01 10.42 13.89 12.50 3.91 Qwen2.5-VL-7B (matched control) 0.00 1.19 2.08 2.86 45.83 21.01 Qwen2.5-VL-7B (LoRA 20260722) 0.00 2.63 8.33 11.55 12.50 3.04 Qwen2.5-VL-7B (LoRA 20260723) 0.00 2.43 8.33 11.55 12.50 3.04 Qwen2.5-VL-7B (LoRA 20260724) 0.00 3.42 14.58 15.62 12.50 4.77 
+
+Table 24: The fixed-marginal diagnostic applied to all three retained metadata controls. O is observed joint success and R the rearrangement reference. Rules are fitted on training groups. The constant-letter control produces opposite NTS and DIS gaps using answer preferences alone. 
+
+Input features Correct counts / 48 NTS (%) DIS (%) MSS Del. Add. O R O RMajority letter 11 12 11 0.00 5.73 22.92 5.25 Image count 9 9 13 0.00 3.52 4.17 5.08 Count + insufficiency letter 5 42 7 6.25 9.11 2.08 1.52 
+
+D.6 Clustering sensitivity 
+
+This post-hoc analysis compares four fixed LoRA– Base contrasts on 48 FQ2 groups. Table 26 reports partitions into 29 exact-image components and 14 inferred core-MSS scene/template clusters. For each partition, 20,000 bootstrap draws (seed 20261009) sample its original number of clusters with replacement. Each sampled block retains all its paired groups. A replicate divides its signed success difference by its sampled group count, ac-counting for unequal block sizes. The original point estimates always divide by 48. These partitions are not nested. One exact-image component spanning groups 00360, 00361 and 00364 crosses two inferred scene clusters. We therefore also join groups connected by ei-ther relation, including indirect paths. This union yields 13 components, with at most 15 groups each. We apply the same bootstrap scheme. Neither scene labels nor union components certify inde-19 Table 25: Paired differences in percentage points, with 95% cluster-block bootstrap intervals. 
+
+Contrast ∆Acc. ∆FQ1-GEM ∆NTS ∆DIS InternVL3-8B : All–Text -1.4 [-6.9,+4.2] +0.0 [-5.9,+6.2] +8.3 [+2.0,+17.0] +12.5 [+0.0,+25.5] InternVL3-8B : All–One +1.7 [-3.4,+6.7] +2.1 [+0.0,+7.0] +2.1 [-6.8,+11.5] -8.3 [-20.0,+2.2] InternVL3-8B LoRA: All–Text +2.4 [-3.5,+7.9] +0.0 [+0.0,+0.0] +8.3 [+2.0,+16.7] +8.3 [+2.0,+16.7] InternVL3-8B LoRA: All–One +4.9 [+1.3,+8.8] +0.0 [+0.0,+0.0] +4.2 [-3.7,+12.8] -2.1 [-12.8,+8.3] InternVL3.5-14B : All–Text -2.1 [-7.3,+3.1] +0.0 [+0.0,+0.0] +6.2 [+0.0,+13.3] +10.4 [-2.1,+24.4] InternVL3.5-14B : All–One +3.5 [-1.8,+8.7] +0.0 [+0.0,+0.0] -2.1 [-9.3,+4.5] +16.7 [+4.3,+29.5] Kimi-VL-A3B : All–Text +4.2 [-0.8,+9.3] +0.0 [+0.0,+0.0] +0.0 [+0.0,+0.0] +4.2 [-7.0,+16.7] Kimi-VL-A3B : All–One -1.0 [-6.6,+4.7] -2.1 [-6.7,+0.0] -6.2 [-13.0,+0.0] +8.3 [-3.7,+22.4] LLaVA-OneVision-7B : All–Text +0.0 [-5.3,+5.2] +0.0 [+0.0,+0.0] +0.0 [+0.0,+0.0] -6.2 [-17.0,+4.1] LLaVA-OneVision-7B : All–One -2.4 [-6.7,+1.5] +0.0 [+0.0,+0.0] +0.0 [+0.0,+0.0] -12.5 [-23.8,-3.6] MiniCPM-V 4.5 : All–Text +3.8 [-1.3,+9.7] +0.0 [+0.0,+0.0] +4.2 [+0.0,+10.2] +14.6 [-2.0,+32.5] MiniCPM-V 4.5 : All–One +1.0 [-3.8,+6.4] +0.0 [+0.0,+0.0] -4.2 [-12.5,+3.9] +4.2 [-6.8,+16.3] Mistral Small 3.2 24B : All–Text -3.8 [-7.1,-0.6] +0.0 [+0.0,+0.0] +2.1 [+0.0,+6.7] +8.3 [+1.9,+17.1] Mistral Small 3.2 24B : All–One -3.8 [-9.1,+2.0] +0.0 [+0.0,+0.0] -4.2 [-12.8,+4.1] -22.9 [-35.6,-10.0] Phi-4-Multimodal : All–Text -2.4 [-9.7,+4.9] -2.1 [-6.7,+0.0] +0.0 [+0.0,+0.0] +16.7 [-4.2,+37.8] Phi-4-Multimodal : All–One -1.7 [-6.7,+3.4] +0.0 [+0.0,+0.0] -4.2 [-10.0,+0.0] -2.1 [-12.5,+8.7] Qwen2.5-VL-32B : All–Text +2.4 [-4.7,+9.4] +0.0 [+0.0,+0.0] +6.2 [+0.0,+14.0] +35.4 [+21.3,+51.0] Qwen2.5-VL-32B : All–One +6.6 [+1.3,+11.9] +0.0 [+0.0,+0.0] -2.1 [-9.1,+4.8] +18.8 [+3.9,+34.8] Qwen2.5-VL-7B : All–Text -3.1 [-9.9,+3.9] +0.0 [+0.0,+0.0] +2.1 [+0.0,+6.8] +43.8 [+29.2,+59.5] Qwen2.5-VL-7B : All–One -0.3 [-3.3,+3.3] +0.0 [+0.0,+0.0] +0.0 [+0.0,+0.0] +6.2 [-4.2,+17.8] Qwen2.5-VL-7B LoRA: All–Text +3.1 [-2.0,+8.3] -2.1 [-6.7,+0.0] +12.5 [+4.2,+22.0] +12.5 [+3.8,+23.4] Qwen2.5-VL-7B LoRA: All–One +4.2 [-0.3,+8.9] +0.0 [+0.0,+0.0] +12.5 [+4.3,+22.2] +12.5 [+3.8,+23.4] Qwen3-VL-8B : All–Text +4.5 [-2.2,+11.4] +0.0 [+0.0,+0.0] +14.6 [+4.5,+26.2] +33.3 [+18.2,+49.0] Qwen3-VL-8B : All–One +5.2 [+0.0,+10.7] +0.0 [+0.0,+0.0] +6.2 [-4.8,+18.9] +29.2 [+17.0,+42.0] Qwen2.5-VL-7B: LoRA–Base +6.6 [-0.3,+12.8] +0.0 [+0.0,+0.0] +10.4 [+0.0,+20.9] -31.2 [-51.2,-11.3] InternVL3-8B: LoRA–Base +3.1 [-0.7,+7.2] -2.1 [-7.0,+0.0] +0.0 [-8.5,+8.2] -12.5 [-22.9,-3.8] Unmarked models are base checkpoints. Positive values favor the first condition. Paired outcome differences are retained while exact-image asset-component fallback clusters are resampled as blocks. 
+
+Table 26: Post-hoc LoRA–Base sensitivity on 48 FQ2 groups. Changes and 95% intervals are in percentage points. Gain/loss gives paired counts. Intervals use 20,000 block-bootstrap draws over 29 exact-image, 14 inferred-scene or 13 union components, with each draw normalized by its sampled group count. 
+
+Family Metric ∆ (pp) Exact-image Inferred-scene Union Gain/loss Qwen2.5-VL-7B NTS +10 .4 [0 .0, +20 .9] [−2.6, +19 .0] [−2.4, +19 .2] 6/1 Qwen2.5-VL-7B DIS −31 .2 [−51 .1, −11 .4] [−56 .7, −8.7] [−57 .1, −9.4] 3/18 InternVL3-8B NTS 0.0 [−8.5, +8 .3] [−12 .5, +8 .2] [−12 .5, +8 .1] 2/2 InternVL3-8B DIS −12 .5 [−22 .8, −2.5] [−27 .3, −2.5] [−27 .3, −2.4] 0/6 
+
+pendent physical scenes. Both NTS intervals in-clude zero, while both DIS intervals remain neg-ative under all three partitions. InternVL’s un-changed NTS also masks two newly successful and two newly failed groups. For a cluster with signed contribution dc and overall total D, we also compute 100( D − dc)/48 .This neutralizes its net contribution while holding the full denominator fixed. Across the inferred clusters, Qwen’s NTS range remains positive and both DIS ranges remain negative. The supplement includes per-group outcomes, cluster contributions and a separate verification implementation. 
+
+E Deletion and Image-Reference Audit 
+
+Offline reconstruction reproduces all 864 question– mode inputs and 130 prepared images without po-sition labels. The evaluator adds neither stable original-image IDs nor missing-image placehold-ers. Both Circular input sets preserve source ques-tions and image order across 1,152 rotations each. Reconstruction uses the saved implementation and prepared inputs rather than archived wire requests. The runner uses current image order. Compar-ing the first explicit Chinese ordinal against the original and deleted lists identifies 36 removed ref-erents and six retained at changed positions. All 36 removed referents are the original first image. Including groups 00368 and 00370 gives 38 ordi-nals pointing to another retained image. Groups 00360, 00361, 00364 and 00405 have out-of-range ordinals. Two retain the referent, while no explicit ordinal is detected in four groups. For example, group 00392 still asks for the first 20 Table 27: Deletion success across 48 groups stratified by the fate of the originally referenced image. M counts correct MSS answers and J jointly correct MSS/deletion answers. For a stratum of n groups, NTS is J/n and conditional deletion success is J/M when M > 0.                                                                                                                                                                                                    
+
+> Removed ( n= 36 )Shifted ( n= 6 )Stable ( n= 2 )No ordinal ( n= 4 )Model Setting MJMJMJMJ
+> Claude Fable 5.1 0-shot 22 4202000Claude Fable 5.1 1-shot 19 0112010Claude Fable 5.1 2-shot 21 4211031Claude Fable 5.1 3-shot 19 3211010GPT-5.6 0-shot 20 5312110GPT-5.6 1-shot 20 7312030GPT-5.6 2-shot 20 8530020GPT-5.6 3-shot 23 7422110InternVL3-8B Base 14 4100000InternVL3-8B LoRA 10 4100000InternVL3.5-14B Base 12 3000000Kimi-VL-A3B Base 20 0000020LLaVA-OneVision-7B Base 19 0201030MiniCPM-V-4.5 Base 23 2100020Mistral-Small-3.2 Base 30000011Phi-4-Multimodal Base 16 0200000Qwen2.5-VL-32B Base 15 1101121Qwen2.5-VL-7B Base 20 1001010Qwen2.5-VL-7B LoRA 75001100Qwen3-VL-8B Base 19 7100010
+
+Table 28: GPT stable-ID prompting on the same twelve FQ2 triplets. Orig. and IDs count released-label matches. Changed counts answer differences between prompts in (a) and the left half of (b), and between blocks in the right half of (b).                                                                         
+
+> (a) Counterbalanced prompt pairs
+> Reference status nOrig. IDs Changed Input condition nOrig. IDs Changed Retained, shifted 18 12 88MSS 12 866Stable ordinal 6624Deletion 12 746No ordinal 12 656Hard addition 12 956Overall 36 24 15 18 Overall 36 24 15 18
+> (b) Two randomized execution blocks
+> Block nOrig. IDs Changed Fixed prompt nBlock 1 Block 2 Changed 136 17 17 12 Original 36 17 20 14 236 20 21 15 Stable IDs 36 17 21 15
+
+image’s camera direction after deleting that original image. Its request now begins with the original second image. The question text is unchanged, but its ordinal now points to a different image, coupling evidence removal with a reference change. 
+
+Sensitivity using the existing predictions. Ta-ble 27 links all 20 configurations to four exhaus-tive strata without replacing the 48-group main denominator. Two groups retain a stable explicit ordinal, and four have no detected ordinal. For Qwen2.5-VL-7B, jointly correct deletion responses increase from one to five among the 36 removed-anchor groups and from zero to one among the two stable-ordinal groups. Both InternVL3-8B check-points obtain all four of their joint successes in the removed-anchor stratum. All four checkpoints fail jointly on the six retained-but-shifted groups. Successes concentrate in removed-anchor groups rather than shifted-reference cases. The six stable-ordinal or no-ordinal groups are too few to establish the pattern independently. 
+
+Paired stable-ID prompting diagnostic. We se-lect all twelve FQ2 groups outside the removed-anchor stratum, covering six retained-but-shifted groups, two stable-ordinal groups and four groups without an ordinal. Each group contributes MSS, deletion and hard-addition inputs. The paired di-agnostic obtains GPT responses for both prompts, 21 giving 36 items per arm and 72 valid responses. Images, their order, options and released labels are held fixed. The rewrite assigns stable original-image IDs, adds an explicit ID mapping and instruc-tions, and replaces ordinal references with those IDs. Original wording is requested first on eighteen pairs and the rewrite first on eighteen. Execution is interleaved rather than simultaneous. Table 28a reports released-label agreement and prediction changes. Twelve pairs match the la-bel in both arms, twelve only under original word-ing, three only under the rewrite and nine in nei-ther. The overall agreement difference is −25 .00 
+
+points. Paired resampling of twelve groups gives a 95% percentile interval of [ −44 .44 , −5.56 ] from 10,000 draws with seed 20261010. Using the six image/scene union components gives [ −41 .67 ,
+
+−3.03 ] with seed 20261110. The corresponding intervals for the 50.00% prediction-change rate are [30.56, 69.44]% and [25.00, 70.83]%. 
+
+Repeated-block control. The repeated-block control holds these 36 items and both prompt for-mulations fixed across two blocks, each containing all 72 item–prompt combinations. Within each block, requests are shuffled with seeds 20261012 and 20261013 and run with concurrency two. Block one finishes before block two starts. This randomizes interleaving without enforcing which prompt is requested first for each item. Images, their order, labels and decoding settings remain unchanged. Only transport or HTTP failures are retried, at most three attempts per request. All 144 responses are valid. Across the blocks in Table 28b, original word-ing matches 37/72 labels and stable IDs match 38/72, a difference of 1.39 points. A paired boot-strap with 20,000 draws over the twelve groups and seed 20261011 retains all three conditions and both blocks within each group. Its 95% in-terval is [ −12 .50 , 16 .67 ]. Resampling the six im-age/scene union components instead gives [ −6.94 ,
+
+16 .67 ]. These intervals condition on the two ob-served blocks. Across their 24 group–block obser-vations, NTS falls from 8 to 4 and DIS from 9 to 8, while three-answer joint agreement remains 4. NTS has two paired gains and six losses despite near-equal item agreement. Original prompts change 14/36 answers between blocks, and stable-ID prompts change 15/36. The initial 25-point decline therefore does not recur in the repeated comparison. Response instability can coexist with nearly equal aggregate agreement, so a single paired run does not isolate a wording effect. The intervention combines IDs, mapping instructions and visible numbering gaps rather than changing ID binding alone. 
+
+Targeted machine-assisted visual check. Given exact prompts and ordered images from six pri-ority groups, two isolated contexts of one assis-tant save answers before seeing gold labels. Both match labels on the same 11 of 18 originals and abstain on seven owing to entity or view ambigu-ity. Audit abstention means inability to adjudicate, not an insufficient-information answer. For nine additional single-view deletions, both select insuf-ficiency on six and abstain on three. Four orig-inal and five additional items have out-of-range references that prevent judging necessity with un-changed bindings. The saved responses and visual rationales localize entity and reference ambiguity in this six-group model-assisted check. 
+
+E.1 Original Inputs and Image-Order Traces 
+
+Figure 7 reproduces two Chinese FQ2 triplets with ordered images and English translations. Source IDs identify images for comparison, while the eval-uated requests use their current order. The com-plete input audit covers all 48 test triplets and their 144 released conditions. Removing one image pre-serves the order of the others but can change which image an ordinal refers to. Group 00392 illustrates removal of the original anchor, and group 00368 il-lustrates a retained anchor whose position changes. Both retain the evaluated prompts and labels. 
+
+F Offline Diagnostic Supplements 
+
+F.1 Sensitivity to Scene/Template Overlap 
+
+The inferred scene/template ledger and fixed split define overlap with train, dev alone, or neither. These categories contain 81, zero and 15 test groups, respectively. Rates are omitted for the empty dev-only stratum. The overlap stratum contains 41 FQ1 and 40 FQ2 groups across ten clusters. The four non-overlapping clusters contain seven FQ1 and eight FQ2 groups. Their 13 synthetic and two real groups contrast with 41 synthetic and 40 real overlap groups. These strata measure descriptive sensitivity rather than a causal scene-exposure effect. Table 29 preserves all 20 primary configurations. Every primary configuration has zero GEM on the 22 (a) Original anchor removed - group 00392     
+
+> S01 S02 S03 S04 S05
+
+以图一镜头朝向为正前方，面对前方时右手侧为右方，烤箱位于椅子的哪一侧？ 
+
+Take the camera's viewing direction in Image 1 as forward, and the right-hand side when facing forward as right. On which side of the chair is the oven?               
+
+> A. 前方 / Front B. 右方 / Right C. 后方 / Behind D. 信息不足 / Insufficient information
+> Input Actual image sequence Ordinal now refers to Released label
+
+MSS S01, S02, S03, S04 S01 BDeletion S02, S03, S04 S02 DAddition S01, S02, S03, S04, S05 S01 B
+
+> The released deletion removes S01. The first image delivered to the model is then S02, while the unchanged question still refers to Image 1.
+
+(b) Original anchor retained at a new position - group 00368    
+
+> S01 S02 S03 S04
+
+以图二镜头朝向为正前方，面对前方时右手侧为右方，盆栽位于桌子的哪一侧？ 
+
+Take the camera's viewing direction in Image 2 as forward, and the right-hand side when facing forward as right. On which side of the table is the potted plant?               
+
+> A. 右后方 / Back-right B. 右前方 / Front-right C. 信息不足 / Insufficient information D. 左后方 / Back-left
+> Input Actual image sequence Ordinal now refers to Released label
+
+MSS S01, S02, S03 S02 ADeletion S02, S03 S03 CAddition S01, S02, S03, S04 S02 A
+
+> The released deletion removes S01 and retains the original anchor S02 in the first position. The second image delivered to the model is now S03, while the question still refers to Image 2.
+
+Figure 7: Original Chinese questions, options and image order in two FQ2 triplets. English text translates the questions for reading. S identifiers track source images, while the original inputs use unlabeled current-order images. Labels are those of the released dataset. 
+
+seven non-overlapping FQ1 groups. Qwen’s pri-mary LoRA reduces DIS in both strata, from 17/40 to 4/40 in overlapping groups and from 4/8 to 2/8 elsewhere. InternVL’s NTS changes from 3/40 to 2/40 and from 1/8 to 2/8, respectively. The un-changed overall NTS therefore combines oppos-ing subgroup changes. Table 30 separately reports matched bases and three training seeds. Paired group outcomes further distinguish gains from losses. Qwen’s non-overlapping DIS decline comprises two gains and four losses. Across strata, numerators, denominators, gains and losses sum ex-actly to their full-test counterparts. With eight FQ2 groups, each success changes the non-overlapping 23 Table 29: Scene/template overlap sensitivity of the primary configurations.                                                                                                                                                                          
+
+> Cluster shared with train Cluster absent from train and dev Model / setting Acc. GEM NTS DIS Acc. GEM NTS DIS Qwen2.5-VL-7B 28.40 0117 31.11 004InternVL3-8B 27.57 13640.00 014Qwen3-VL-8B 33.33 0515 37.78 024LLaVA-OneVision-7B 29.22 0016 28.89 002MiniCPM-V 4.5 32.92 0219 33.33 004Mistral Small 3.2 24B 25.10 01428.89 000Qwen2.5-VL-32B 33.74 0314 31.11 003InternVL3.5-14B 28.40 0311 26.67 001Phi-4-Multimodal 26.34 0014 26.67 003Kimi-VL-A3B 27.16 0014 40.00 005Qwen2.5-VL-7B / LoRA 34.57 05440.00 012InternVL3-8B / LoRA 30.45 02344.44 021GPT-5.6 / 0-shot 41.56 2615 35.56 0121-shot 42.39 3616 53.33 0242-shot 46.91 5615 55.56 0563-shot 51.03 3819 44.44 024Claude Fable 5.1 / 0-shot 38.68 0317 42.22 0131-shot 40.74 3115 37.78 0032-shot 40.33 3516 46.67 0123-shot 42.39 1216 37.78 023Acc. is a percentage over 243 or 45 questions. GEM is a count out of 41 or 7 FQ1 groups. NTS and DIS are counts out of 40 or 8 FQ2 groups. The partition uses an inferred scene/template ledger. No test cluster overlaps only dev. Invalid answers remain errors. Unmarked open models are bases.
+
+rate by 12.5 points. 
+
+F.2 Semantic Changes Across FQ1 Pairs 
+
+Each of the 48 FQ1 triplets contributes camera– object, camera–world and object–world pairs. Pre-dicted letters are mapped to direction meanings. The 144 pairs per configuration are partitioned by gold-meaning changes and predicted changes, un-changed meanings or invalid responses. Joint cor-rectness is counted within each cell. All FQ1 test gold pairs require a semantic change, and all predictions are valid. False-change rates on unchanged gold therefore cannot be esti-mated. The 2,880 configuration-pair records reuse the same 48 groups. Table 31 separates answer changes from suc-cessful switching. GPT two- and three-shot each change 94 pairs, with 26 and 27 jointly correct, yet fully correct triplets fall from five to three. Im-proved pairwise correctness need not extend to all three frames. Qwen3 changes only 29 pairs, with one jointly correct. 
+
+F.3 Train-Only Text Shortcut Baseline 
+
+We fit a single shallow classifier with fixed hy-perparameters to the visible question followed by its A–D option texts. Character TF-IDF uses 2– 5-grams, minimum document frequency two, a 50,000-feature cap, sublinear term frequency and L2 normalization, without lowercasing. Logistic regression uses C = 1 , the limited-memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) optimizer, no class weighting, at most 5,000 iterations and seed 20261011. Vocabulary, inverse document frequencies and classifier weights are learned from the 576 train-ing items. Identifiers, condition tags and image metadata are excluded. The fitted vocabulary contains 3,623 features, and optimization converges in 31 iterations without warnings. The 96 dev items provide a descriptive check without tuning. One evaluation on the 288 test items gives 69 correct answers. Table 32 re-ports macro classification metrics and joint counts from the same saved predictions. Implementation uses scikit-learn 1.7.2 on CPU. The fixed text classifier performs near the four-choice accuracy reference and obtains no fully cor-24 Table 30: Scene/template overlap sensitivity of the separate three-seed cohort. 
+
+Cluster shared with train Cluster absent from train and dev Model / setting Acc. GEM NTS DIS Acc. GEM NTS DIS InternVL3-8B / Base control 28.40 1 3 6 40.00 0 1 4InternVL3-8B / LoRA 20260722 30.86 0 3 6 44.44 0 2 1InternVL3-8B / LoRA 20260723 28.81 0 2 4 42.22 0 2 1InternVL3-8B / LoRA 20260724 30.86 0 3 4 46.67 1 2 2Qwen2.5-VL-7B / Base control 28.81 0 1 18 31.11 0 0 4Qwen2.5-VL-7B / LoRA 20260722 34.98 0 3 4 40.00 0 1 2Qwen2.5-VL-7B / LoRA 20260723 33.74 0 3 4 40.00 0 1 2Qwen2.5-VL-7B / LoRA 20260724 37.45 0 6 4 37.78 0 1 2Acc. is a percentage over 243 or 45 questions. GEM is a count out of 41 or 7 FQ1 groups. NTS and DIS are counts out of 40 or 8 FQ2 groups. The partition uses an inferred scene/template ledger. No test cluster overlaps only dev. Seed numbers identify LoRA adapters, with a separate matched base for each family. 
+
+Table 31: FQ1 semantic changes across frame pairs. 
+
+Model / setting Same Change Both GEM Qwen2.5-VL-7B 114 30 4 0InternVL3-8B 94 50 4 1Qwen3-VL-8B 115 29 1 0LLaVA-OneVision-7B 116 28 4 0MiniCPM-V 4.5 99 45 3 0Mistral Small 3.2 24B 112 32 2 0Qwen2.5-VL-32B 103 41 1 0InternVL3.5-14B 111 33 1 0Phi-4-Multimodal 120 24 1 0Kimi-VL-A3B 108 36 4 0Qwen2.5-VL-7B / LoRA 103 41 6 0InternVL3-8B / LoRA 113 31 6 0GPT-5.6 / 0-shot 54 90 18 21-shot 54 90 21 32-shot 50 94 26 53-shot 50 94 27 3Claude Fable 5.1 / 0-shot 92 52 7 01-shot 68 76 23 32-shot 59 85 17 33-shot 65 79 15 1Same and Change count predicted direction relations out of 144 frame pairs. Both counts pairs with two correct answers, a subset of Change. GEM counts fully correct triplets out of 48. All evaluated test gold pairs require a direction change and all responses are valid. Unmarked open models are bases. 
+
+rect FQ1 groups or MSS–deletion pairs. It never-theless solves five MSS–addition pairs, including all five groups on which its MSS answer is cor-rect. Addition agreement can thus persist even for a weak text-only classifier. 
+
+G Additional Paired and Stratified Analyses 
+
+G.1 Captured and rendered inputs 
+
+Captured and rendered strata contain 42 and 54 test groups, respectively, with 21 and 27 in each ques-
+
+Table 32: Train-fitted question-and-option text baseline. 
+
+Metric Dev (96 questions) Test (288 questions) P 25.29 23.99 R 24.76 23.97 F1 24.63 23.97 Acc. 25.00 23.96 GEM 0/16 0/48 NTS 0/16 0/48 DIS 4/16 5/48 P, R and F1 are macro-averaged percentages over A–D. GEM, NTS and DIS are joint-success counts. Character TF-IDF and logistic regression are fitted on 576 training questions with fixed settings. Dev does not guide model selection. 
+
+tion family. Table 33 retains all primary predictions and counts invalid responses as errors. Rendered inputs yield higher accuracy in 14/20 configurations and higher DIS in 16. Qwen2.5-VL-32B instead favors captured inputs on both endpoints, unlike its 7B Base. GPT’s accuracy advantage also shifts from captured to rendered with one shot. These descriptive contrasts combine image-source, scene and question differences. 
+
+G.2 Paired Base executions 
+
+Table 34 pairs 288 valid answers per Base run under identical item, label, group and option mappings. Agreement compares the selected answer letters. Qwen changes seven answers but gains one net correct item, from 83 to 84. InternVL changes eleven but gains two, from 85 to 87. Small accuracy differences thus conceal answer-level changes. Qwen’s DIS rises from 21/48 to 22/48, with unchanged GEM and NTS. InternVL’s joint counts stay unchanged. 25 Table 33: All-images performance by image source (%). Each source contains equal numbers of FQ1 and FQ2 groups.                                                                                                                                                                                               
+
+> Captured (126 questions) Rendered (162 questions) Model Setting Acc. GEM NTS DIS Acc. GEM NTS DIS Qwen2.5-VL-7B Base 25.40 0.00 0.00 33.33 31.48 0.00 3.70 51.85 InternVL3-8B Base 23.81 4.76 4.76 9.52 33.95 0.00 11.11 29.63 Qwen3-VL-8B Base 32.54 0.00 9.52 33.33 35.19 0.00 18.52 44.44 LLaVA-OneVision-7B Base 23.02 0.00 0.00 23.81 33.95 0.00 0.00 48.15 MiniCPM-V 4.5 Base 30.16 0.00 4.76 33.33 35.19 0.00 3.70 59.26 Mistral Small 3.2 24B Base 25.40 0.00 0.00 14.29 25.93 0.00 3.70 3.70 Qwen2.5-VL-32B Base 34.92 0.00 9.52 38.10 32.10 0.00 3.70 33.33 InternVL3.5-14B Base 28.57 0.00 4.76 19.05 27.78 0.00 7.41 29.63 Phi-4-Multimodal Base 22.22 0.00 0.00 23.81 29.63 0.00 0.00 44.44 Kimi-VL-A3B Base 23.02 0.00 0.00 23.81 33.95 0.00 0.00 51.85 Qwen2.5-VL-7B LoRA 35.71 0.00 9.52 4.76 35.19 0.00 14.81 18.52 InternVL3-8B LoRA 29.37 0.00 9.52 9.52 35.19 0.00 7.41 7.41 GPT-5.6 0-shot 43.65 9.52 14.29 38.10 38.27 0.00 14.81 33.33 GPT-5.6 1-shot 35.71 4.76 0.00 28.57 50.62 7.41 29.63 51.85 GPT-5.6 2-shot 48.41 19.05 9.52 28.57 48.15 3.70 33.33 55.56 GPT-5.6 3-shot 51.59 4.76 19.05 42.86 48.77 7.41 22.22 51.85 Claude Fable 5.1 0-shot 34.92 0.00 4.76 19.05 42.59 0.00 11.11 59.26 Claude Fable 5.1 1-shot 37.30 4.76 0.00 33.33 42.59 7.41 3.70 40.74 Claude Fable 5.1 2-shot 33.33 4.76 9.52 28.57 47.53 7.41 14.81 44.44 Claude Fable 5.1 3-shot 41.27 4.76 4.76 28.57 41.98 0.00 11.11 48.15 Joint metrics divide by 21 captured or 27 rendered groups. LLaVA retains six captured and four rendered invalid answers as errors. All rows reuse the same source strata.
+
+Table 34: Paired Base executions on the same 288 questions. Correctness changes are relative to the primary run.                   
+
+> Model Same answer Agreement (%) Both correct Primary only Later only Neither correct Qwen2.5-VL-7B 281 97.57 82 12203 InternVL3-8B 277 96.18 83 24199
+
+G.3 Adjacent-shot uncertainty 
+
+Table 35 compares each adjacent shot setting within both gateway families. We pair predic-tions on all 96 test groups and connect groups through the union of the exact-image and inferred scene/template maps. The resulting 13 components contain both question families. Each of 20,000 bootstrap replicates samples 13 whole components with replacement and recomputes the paired differ-ence using its actual question or group denominator. Seed 20261013 fixes the shared component draws. The intervals are exploratory, pointwise 95% per-centile intervals. They measure test-composition sensitivity conditional on the stored predictions, separately from execution variability. GPT’s two-to-three-shot change adds five correct items but loses two complete frame groups. Both accuracy and GEM intervals span zero. 
+
+G.4 Semantic retention and insufficiency detection 
+
+Table 36 separates repeated meanings from correct retention after addition. We decode letters to op-tion text before comparing answers. Retained and flipped pairs require two valid predictions, while invalid pairs remain separate. Conditional reten-tion divides the DIS numerator by all MSS-correct groups, including those with an invalid addition response in the denominator. Across 144 FQ2 questions, insufficiency de-tection has 48 positive deletion labels and 96 negative MSS/addition labels. Invalid positive-label responses count as missed positives, while invalid negative-label responses remain errors rather than true negatives. Qwen Base retains 21/22 initially correct an-swers after addition, compared with 6/8 for LoRA. InternVL changes from 10/15 to 4/11. Joint DIS therefore depends on both initial coverage and sub-sequent retention. Qwen LoRA also produces 38 true and 54 false insufficiency responses, compared 26 Table 35: Adjacent-shot differences with paired component-bootstrap intervals. Item gains do not consistently extend to joint success. 
+
+Model Shots Acc. GEM NTS DIS GPT 0 → 1 +3.47 [-3.83, +14.55] +2.08 [-3.64, +11.11] +2.08 [-10.45, +21.05] +6.25 [-8.47, +29.03] 
+
+1 → 2 +4.17 [-2.86, +9.49] +4.17 [-6.25, +10.87] +6.25 [-9.38, +23.91] +2.08 [-10.23, +23.33] 
+
+2 → 3 +1.74 [-4.90, +5.35] -4.17 [-12.50, +8.33] -2.08 [-19.51, +7.25] +4.17 [-18.42, +19.72] Claude 0 → 1 +1.04 [-3.00, +6.33] +6.25 [+0.00, +14.29] -6.25 [-12.77, +0.00] -4.17 [-24.14, +11.32] 
+
+1 → 2 +1.04 [-3.89, +8.77] +0.00 [-6.06, +6.45] +10.42 [+3.03, +16.67] +0.00 [-10.20, +11.76] 
+
+2 → 3 +0.35 [-10.95, +7.14] -4.17 [-10.26, +0.00] -4.17 [-10.53, +5.26] +2.08 [-9.38, +10.00] Entries are later-minus-earlier differences in percentage points with pointwise 95% percentile intervals from 20,000 paired resamples of 13 whole components. Acc. uses 288 questions. Each joint metric uses 48 groups. The fixed-prediction intervals reflect test-component composition, not run-to-run variability. 
+
+Table 36: Semantic answer retention after addition and insufficiency detection across FQ2. 
+
+All 48 MSS–addition pairs MSS-correct retention Insufficiency (%) Model Setting Retained Flipped Invalid Correct / eligible P RQwen2.5-VL-7B Base 44 4 0 21/22 42.86 6.25 InternVL3-8B Base 36 12 0 10/15 39.02 33.33 Qwen3-VL-8B Base 45 3 0 19/21 62.16 47.92 LLaVA-OneVision-7B Base 37 1 10 18/25 100.00 2.08 MiniCPM-V 4.5 Base 42 6 0 23/26 100.00 12.50 Mistral Small 3.2 24B Base 37 11 0 4/4 32.43 50.00 Qwen2.5-VL-32B Base 41 7 0 17/19 51.43 37.50 InternVL3.5-14B Base 42 6 0 12/12 44.44 33.33 Phi-4-Multimodal Base 43 5 0 17/18 33.33 4.17 Kimi-VL-A3B Base 42 6 0 19/22 50.00 6.25 Qwen2.5-VL-7B LoRA 38 10 0 6/8 41.30 79.17 InternVL3-8B LoRA 30 18 0 4/11 41.10 62.50 GPT-5.6 0-shot 28 20 0 17/26 83.33 31.25 GPT-5.6 1-shot 27 21 0 20/28 82.35 29.17 GPT-5.6 2-shot 28 20 0 21/27 86.36 39.58 GPT-5.6 3-shot 29 19 0 23/30 85.71 37.50 Claude Fable 5.1 0-shot 28 20 0 20/26 90.91 20.83 Claude Fable 5.1 1-shot 34 14 0 18/23 55.56 10.42 Claude Fable 5.1 2-shot 30 18 0 18/27 71.43 31.25 Claude Fable 5.1 3-shot 35 13 0 19/23 75.00 31.25 Retention compares decoded option meanings. The first three counts partition 48 pairs. Conditional retention divides by MSS-correct groups. Insufficiency precision and recall use 48 positive and 96 negative labels across all 144 FQ2 questions. 
+
+with three and four for Base. Higher deletion recall thus comes with more false insufficiency responses on the two answerable conditions. 27

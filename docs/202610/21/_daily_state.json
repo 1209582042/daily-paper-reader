@@ -1,0 +1,345 @@
+{
+  "date": "20261021",
+  "date_label": "",
+  "generated_at": "2026-10-21 22:39:38 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2610.17640v1",
+      "route": "202610/21/2610.17640v1-memact-streaming-spatial-understanding-with-memory-and-active-exploration",
+      "title": "MemAct: Streaming Spatial Understanding with Memory and Active Exploration",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "流式空间理解中增量写入结构化记忆并按需检索",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.17844v1",
+      "route": "202610/21/2610.17844v1-what-makes-a-good-visual-representation-for-spatial-understanding-in-mllms",
+      "title": "What Makes a Good Visual Representation for Spatial Understanding in MLLMs?",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "何种迁移几何表征最利于多模态大模型空间理解",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.18694v1",
+      "route": "202610/21/2610.18694v1-georeader-learning-latent-geometry-for-spatial-reasoning-in-vision-language-models",
+      "title": "GeoReader: Learning Latent Geometry for Spatial Reasoning in Vision-Language Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "学习VLM真正读取并用于空间推理的几何表示",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.22070v1",
+      "route": "202610/21/2610.22070v1-memory-as-weights-internalizing-long-term-history-for-streaming-videos",
+      "title": "Memory as Weights: Internalizing Long-Term History for Streaming Videos",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "将流式视频历史内化为固定大小LoRA权重而非上下文记忆",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.22356v1",
+      "route": "202610/21/2610.22356v1-dk-vlm-geometry-as-position-for-spatial-reasoning-in-vision-language-models",
+      "title": "DK-VLM: Geometry as Position for Spatial Reasoning in Vision-Language Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "双核注意力将语义token与3D几何位置融合以支持空间推理",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.22736v1",
+      "route": "202610/21/2610.22736v1-spatial-memory-by-agents-for-agents",
+      "title": "Spatial Memory by Agents, for Agents",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "设计查询无关的记忆构建与问题条件检索，用于空间问答",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.23998v1",
+      "route": "202610/21/2610.23998v1-prov-mem-proactive-memory-for-streaming-video-question-answering",
+      "title": "ProV-Mem: Proactive Memory for Streaming Video Question Answering",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向流式视频问答的免训练分层记忆与有界历史管理",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.24537v1",
+      "route": "202610/21/2610.24537v1-write-once-query-many-evolving-compact-reusable-memory-for-long-videos",
+      "title": "Write Once, Query Many: Evolving Compact Reusable Memory for Long Videos",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "长视频中可复用紧凑记忆与问题条件证据检索",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.24676v1",
+      "route": "202610/21/2610.24676v1-from-views-to-worlds-active-exploration-over-3d-worlds-for-vision-language-models",
+      "title": "From Views to Worlds: Active Exploration over 3D Worlds for Vision-Language Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "让视觉语言模型主动获取相机位姿与跨视角空间证据以进行3D空间推理",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.26659v2",
+      "route": "202610/21/2610.26659v2-spatialscout-can-vlm-agents-actively-explore-and-map-3d-scenes",
+      "title": "SpatialScout: Can VLM Agents Actively Explore and Map 3D Scenes?",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "VLM智能体探索场景并跨视角关联构建物体级三维地图",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.18478v1",
+      "route": "202610/21/2610.18478v1-memoryvln-from-ego-aware-memory-representation-to-cross-context-memory-reuse-in-vision-language-navigation",
+      "title": "MemoryVLN: From Ego-Aware Memory Representation to Cross-Context Memory Reuse in Vision-Language Navigation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "以遗忘曲线启发的时序采样构建与管理记忆，压缩长历史并复用过往空间经验",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.19257v1",
+      "route": "202610/21/2610.19257v1-long-horizon-video-generation-with-slot-memory-addressed-by-region-tokens",
+      "title": "Long-horizon Video Generation with Slot Memory Addressed By Region Tokens",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "长视频中带空间寻址召回的有界槽记忆",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.19674v1",
+      "route": "202610/21/2610.19674v1-remember-revisit-revise-scaffold-memory-for-long-horizon-3d-geometry",
+      "title": "Remember, Revisit, Revise: Scaffold Memory for Long-Horizon 3D Geometry",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "可修订的外部空间记忆在长视频窗口间维持几何一致性",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.20592v1",
+      "route": "202610/21/2610.20592v1-geothinker-f-endogenous-predictive-world-representations-for-fast-spatial-intelligence",
+      "title": "GeoThinker-$F$: Endogenous Predictive World Representations for Fast Spatial Intelligence",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "将三维几何内化到多模态大模型隐状态而非依赖外部三维编码器",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.17665v3",
+      "route": "202610/21/2610.17665v3-rota-bench-evaluating-3d-spatial-reasoning-through-interactive-projection-alignment",
+      "title": "RoTA-Bench: Evaluating 3D Spatial Reasoning through Interactive Projection Alignment",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "通过二维投影对齐评估三维空间推理的基准",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.17976v1",
+      "route": "202610/21/2610.17976v1-seeing-depth-but-choosing-cues-in-vision-language-models",
+      "title": "Seeing Depth but Choosing Cues in Vision-Language Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "受控深度线索冲突实验检验视觉语言模型是否真正利用深度几何",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.18356v1",
+      "route": "202610/21/2610.18356v1-urbex-agentic-spatial-grounding-for-city-scale-3d-scenes",
+      "title": "Urbex: Agentic Spatial Grounding for City-Scale 3D Scenes",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "VLM智能体在多视角三维城市场景中的主动空间定位",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.19564v2",
+      "route": "202610/21/2610.19564v2-frame-evidencea-benchmark-for-reference-frames-and-visual-evidence-in-multi-image-spatial-reasoning",
+      "title": "Frame Evidence:A Benchmark for Reference Frames and Visual Evidence in Multi-Image Spatial Reasoning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "多图像空间推理中参考系与视觉证据的基准",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.18446v2",
+      "route": "202610/21/2610.18446v2-cotl-compact-token-learning-for-3d-scene-representation",
+      "title": "CoTL: Compact Token Learning for 3D Scene Representation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "紧凑且视角一致的三维场景Token与高斯几何",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.18858v1",
+      "route": "202610/21/2610.18858v1-visual-tokens-on-demand-visual-budgeting-for-scalable-and-efficient-multi-image-reasoning-in-multimodal-llms",
+      "title": "Visual Tokens on Demand: Visual Budgeting for Scalable and Efficient Multi-Image Reasoning in Multimodal LLMs",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "视觉预算在多图间选择与压缩视觉令牌以高效推理",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    },
+    {
+      "paper_id": "2610.19071v1",
+      "route": "202610/21/2610.19071v1-monomip-multi-height-inverse-perspective-mapping-for-monocular-3d-object-detection",
+      "title": "MonoMIP: Multi-Height Inverse Perspective Mapping for Monocular 3D Object Detection",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "通过逆透视映射融合透视图像特征与度量BEV三维几何",
+      "first_seen_at": "2026-10-21 22:39:38 UTC",
+      "updated_at": "2026-10-21 22:39:38 UTC"
+    }
+  ]
+}

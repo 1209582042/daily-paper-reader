@@ -1,6 +1,304 @@
 {
-  "generated_at": "2026-03-06T19:11:18.471356+00:00",
-  "updated_date": "20260306",
+  "generated_at": "2026-10-21T22:33:17.801795+00:00",
+  "updated_date": "20261021",
   "carryover_days": 9,
-  "items": []
+  "tag_states": {
+    "vsr": {
+      "updated_date": "20261021",
+      "carryover_days": 9,
+      "items": [
+        {
+          "id": "2610.24767v1",
+          "source": "arxiv",
+          "title": "DialogMem: Evaluating Dialogue-Grounded Embodied Memory in 3D Environments",
+          "abstract": "Embodied agents in human-centered environments require memory that integrates what they observe with what humans tell them over time. However, existing embodied memories are built primarily from visual experience, leaving open how dialogue with humans can be grounded in the objects encountered throughout that experience. We introduce DialogMem, a two-phase benchmark in which agents build memory from time-aligned streams of posed RGB-D observations and dialogue, and later use it for instance-level object navigation and question answering (QA). DialogMem provides 142 episodes across 27 real-world 3D scenes, with 14,193 QA pairs and 11,890 navigation instructions. We evaluate nine memory representations within a unified framework of memory formation, evidence retrieval, and reasoning for task outputs. In experiments, appending dialogue to visual memory at evaluation time substantially improves QA but yields negligible navigation gains, suggesting that relevant dialogue is present in memory but not grounded to specific objects. Controlled diagnostics show that navigation improves with link quality but falls short of ground-truth object-level memory even under perfect linking. Retrieving the correct object entry and recovering its spatial location remain further bottlenecks. These results identify three bottlenecks for dialogue-grounded embodied memory: grounding and organizing dialogue at object-level entries during formation, retrieving the correct entry, and localizing it accurately.",
+          "authors": [
+            "SeongJun Jeong",
+            "Junghyun Kim",
+            "Gi-Cheon Kang",
+            "Byoung-Tak Zhang"
+          ],
+          "primary_category": "cs.AI",
+          "categories": [
+            "cs.AI"
+          ],
+          "published": "2026-10-17T16:19:40+00:00",
+          "link": "https://arxiv.org/pdf/2610.24767v1",
+          "tags": [
+            "keyword:vsr",
+            "query:vsr"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Builds embodied memory from posed RGB-D streams and dialogue for object navigation and spatial QA",
+          "llm_evidence_cn": "从带位姿的RGB-D流与对话构建具身记忆，用于物体导航与空间问答",
+          "llm_evidence": "从带位姿的RGB-D流与对话构建具身记忆，用于物体导航与空间问答",
+          "canonical_evidence": "从带位姿的RGB-D流与对话构建具身记忆，用于物体导航与空间问答",
+          "llm_tldr_en": "DialogMem is a two-phase benchmark where agents build memory from time-aligned posed RGB-D streams and dialogue, then use it for instance-level object navigation and spatial question answering across 27 real 3D scenes.",
+          "llm_tldr_cn": "现有具身记忆主要依赖视觉经验，难以将人类对话与环境中遇到的物体对齐。作者提出DialogMem两阶段基准，智能体从时间对齐的位姿RGB-D观测流和对话中构建记忆，再用于实例级物体导航与问答。该基准覆盖27个真实三维场景、142个回合和上万条问答与导航指令，并在统一框架下比较九种记忆表示。这为评估对话接地的空间记忆与历史证据检索提供了标准化平台。",
+          "llm_tldr": "现有具身记忆主要依赖视觉经验，难以将人类对话与环境中遇到的物体对齐。作者提出DialogMem两阶段基准，智能体从时间对齐的位姿RGB-D观测流和对话中构建记忆，再用于实例级物体导航与问答。该基准覆盖27个真实三维场景、142个回合和上万条问答与导航指令，并在统一框架下比较九种记忆表示。这为评估对话接地的空间记忆与历史证据检索提供了标准化平台。",
+          "llm_tags": [
+            "query:vsr"
+          ],
+          "matched_query_tag": "query:vsr",
+          "matched_query_text": "Maintain object identity, geometric consistency, and spatial relationships across viewpoints and temporal windows, and retrieve temporally grounded historical or out of view evidence for spatial question answering.",
+          "matched_requirement_id": "req-7",
+          "selection_source": "carryover_cache",
+          "paper_id": "2610.24767v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2610.22681v1",
+          "source": "arxiv",
+          "title": "EgoP$^{2}$C: Internalizing Plan-Perceive-Compose for Spatial Reasoning in Egocentric Video",
+          "abstract": "Answering complex spatial reasoning questions from egocentric video requires determining what evidence is needed, acquiring targeted observations, and combining them through multiple reasoning steps. Existing vision-language models (VLMs) struggle to perform this process reliably. Agentic systems address this challenge by querying external vision and geometry tools, but training their reasoning leaves these tools unchanged, so inaccurate observations can still lead to incorrect answers. We introduce EgoP$^{2}$C, a framework that internalizes a plan-perceive-compose process within a single VLM. To this end, we first train specialized Planner and Perception teachers using separate adapters (Dual-LoRA), then fine-tune the corresponding experts in a mixture-of-experts (MoE) student under their supervision. We subsequently train the student on trajectories generated by its current policy using a segment-level extension of multi-teacher on-policy distillation (MOPD), assigning different trajectory segments to different supervisors. The Planner teacher supervises which evidence-seeking questions to ask, when to stop gathering evidence, and how to compose the final answer. The Perception teacher supervises the video-grounded answers to those questions. At inference, the student executes this adaptive workflow end-to-end, without external spatial tools. Across three spatial reasoning benchmarks, EgoP$^{2}$C students built from Qwen3-VL-8B and SenseNova-SI-1.3-8B outperform their base models by an average of 9.2 and 7.5 percentage points, respectively. Across both backbones, EgoP$^{2}$C reduces inference FLOPs by 65.8-66.3% and achieves $1.29$-$1.49\\times$ speedups over their shared Dual-LoRA teacher.",
+          "authors": [
+            "Chaoyu Li",
+            "Arka Sadhu",
+            "Yuliang Li",
+            "Hyo Jin Kim",
+            "Yuning Chai",
+            "Pooyan Fazli"
+          ],
+          "primary_category": "cs.CV",
+          "categories": [
+            "cs.CV"
+          ],
+          "published": "2026-10-15T21:51:56+00:00",
+          "link": "https://arxiv.org/pdf/2610.22681v1",
+          "tags": [
+            "keyword:vsr",
+            "query:vsr"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Internalizes plan-perceive-compose spatial reasoning within a single VLM for egocentric video",
+          "llm_evidence_cn": "在单一视觉语言模型中内化计划-感知-组合的空间推理",
+          "llm_evidence": "在单一视觉语言模型中内化计划-感知-组合的空间推理",
+          "canonical_evidence": "在单一视觉语言模型中内化计划-感知-组合的空间推理",
+          "llm_tldr_en": "EgoP2C addresses unreliable spatial reasoning in VLMs on egocentric video by internalizing a plan-perceive-compose process, training Planner and Perception teachers with Dual-LoRA before fine-tuning a unified model.",
+          "llm_tldr_cn": "从第一视角视频回答复杂空间问题需要判断所需证据、获取针对性观测并多步组合，现有视觉语言模型难以可靠完成。作者提出EgoP2C，将计划-感知-组合流程内化到单个视觉语言模型中，先用双LoRA分别训练规划器与感知教师，再微调统一模型。该框架减少对外部几何工具的依赖，使模型能自主获取并组合视觉证据，为第一视角空间问答提供了更稳健的推理范式。",
+          "llm_tldr": "从第一视角视频回答复杂空间问题需要判断所需证据、获取针对性观测并多步组合，现有视觉语言模型难以可靠完成。作者提出EgoP2C，将计划-感知-组合流程内化到单个视觉语言模型中，先用双LoRA分别训练规划器与感知教师，再微调统一模型。该框架减少对外部几何工具的依赖，使模型能自主获取并组合视觉证据，为第一视角空间问答提供了更稳健的推理范式。",
+          "llm_tags": [
+            "query:vsr"
+          ],
+          "matched_query_tag": "query:vsr",
+          "matched_query_text": "spatial reasoning",
+          "matched_requirement_id": "req-6",
+          "selection_source": "carryover_cache",
+          "paper_id": "2610.22681v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2610.24705v1",
+          "source": "arxiv",
+          "title": "Relational Spatial Alignment for Vision-Language-Action Models",
+          "abstract": "Spatial understanding is essential for robots to perceive their surrounding environments and execute actions. Existing approaches typically encode 3D awareness into vision-language-action (VLA) models by directly aligning their representations with pre-trained 3D foundation models. However, we observe that such direct geometric feature alignment essentially exploits 3D foundation priors as a form of low-rank regularization in the feature space, resulting in severe rank collapse of the pre-trained VLA representations. In contrast, we shift the focus from enforcing point-wise equality to aligning pair-wise relationships. We propose a representation-alignment method that enables the injection of 3D spatial awareness without compromising the model's original expressivity. Extensive experiments on public benchmarks, our new spatial reasoning benchmark, and real-world manipulation scenarios demonstrate that our approach effectively incorporates 3D spatial representations into VLA reasoning, achieving robust performance and enhanced spatial awareness across diverse manipulation tasks.",
+          "authors": [
+            "Chaoran Zhu",
+            "Hengyi Wang",
+            "Chenglin Cui",
+            "Yazhe Wan",
+            "Taein Kwon",
+            "Changjae Oh"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-10-17T14:08:49+00:00",
+          "link": "https://arxiv.org/pdf/2610.24705v1",
+          "tags": [
+            "keyword:vsr",
+            "query:vsr"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Aligns VLA representations with 3D geometry via relational rather than point-wise alignment",
+          "llm_evidence_cn": "以关系对齐而非逐点对齐将三维几何注入视觉语言动作模型",
+          "llm_evidence": "以关系对齐而非逐点对齐将三维几何注入视觉语言动作模型",
+          "canonical_evidence": "以关系对齐而非逐点对齐将三维几何注入视觉语言动作模型",
+          "llm_tldr_en": "Relational Spatial Alignment injects 3D spatial awareness into vision-language-action models by aligning pair-wise relations instead of point-wise features, avoiding rank collapse of pre-trained representations.",
+          "llm_tldr_cn": "现有方法通过直接对齐预训练三维基础模型把三维感知注入视觉语言动作模型，但作者发现这种逐点几何对齐会导致表示严重秩塌缩。为此他们转而对齐成对关系，提出关系式空间对齐方法，在不损害模型原有表达力的前提下注入三维空间感知。这一做法为二维语义特征与三维几何表示的融合提供了更稳健的对齐范式，对空间推理与机器人动作具有直接价值。",
+          "llm_tldr": "现有方法通过直接对齐预训练三维基础模型把三维感知注入视觉语言动作模型，但作者发现这种逐点几何对齐会导致表示严重秩塌缩。为此他们转而对齐成对关系，提出关系式空间对齐方法，在不损害模型原有表达力的前提下注入三维空间感知。这一做法为二维语义特征与三维几何表示的融合提供了更稳健的对齐范式，对空间推理与机器人动作具有直接价值。",
+          "llm_tags": [
+            "query:vsr"
+          ],
+          "matched_query_tag": "query:vsr",
+          "matched_query_text": "Improve spatial reasoning in vision language models by aligning and fusing 2D semantic features with explicit or implicit 3D geometric representations, including cross attention, intermediate layer fusion, and question conditioned geometry readout.",
+          "matched_requirement_id": "req-10",
+          "selection_source": "carryover_cache",
+          "paper_id": "2610.24705v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2610.22700v1",
+          "source": "arxiv",
+          "title": "Thinking from Above: Efficient Spatial Reasoning with Bird's-Eye-View Visual Tokens",
+          "abstract": "Existing video multimodal large language models (MLLMs) organize observations primarily in time, but embodied spatial reasoning requires organizing them in space. Consequently, their visual representations can remain locally consistent across nearby frames while lacking a persistent spatial context that is stable across viewpoints and time. We exploit depth and camera pose, which are naturally available to embodied agents, to explicitly establish this spatial correspondence. We introduce Cambrian-BEV, which extends Cambrian-S with a parameter-free geometric tokenization scheme that back-projects visual patch features from each frame into a shared bird's-eye-view (BEV) coordinate frame and averages features that fall within the same spatial cell. Thus, observations of the same physical location, regardless of viewpoint or time step, are aggregated into a common spatial token. In addition to providing a persistent scene representation, this formulation acts as an efficient compression mechanism: 128 frames containing approximately 100K DINOv3 patch features are consolidated into a fixed 27$\\times$27 grid of only 729 BEV tokens, cutting LLM prefill time by $2.9\\times$ and peak memory by $3.6\\times$. Cambrian-BEV requires no architectural modification beyond BEV tokenization and uses a frozen DINOv3 vision encoder with a trainable multimodal projector and LLM. On VSI-Bench, our model reaches 63.48, $+8.5$ points over an identically fine-tuned frame-token control with $12.6\\times$ fewer visual tokens, with particularly large gains on room size ($+24.5$) and relative direction ($+34.1$). On ReVSI, it reaches 44.68, $+4.5$ over the corresponding control.",
+          "authors": [
+            "Faizan Siddiqui",
+            "Nirav Savaliya",
+            "Sahith Reddy Chada",
+            "Enna Sachdeva"
+          ],
+          "primary_category": "cs.CV",
+          "categories": [
+            "cs.CV"
+          ],
+          "published": "2026-10-15T22:06:26+00:00",
+          "link": "https://arxiv.org/pdf/2610.22700v1",
+          "tags": [
+            "keyword:vsr",
+            "query:vsr"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "fusing 2D patch features into a shared BEV 3D frame via depth and pose",
+          "llm_evidence_cn": "借助深度与位姿把2D图像块特征融合到统一鸟瞰图坐标",
+          "llm_evidence": "借助深度与位姿把2D图像块特征融合到统一鸟瞰图坐标",
+          "canonical_evidence": "借助深度与位姿把2D图像块特征融合到统一鸟瞰图坐标",
+          "llm_tldr_en": "Video MLLMs organize observations in time and lack persistent spatial context across viewpoints; Cambrian-BEV uses depth and camera pose to back-project patch features into a shared bird's-eye-view frame, averaging features per spatial cell into stable spatial tokens.",
+          "llm_tldr_cn": "现有视频多模态大模型主要按时间组织观测，视觉表示在相邻帧局部一致，却缺乏跨视角与跨时间稳定的空间上下文。Cambrian-BEV利用具身智能体天然可得的深度与相机位姿，将每帧图像块特征反投影到统一鸟瞰图坐标系，并对落入同一空间单元的特征求平均，形成参数无关的几何令牌。该表示提升了具身空间推理的效率与一致性，为2D语义与3D几何融合提供了简洁方案。",
+          "llm_tldr": "现有视频多模态大模型主要按时间组织观测，视觉表示在相邻帧局部一致，却缺乏跨视角与跨时间稳定的空间上下文。Cambrian-BEV利用具身智能体天然可得的深度与相机位姿，将每帧图像块特征反投影到统一鸟瞰图坐标系，并对落入同一空间单元的特征求平均，形成参数无关的几何令牌。该表示提升了具身空间推理的效率与一致性，为2D语义与3D几何融合提供了简洁方案。",
+          "llm_tags": [
+            "query:vsr"
+          ],
+          "matched_query_tag": "query:vsr",
+          "matched_query_text": "Improve spatial reasoning in vision language models by aligning and fusing 2D semantic features with explicit or implicit 3D geometric representations, including cross attention, intermediate layer fusion, and question conditioned geometry readout.",
+          "matched_requirement_id": "req-10",
+          "selection_source": "carryover_cache",
+          "paper_id": "2610.22700v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2610.27104v1",
+          "source": "arxiv",
+          "title": "LVMem: Image-Augmented Memory for Long-Horizon Question Answering",
+          "abstract": "Reliable language-guided perception is essential for embodied agents, where questions about objects, events, and their locations must be answered from long observation histories. Unlike conventional visual question answering, realistic robotic settings require reasoning over extended temporal horizons and persistent scene memory. We build upon the view-based memory paradigm and propose an efficient framework for long-horizon spatio-temporal question answering. While existing view-based systems typically store either text captions or visual embeddings, we extend the ReMEmbR-style memory with image paths that link each stored description to its original visual content. To make the stored annotations more informative, we replace uniform sampling during memory construction with an optical-flow-based frame selection strategy (PSFR) and store an object-centric descriptive scene representation instead of plain captions. We further equip a VLM-based agent with an adaptive retrieval tool that returns the image associated with the most relevant caption, allowing the agent to decide when visual inspection is needed. On the OC-NaVQA benchmark, LVMem outperforms ReMEmbR on binary and positional metrics with both backbones and matches or exceeds a 4D scene graph DAAAM baseline on binary accuracy, while operating on a lightweight view-based memory that requires no explicit graph construction.",
+          "authors": [
+            "Victoria Khoruzhaya",
+            "Maksim Kalmykov",
+            "Tuong Do Minh",
+            "Tatiana Zemskova",
+            "Yixin Zhu",
+            "Dmitry Yudin"
+          ],
+          "primary_category": "cs.CV",
+          "categories": [
+            "cs.CV"
+          ],
+          "published": "2026-10-19T18:01:56+00:00",
+          "link": "https://arxiv.org/pdf/2610.27104v1",
+          "tags": [
+            "keyword:vsr",
+            "query:vsr"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "View-based persistent memory for long-horizon spatio-temporal question answering with image-linked records",
+          "llm_evidence_cn": "基于视图的持久空间记忆用于长时程时空问答",
+          "llm_evidence": "基于视图的持久空间记忆用于长时程时空问答",
+          "canonical_evidence": "基于视图的持久空间记忆用于长时程时空问答",
+          "llm_tldr_en": "LVMem extends view-based memory with image paths linking stored descriptions to original visuals and non-uniform sampling, enabling efficient long-horizon spatio-temporal question answering for embodied agents.",
+          "llm_tldr_cn": "现有具身智能体的视觉问答难以在长观测历史中保持持久场景记忆，且基于视图的记忆系统通常只存文本描述或视觉嵌入。本文提出LVMem框架，为每条存储描述附加图像路径以链接原始视觉内容，并用更信息丰富的采样替代均匀采样。实验表明该框架提升了长时程时空问答的效率与准确性。该工作为机器人长历史空间记忆与历史证据检索提供了实用方案。",
+          "llm_tldr": "现有具身智能体的视觉问答难以在长观测历史中保持持久场景记忆，且基于视图的记忆系统通常只存文本描述或视觉嵌入。本文提出LVMem框架，为每条存储描述附加图像路径以链接原始视觉内容，并用更信息丰富的采样替代均匀采样。实验表明该框架提升了长时程时空问答的效率与准确性。该工作为机器人长历史空间记忆与历史证据检索提供了实用方案。",
+          "llm_tags": [
+            "query:vsr"
+          ],
+          "matched_query_tag": "query:vsr",
+          "matched_query_text": "Maintain object identity, geometric consistency, and spatial relationships across viewpoints and temporal windows, and retrieve temporally grounded historical or out of view evidence for spatial question answering.",
+          "matched_requirement_id": "req-7",
+          "selection_source": "carryover_cache",
+          "paper_id": "2610.27104v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2610.28280v1",
+          "source": "arxiv",
+          "title": "GALA: Geometry-Aware Language Model for Controllable Object Arrangement",
+          "abstract": "Reasoning about fine-grained placement constraints, such as support and containment, is essential for realistic 3D scene creation. It remains a significant challenge for existing methods that rely on simplified object representations like oriented bounding box (OBB), which are blind to the detailed geometry. To address this limitation, we introduce GALA, a geometry-aware language model with explicit point cloud perception for controllable object placement. Our model performs autoregressively by predicting the 6D pose of one target object at a time conditioned on the scene context and placement instruction. We utilize a two-stage training strategy: the first stage aligns geometric and textual modalities through pretraining tasks, and the second stage fine-tunes the model for placement. To facilitate this task, we also curate a multi-source scene dataset covering diverse room types and fine-grained furniture arrangements, which will be open-sourced for community benefit. Experiments on our benchmark show our model significantly outperforms baselines without explicit geometric reasoning. We further develop a multi-stage plan-place-verify agent pipeline that uses the model for text-driven scene generation. Project Page: https://xccelephant.github.io/paper/gala/",
+          "authors": [
+            "Chucheng Xiang",
+            "Runze Wang",
+            "Zhi Deng",
+            "Ruchao Bao",
+            "Yuanwei Zhang",
+            "Yuxuan Xie",
+            "Hanliu Wang",
+            "Liangzhen Fei",
+            "Wenzheng Wu",
+            "Cheng Wan",
+            "Peifeng Li",
+            "Zhongyuan Liu",
+            "Ligang Liu"
+          ],
+          "primary_category": "cs.GR",
+          "categories": [
+            "cs.GR",
+            "cs.AI",
+            "cs.CV"
+          ],
+          "published": "2026-10-20T14:32:52+00:00",
+          "link": "https://arxiv.org/pdf/2610.28280v1",
+          "tags": [
+            "keyword:vsr",
+            "query:vsr"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "aligns geometric point cloud and textual modalities for geometry-aware language modeling",
+          "llm_evidence_cn": "对齐点云几何与文本模态实现几何感知语言建模",
+          "llm_evidence": "对齐点云几何与文本模态实现几何感知语言建模",
+          "canonical_evidence": "对齐点云几何与文本模态实现几何感知语言建模",
+          "llm_tldr_en": "Fine-grained placement constraints remain hard for methods using coarse OBB representations. GALA is a geometry-aware language model with explicit point cloud perception that predicts 6D poses autoregressively, using two-stage training that first aligns geometric and textual modalities then fine-tunes for controllable object arrangement.",
+          "llm_tldr_cn": "现有三维场景布置方法依赖有向包围盒等简化表示，无法感知细粒度支撑与包含等放置约束。作者提出GALA，一种具备显式点云感知的几何感知语言模型，逐个自回归预测目标的6D位姿。训练分两阶段，先通过预训练任务对齐几何与文本模态，再针对可控布置微调。实验表明该模型能依据场景上下文与放置指令实现更精确的物体布置，为几何-语言对齐提供了范例。",
+          "llm_tldr": "现有三维场景布置方法依赖有向包围盒等简化表示，无法感知细粒度支撑与包含等放置约束。作者提出GALA，一种具备显式点云感知的几何感知语言模型，逐个自回归预测目标的6D位姿。训练分两阶段，先通过预训练任务对齐几何与文本模态，再针对可控布置微调。实验表明该模型能依据场景上下文与放置指令实现更精确的物体布置，为几何-语言对齐提供了范例。",
+          "llm_tags": [
+            "query:vsr"
+          ],
+          "matched_query_tag": "query:vsr",
+          "matched_query_text": "Train vision language models to interpret and use geometric information through geometry language alignment, spatial descriptions, pose or depth supervision, and spatial question answering, with controlled evidence that geometry improves the answers.",
+          "matched_requirement_id": "req-9",
+          "selection_source": "carryover_cache",
+          "paper_id": "2610.28280v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2610.25551v1",
+          "source": "arxiv",
+          "title": "StreamAhead: Real-Time Streaming Video Question Answering via Adaptive Precomputation",
+          "abstract": "Real-time streaming video question answering with vision-language models must answer queries that arrive at any time with low latency while sustaining the video-processing rate required by the application. Existing systems construct key-value (KV) caches for the entire video as it arrives, although a query typically uses only a few of the preceding frames as evidence. This highlights a fundamental trade-off: performing more computation as video arrives reduces query-time computation but can increase processing lag, whereas deferring computation can increase the video-processing rate but requires additional query-time computation for retrieved content.   We present StreamAhead, an algorithm-system co-design that exploits this trade-off through adaptive precomputation: dynamically controlling how much computation to complete for each video segment before a query arrives. StreamAhead encodes video segments independently and lets each remain at a different representation level, from inexpensive visual features to costly KV caches, completing KV caches only for the retrieved segments when a query arrives. StreamAhead profiles offline the cost of advancing a segment to each representation level. Its runtime uses these profiles to schedule segment computation concurrently with query execution, pipelining it across heterogeneous CPU and GPU resources while maintaining the required video-processing rate. StreamAhead achieves accuracy competitive with state-of-the-art methods with up to 10.4x lower time-to-first-token (TTFT), and up to 5.9x lower TTFT than state-of-the-art streaming systems. It sustains 30 FPS with P95 TTFT under 0.5 s, and up to 57 FPS with P95 TTFT under 2 s. To our knowledge, StreamAhead is the first real-time streaming video QA system with competitive accuracy, setting a new Pareto frontier between video-processing rate and TTFT.",
+          "authors": [
+            "Haoyang Fan",
+            "Dhruv Parikh",
+            "Rajgopal Kannan",
+            "Viktor Prasanna"
+          ],
+          "primary_category": "cs.DC",
+          "categories": [
+            "cs.DC",
+            "cs.CV"
+          ],
+          "published": "2026-10-18T21:48:59+00:00",
+          "link": "https://arxiv.org/pdf/2610.25551v1",
+          "tags": [
+            "keyword:vsr",
+            "query:vsr"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Real-time streaming video question answering with KV cache and adaptive precomputation",
+          "llm_evidence_cn": "基于KV缓存与自适应预计算的实时流式视频问答",
+          "llm_evidence": "基于KV缓存与自适应预计算的实时流式视频问答",
+          "canonical_evidence": "基于KV缓存与自适应预计算的实时流式视频问答",
+          "llm_tldr_en": "Real-time streaming video QA must balance latency and video throughput. StreamAhead is an algorithm-system co-design that adaptively precomputes KV caches for likely-needed frames, exploiting the trade-off to cut query latency.",
+          "llm_tldr_cn": "实时流式视频问答要求随时到达的查询低延迟作答，同时维持应用所需的视频处理速率。现有系统为整段视频构建KV缓存，但单个查询通常只用少数历史帧作为证据，造成计算与延迟的权衡困境。本文提出StreamAhead，通过算法与系统协同设计，自适应地对可能被检索的帧进行预计算，从而在保持处理吞吐的同时降低查询时延。该工作为流式视频场景下的有界证据检索与计算调度提供了实用方案。",
+          "llm_tldr": "实时流式视频问答要求随时到达的查询低延迟作答，同时维持应用所需的视频处理速率。现有系统为整段视频构建KV缓存，但单个查询通常只用少数历史帧作为证据，造成计算与延迟的权衡困境。本文提出StreamAhead，通过算法与系统协同设计，自适应地对可能被检索的帧进行预计算，从而在保持处理吞吐的同时降低查询时延。该工作为流式视频场景下的有界证据检索与计算调度提供了实用方案。",
+          "llm_tags": [
+            "query:vsr"
+          ],
+          "matched_query_tag": "query:vsr",
+          "matched_query_text": "streaming video",
+          "matched_requirement_id": "req-2",
+          "selection_source": "carryover_cache",
+          "paper_id": "2610.25551v1",
+          "carry_days": 1
+        }
+      ]
+    }
+  }
 }
