@@ -1,0 +1,2007 @@
+StreamFlow: Dynamic Memory Flows for
+Streaming Video Understanding
+Muxin Fu1,2,*, Yifan Zhang3,*, Wentao Zhang2,*, Fangming Guo1, Qian Chen1,4
+Guibin Zhang5, Shuicheng Yan5,†, Bo An2,†
+1Tongji University, 2Nanyang Technological University, 3University of Michigan
+4The Hong Kong University of Science and Technology, 5National University of Singapore
+*Equal contribution,
+†Corresponding authors
+Abstract Streaming video understanding requires multimodal large language models (MLLMs) to
+preserve relevant evidence from continuously evolving streams under strict causality and bounded
+memory. Yet existing paradigms remain limited: model-based methods require intrusive backbone
+updates, while memory-based methods expend substantial visual-encoding computation on temporally
+redundant content and rely on rigid access to visual history. To address these limitations, we introduce
+StreamFlow, an efficient visual memory framework that enables dynamic, on-demand access to historical
+visual information. StreamFlow combines a lightweight, dynamics-aware mid-term memory that filters
+temporal redundancy before visual encoding with a latent long-term memory that consolidates historical
+video content into visual latents accessible to subsequent reasoning. During generation, an attention-
+guided retrieval mechanism injects relevant visual latents when the model’s reliance on visual evidence
+weakens. StreamFlow achieves state-of-the-art streaming video understanding performance, reaching
+67.73% overall accuracy on StreamingBench, while also delivering strong performance on offline long-
+video benchmarks. Relative to the vanilla setting, it improves the visual attention score (VAS) by 59.1%
+while reducing end-to-end latency and peak memory by 50.4% and 21.1%, respectively, enabling more
+visually grounded and efficient reasoning.
+1. Introduction
+Recent years have witnessed remarkable advances in
+the capabilities of multimodal large language mod-
+els (MLLMs) across a broad range of video under-
+standing tasks (Tang et al., 2025; Bai et al., 2025;
+Team, 2026). However, emerging scenarios such as
+autonomous driving (Fu et al., 2025b), embodied
+robotics (Black et al., 2024) and computer-using
+agents (Tan et al., 2024) increasingly demand real-
+time understanding of continuously evolving visual
+streams. This growing demand has shifted research
+attention from conventional offline video understand-
+ing toward the more challenging paradigm of stream-
+ing video understanding (Zeng et al., 2026; Qian
+et al., 2025; Huang et al., 2025).
+MLLM
+Backbone
+Model-based Methods 
+Memory-based Methods 
+...
+MLLM
+Backbone
+...
+Memory
+Mid-Term
+Memory
+Memory
+Consolidation
+Long-Term
+Memory
+StreamFlow
+MLLM
+Backbone
+...
+Text Token
+Latent Token
+Text Token
+Generation
+Visual Attention Score
+Generation Progress (%)
+Figure 1 | Overview and motivation of StreamFlow.
+Left: comparison of model-based and memory-based
+methods with StreamFlow. Right: visual attention dy-
+namics during autoregressive generation.
+Despite its importance, streaming video understanding remains challenging, requiring MLLMs to retain relevant
+evidence from unbounded streams under strict causality and resource constraints (Lin et al., 2026; Qian et al.,
+2024). Existing approaches can be broadly categorized into two paradigms, as illustrated in Figure 1 (left).
+(I) Model-based methods fine-tune the MLLM backbone on streaming videos to endow the model with
+online perception (Huang et al., 2025; Guan et al., 2026; Liu et al., 2026). While this approach can yield
+substantial performance gains, adapting the full backbone incurs prohibitive training costs and risks catastrophic
+forgetting (Zhou et al., 2024; Xie et al., 2025). (II) Memory-based methods, by contrast, couple a frozen
+MLLM with an external memory that incrementally stores historical visual information (Di et al., 2025; Ning
+arXiv:2608.10949v1  [cs.CV]  11 Aug 2026
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+et al., 2025; Kim et al., 2026; Chen et al., 2025). This modular paradigm has gained growing attention, as it
+avoids full-backbone training and integrates seamlessly with pretrained MLLMs.
+However, despite their efficiency, existing memory-based approaches still provide limited fine-grained man-
+agement over visual information in two key aspects: (I) Redundant visual encoding: existing approaches
+densely encode incoming frames before memory construction, spending substantial computation on static or
+predictable regions (Tang et al., 2026; Shen et al., 2026; Yao et al., 2025). (II) Rigid memory access: historical
+evidence is typically confined to a fixed visual prefix, incurring persistent context overhead and causing visual
+attention to decline during generation, as shown in Figure 1 (right), thereby increasing hallucination risk (Liu
+et al., 2025; Huang et al., 2026; Yu et al., 2025).
+How can we design a streaming memory that decides what visual information to encode and when to reactivate
+historical evidence during generation?
+To address these limitations, we propose StreamFlow, a novel memory framework that efficiently enables
+dynamic, on-demand access to historical visual information. Specifically, StreamFlow comprises two comple-
+mentary memory modules and an attention-guided injection mechanism: (I) Dynamics-aware mid-term
+memory identifies temporal changes directly from raw pixel differences and selectively encodes dynamic
+visual content, reducing redundant encoding while providing the MLLM with direct access to recent spatiotem-
+poral information. (II) Latent long-term memory stores and consolidates earlier visual content as latent
+representations within a fixed capacity, keeping memory usage bounded as the video stream grows while
+making long-term visual information available for flexible access during generation. (III) Attention-guided
+memory injection monitors the MLLM’s attention to visual information and injects visual latents retrieved
+from the long-term memory when needed. These components together form a continuous memory flow in
+which visual information is selectively encoded, consolidated over time, and dynamically reactivated when
+grounding weakens during generation.
+Extensive evaluations across diverse video understanding benchmarks consistently demonstrate the effective-
+ness of StreamFlow in both streaming and offline settings. (I) Strong Performance. On StreamingBench,
+StreamFlow surpasses the previous best result by 4.63%. Its benefits extend to long-video understanding,
+outperforming leading streaming methods by 2.24% and 8.22% on MLVU and VideoMME, respectively. (II)
+Improved Visual Grounding. Mechanistic analysis shows that attention-guided injection improves the mean
+visual attention score (VAS) by 59.1% relative to the vanilla setting, indicating that StreamFlow restores
+attention to historical visual evidence as generation proceeds. (III) Greater Efficiency. Relative to the vanilla
+setting, StreamFlow further reduces end-to-end latency and peak memory by 50.4% and 21.1%, respectively.
+In summary, our main contributions are as follows:
+• Complementary Visual Memory. We introduce mid-term and long-term memories that selectively encode
+evolving content and consolidate historical evidence within a fixed capacity.
+• Attention-Guided Injection. We develop a visual attention score-guided mechanism that dynamically
+injects relevant visual latent memory during generation, mitigating visual attention drift.
+• Extensive Evaluation. StreamFlow establishes state-of-the-art performance on streaming benchmarks
+while delivering strong offline performance, improved visual grounding, and greater inference efficiency.
+2. Related Work
+Streaming Video Understanding. Although video MLLMs have demonstrated strong performance in offline
+settings, streaming video understanding requires models to causally process continuously arriving visual inputs
+under strict latency and memory constraints (Tang et al., 2025). A major line of work equips MLLMs with
+streaming capabilities through training objectives designed for streaming and online instruction tuning (Chen
+et al., 2024; Guan et al., 2026; Huang et al., 2025; Liu et al., 2026), often together with specialized designs for
+perception, computation, memory, and reasoning (He et al., 2024; Qian et al., 2025; Song et al., 2023; Wu
+et al., 2024b; Zeng et al., 2026). However, in many such systems, the modules introduced for streaming and the
+MLLM backbone are jointly optimized to align their representations. While effective, such joint optimization
+introduces substantial training costs and may compromise some of the general capabilities acquired during
+pretraining. This motivates lightweight approaches that endow frozen MLLMs with streaming capabilities
+without modifying their pretrained parameters.
+2
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Frames
+Buffer
+Temporal Residual Scoring
+P-Frame
+I-Frame
+...
+Groups of Pictures
+I
+P
+P
+...
+Latent GOP Memory
+G
+G
+G
+G'
+G
+G
+memory consolidation
+old memory
+new memory
+Latent token
+Visual Prefix
+…
+…
+spare GOPs from mid-term memory
+MLLM
+Backbone
+Autoregressive Generation
+insert latent tokens into the generated sequence
+I
+P
+I-frame
+P-frame
+Text token
+Visual token
+overflow
+Visual memory flow
+Video Stream
+0 s
+12 s
+27 s
+43 s
+58 s
+old memory
+new memory
+Attention-Guided Memory Injection
+Dynamics-Aware Mid-Term Memory
+Latent Long-Term Memory
+I
+P
+P
+...
+Retrieval and Compression
+top-K
+GOP latents
+compressor
+text
+visual latents
+memory injection
+learned queries
+G
+GOP-level latent tokens
+conditional
+compression
+Sparse GOP Memory
+Figure 2 | Overview of StreamFlow. (1) Dynamics-aware mid-term memory organizes incoming frames into
+GOPs using temporal residual scoring. (2) Latent long-term memory encodes overflowing GOPs as visual latents
+and consolidates similar GOPs. (3) Attention-guided injection retrieves query-relevant GOPs, compresses them
+into visual latents, and injects them when the visual attention score falls below a threshold.
+Streaming Video Memory. Memory mechanisms summarize unbounded video streams into compact repre-
+sentations, enabling MLLMs to process streaming visual inputs (Meng et al., 2026; Zou et al., 2024). Existing
+methods can be characterized by their memory construction and utilization (Shan et al., 2025; Zhang et al.,
+2025). For memory construction, prior work compresses visual tokens or video KV caches under bounded
+memory budgets, often organizing historical information through recurrent, hierarchical, or multi-stage mem-
+ory structures (Chen et al., 2026a, 2025; Kim et al., 2026; Wang et al., 2025; Xie et al., 2026). For memory
+utilization, stored information is commonly retrieved from external caches at query time (Di et al., 2025; Ning
+et al., 2025; Chen et al., 2025) or incorporated into the model through predefined access mechanisms (Chen
+et al., 2026b; Liang et al., 2026; Zhang et al., 2026). Representative approaches include ReKV (Di et al., 2025),
+which stores historical video KV caches in an external memory, and TimeChat-Online (Yao et al., 2025), which
+applies differential temporal token dropping to progressively condense streaming visual tokens. Despite these
+advances, many existing systems identify temporal redundancy only after visual encoding or expose historical
+memory through fixed or predetermined access patterns. In contrast, StreamFlow performs temporal filtering
+directly on raw frames before visual encoding and dynamically injects relevant long-term memory based on the
+model’s reliance on visual information during generation.
+3. Methodology
+In this section, we first present the overall pipeline of StreamFlow (⊲Section 3.1). We then describe its two
+memory modules in detail: the dynamics-aware mid-term memory (⊲Section 3.2) and the latent long-term
+memory (⊲Section 3.3). Finally, we introduce the attention-guided memory injection mechanism (⊲Section 3.4),
+which continuously monitors the model’s reliance on visual information during generation and injects relevant
+visual latents on demand.
+3.1. Overall Pipeline
+As illustrated in Figure 2, StreamFlow comprises a dynamics-aware mid-term memory MM and a latent long-
+term memory ML, which preserve visual information at different temporal scales. As video frames continuously
+arrive, the mid-term memory selectively retains dynamic visual patches from incoming frames before visual
+3
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+encoding. Once the mid-term memory is full, older visual information is encoded into GOP-level visual latents
+and transferred to the long-term memory for later retrieval. During answer generation, StreamFlow monitors
+the MLLM’s attention to visual information and injects visual latents retrieved from the long-term memory
+when needed, enabling adaptive reference to historical visual evidence and mitigating attention drift.
+3.2. Dynamics-Aware Mid-Term Memory
+To support real-time efficient spatiotemporal perception, StreamFlow maintains a bounded dynamics-aware
+mid-term memory MM. It partitions the video stream into consecutive groups of pictures (GOPs), identifies
+temporal changes from raw pixel differences, and selectively encodes dynamic patches. By filtering redundant
+content before visual encoding, it reduces unnecessary encoding computation while preserving fine-grained
+recent dynamics.
+Reference-Anchored Grouping. As a basis for quantifying local temporal changes, the mid-term memory
+organizes the video stream into consecutive GOPs, each comprising a single I-frame and multiple P-frames.
+Specifically, as video frames arrive, StreamFlow temporarily stores them in their original form in a frame buffer.
+Once the buffer accumulates 𝑇frames, they are grouped into the 𝑔-th GOP, denoted as G𝑔= {X𝑔
+0, X𝑔
+1, . . . , X𝑔
+𝑇−1},
+and passed to the subsequent patch-level temporal residual scoring module. Within this module, X𝑔
+0 serves
+as the shared I-frame reference, while the remaining frames serve as P-frames for measuring local temporal
+variations against the reference.
+Patch-Level Residual Scoring. Streaming videos exhibit substantial local temporal redundancy: over short
+intervals, most content remains stable, with new visual evidence concentrated in a few dynamic regions.
+Motivated by this observation, StreamFlow uses temporal residuals within each GOP to localize these changes
+directly in raw pixel space before visual encoding. Given the reference frame X𝑔
+0, we construct a residual field
+for each P-frame X𝑔
+𝑓as
+R𝑔
+𝑓(u) = X𝑔
+𝑓(u) −X𝑔
+0(u),
+𝑓= 1, . . . , 𝑇−1,
+(1)
+where u denotes a spatial location and R𝑔
+𝑓(u) ∈ℝ3 is the corresponding RGB residual. Since scene dynamics
+typically produce spatially localized residual responses, we aggregate residual magnitudes within each visual
+patch to reduce sensitivity to pixel-level noise. For the 𝑖-th patch covering the pixel set P𝑖, its temporal residual
+score is defined as
+𝑠𝑔
+𝑓,𝑖=
+1
+|P𝑖|
+∑︁
+u∈P𝑖
+R𝑔
+𝑓(u)
+
+2 .
+(2)
+This reference-anchored score provides a dynamics-aware prior that identifies where new temporal evidence
+emerges and guides subsequent sparse patch selection.
+Sparse Patch Selection. Guided by temporal residual scores, StreamFlow allocates asymmetric patch budgets
+across each GOP to suppress temporally redundant content while preserving informative dynamics. All 𝑁I-frame
+patches are retained as the spatial reference, whereas each P-frame keeps the top ⌈𝜌𝑁⌉patches, with 𝜌∈(0, 1].
+Formally, the selected index set maximizes the aggregate residual score under this retention constraint:
+S𝑔
+𝑓= arg max
+I⊆{1,...,𝑁}
+|I|=⌈𝜌𝑁⌉
+∑︁
+𝑖∈I
+𝑠𝑔
+𝑓,𝑖.
+(3)
+The selected patches are then chronologically arranged to form a sparse GOP b
+G𝑔, which preserves the most
+informative visual content and is subsequently incorporated into the mid-term memory MM.
+3.3. Latent Long-Term Memory
+To preserve historical visual information displaced from MM, StreamFlow introduces a latent long-term memory
+ML, which encodes earlier video segments as GOP-level visual latents that remain accessible to subsequent
+reasoning. By consolidating visually redundant GOPs through I-frame-guided temporal subsampling and token
+pruning, ML progressively consolidates historical evidence within a fixed memory budget as the stream evolves.
+4
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Visual Latent Encoding. When a sparse GOP b
+G𝑔leaves the mid-term memory, StreamFlow encodes its retained
+patches at their original spatiotemporal coordinates using the frozen visual encoder E𝑣of the backbone MLLM:
+H𝑔= E𝑣
+
+b
+G𝑔
+=
+h
+h𝑔
+1, . . . , h𝑔
+𝑁𝑔
+i⊤
+∈ℝ𝑁𝑔×𝑑𝑣,
+(4)
+where 𝑁𝑔denotes the number of retained visual tokens and 𝑑𝑣is the hidden dimension of the visual encoder.
+The resulting query-independent visual latents preserve the selected spatiotemporal structure of the GOP.
+Memory Management. Directly appending incoming visual latents would make ML grow unbounded, while
+FIFO eviction would discard early visual evidence. StreamFlow instead maintains a temporally ordered latent
+memory with a fixed capacity of 𝐶GOPs:
+ML =
+
+H(1), . . . , H(𝑛)
+,
+0 ≤𝑛≤𝐶,
+(5)
+where H( 𝑗) = [I𝑗, P1
+𝑗, . . . , P𝑇−1
+𝑗
+] is the 𝑗-th GOP representation and the entries are ordered from oldest to newest.
+If 𝑛< 𝐶, the incoming GOP Hnew is appended directly. Once the memory reaches capacity, StreamFlow selects
+the most similar adjacent pair by averaging the cosine similarities between spatially corresponding tokens of
+their I-frames:
+𝑠𝑗= 1
+𝑁
+𝑁
+∑︁
+𝑖=1
+cos  I𝑗,𝑖, I𝑗+1,𝑖
+
+,
+𝑝= arg max
+𝑗∈{1,...,𝐶−1}
+𝑠𝑗,
+(6)
+where 𝑁is the number of I-frame tokens. The merge operator Fmerge anchors on the earlier I-frame, retains the
+⌈𝜌𝑁⌉least similar tokens from the later I-frame as a sparse P-frame, and uniformly subsamples the combined
+2𝑇frames to 𝑇frames:
+H
+(𝑝) = Fmerge
+
+H(𝑝), H(𝑝+1)
+.
+(7)
+The merged representation replaces the selected pair, freeing one slot for the incoming GOP Hnew. This memory
+consolidation preserves temporal order while maintaining bounded access to long-range visual information.
+3.4. Attention-Guided Memory Injection
+Prepending the entire streaming memory to the MLLM input is inefficient: it consumes substantial context,
+while attention to the visual prefix decays during autoregressive generation. StreamFlow instead uses only
+mid-term memory as the visual prefix and injects long-term latents on demand based on the visual attention
+score (VAS), enabling dynamic access to historical evidence with limited context overhead.
+Visual Attention Score. To efficiently track the model’s reliance on visual evidence during decoding, we use
+VAS as an online grounding signal, motivated by recent findings in MLLMs (Luo et al., 2026; Wu et al., 2026).
+For the 𝑡-th generated token, let 𝐴ℓ,ℎ
+𝑡,𝑐denote the normalized attention weight to context token 𝑐at layer ℓ
+and head ℎ, and let V𝑡be the indices of accessible visual tokens. VAS is defined as the visual attention mass
+averaged across all layers and heads:
+VAS𝑡=
+1
+𝑁ℓ𝑁ℎ
+𝑁ℓ
+∑︁
+ℓ=1
+𝑁ℎ
+∑︁
+ℎ=1
+∑︁
+𝑐∈V𝑡
+𝐴ℓ,ℎ
+𝑡,𝑐.
+(8)
+A low VAS𝑡indicates that linguistic context is dominating visual evidence, prompting StreamFlow to reactivate
+long-term memory for subsequent generation.
+Memory Retrieval. Once the model’s visual attention score falls below the threshold 𝜏, StreamFlow retrieves
+the 𝐾GOPs most relevant to the current reasoning state. Let Q𝑡denote the retrieval-query tokens and e𝑢the
+input embedding of token 𝑢∈Q𝑡. Using the backbone’s frozen visual projector P𝑣, we map visual tokens into
+the text embedding space and construct a pooled query and frame-level keys:
+q𝑡= Avg𝑢∈Q𝑡e𝑢,
+k𝑗, 𝑓= Avg
+𝑁𝑗, 𝑓
+𝑖=1 P𝑣
+
+h( 𝑗)
+𝑓,𝑖
+
+.
+(9)
+5
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Here, h( 𝑗)
+𝑓,𝑖denotes the 𝑖-th valid token of frame 𝑓in GOP 𝑗, and 𝑁𝑗, 𝑓is the number of valid tokens. Each GOP is
+scored by its most relevant frame, after which the top-𝐾GOPs are restored to chronological order:
+𝑟𝑡,𝑗=
+max
+𝑓∈{1,...,𝑇} cos q𝑡, k𝑗, 𝑓
+
+,
+I𝑡= sort
+
+TopK 𝑗∈{1,...,𝑛}
+ 𝑟𝑡,𝑗
+
+.
+(10)
+A neural compressor C𝜙parameterized by 𝜙then jointly processes the chronologically concatenated GOPs
+H(I𝑡), the query tokens, and 𝐿learned queries:
+Z𝑡= C𝜙
+
+P𝑣
+
+H(I𝑡)
+, Q𝑡; L
+
+.
+(11)
+The compressor retains only the outputs of the 𝐿learned queries as a fixed visual bottleneck, and the resulting
+latents Z𝑡are inserted after the current decoding prefix, thereby enabling dynamic access to relevant long-term
+visual evidence during subsequent token generation.
+4. Experiments
+4.1. Experimental Setup
+Benchmarks. We evaluate StreamFlow on both offline and streaming video benchmarks. For offline evaluation,
+we adopt MVBench (Li et al., 2024), MLVU (Zhou et al., 2025), and VideoMME (Fu et al., 2025a), while for
+streaming evaluation, we use StreamingBench (Lin et al., 2026). Across all benchmarks, we adopt a unified
+streaming evaluation protocol, where videos are presented frame by frame and each question is revealed only
+after its associated end timestamp, requiring causal reasoning over previously observed content (Chen et al.,
+2025). Further details of the benchmarks are provided in Appendix A.1.
+Baselines. We compare StreamFlow against two categories of approaches to streaming video understanding:
+model-based and memory-based methods. The model-based baselines include VideoLLM-Online (Chen et al.,
+2024), Dispider (Qian et al., 2025), TimeChat-Online (Yao et al., 2025), and StreamForest (Zeng et al.,
+2026). The memory-based baselines include LiveVLM (Ning et al., 2025), StreamMem (Yang et al., 2025),
+InfiniPot-V (Kim et al., 2026), StreamingTOM (Chen et al., 2025), HERMES (Zhang et al., 2026), FluxMem (Xie
+et al., 2026), and CausalMem (Song et al., 2026). Further details of the baselines and their configurations are
+provided in Appendix A.2.
+Training Data. The training data consist of question-conditioned video examples drawn from COIN (Tang
+et al., 2019) for multi-step procedures, NeXT-QA (Xiao et al., 2021) for temporally dependent event reasoning,
+STAR (Wu et al., 2024a) for interactions and action transitions, CLEVRER (Yi et al., 2019) for controlled object
+dynamics, and selected LLaVA-Video-178K data (Zhang et al., 2024) for broader real-world coverage. We use
+Qwen3.5-27B to construct the supervision labels for these training samples. Dataset details are provided in
+Appendices A.3 and A.4.
+Implementation Details. We use Qwen3.5-9B as the frozen MLLM backbone and adapt the same model
+with LoRA as the memory compressor. The mid-term memory accommodates up to 32 frames, organized
+into four-frame GOPs, and the P-frame retention ratio 𝜌is set to 0.5. The long-term memory maintains up
+to 96 GOPs through similarity-guided consolidation. At each memory injection, we retrieve 𝐾= 4 GOPs and
+compress them into 𝐿= 32 visual latents. We set the VAS threshold to 𝜏= 0.1. The compressor is trained
+via supervised fine-tuning (SFT) on four NVIDIA L20X GPUs, while the answering backbone remains frozen.
+During evaluation, videos are sampled at 1 FPS and processed in a streaming manner. See Appendix A.4 for
+implementation details.
+4.2. Main Results
+StreamFlow Achieves Consistent Improvements Across Streaming Video Understanding Tasks. As shown
+in Table 1, StreamFlow achieves an overall score of 67.73% on StreamingBench, surpassing the strongest
+baseline, LiveVLM-7B, by 4.63%. The RTVU breakdown in Table 2 further shows that this improvement is
+consistent across task types: StreamFlow attains an overall score of 81.55%, exceeding HERMES-7B by 2.11%,
+6
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Table 1 | Performance comparison on video understanding benchmarks. The #Frames column reports either
+the number of input frames or the sampling rate (fps), following each method’s original evaluation setting. “–”
+denotes unreported results. The best and second-best results among all compared methods are in bold and
+underlined, respectively.
+Method
+#Frames
+StreamingBench
+MVBench
+MLVU
+VideoMME
+Overall
+S
+M
+L
+Overall
+Model-based
+VideoLLM-Online-8B (Chen et al., 2024)
+2 fps
+32.48
+–
+–
+–
+–
+–
+–
+Dispider-7B (Qian et al., 2025)
+1 fps
+53.12
+–
+61.70
+–
+53.70
+49.70
+57.20
+TimeChat-Online-7B (Yao et al., 2025)
+1 fps
+58.11
+–
+65.40
+–
+–
+52.40
+63.30
+StreamForest-7B (Zeng et al., 2026)
+1 fps
+–
+70.20
+70.00
+–
+–
+–
+61.40
+Memory-based
+LiveVLM-7B (Ning et al., 2025)
+0.5/0.2 fps
+63.10
+–
+68.10
+–
+57.00
+51.30
+59.60
+StreamMem-7B (Yang et al., 2025)
+0.5/0.2 fps
+–
+–
+66.90
+–
+56.60
+50.10
+59.40
+InfiniPot-V-7B (Kim et al., 2026)
+0.5 fps
+–
+–
+65.80
+74.10
+60.80
+53.40
+62.80
+StreamingTOM-7B (Chen et al., 2025)
+0.5 fps
+–
+–
+67.90
+71.30
+57.80
+50.60
+59.90
+HERMES-7B (Zhang et al., 2026)
+1 fps
+–
+65.53
+–
+–
+–
+53.44
+60.63
+FluxMem-7B (Xie et al., 2026)
+1 fps
+–
+–
+73.10
+76.90
+65.10
+54.00
+65.30
+CausalMem-7B (Song et al., 2026)
+0.5/0.2 fps
+–
+–
+70.90
+–
+–
+–
+60.00
+StreamFlow-9B (ours)
+1 fps
+67.73
+68.90
+75.34
+87.78
+70.67
+62.11
+73.52
+Table 2 | Accuracy (%) on all ten task types in the Real-Time Visual Understanding (RTVU) subset of Stream-
+ingBench. “–” denotes an unreported result. The best and second-best results among all methods are in bold
+and underlined, respectively.
+Method
+OP
+CR
+CS
+ATP
+EU
+TR
+PR
+SU
+ACP
+CT
+Overall
+Model-based
+VideoLLM-Online-8B (Chen et al., 2024)
+39.07
+40.06
+34.49
+31.05
+45.96
+32.40
+31.48
+34.16
+42.49
+27.89
+35.99
+Dispider-7B (Qian et al., 2025)
+74.92
+75.53
+74.10
+73.08
+74.44
+59.92
+76.14
+62.91
+62.16
+45.80
+67.63
+TimeChat-Online-7B (Yao et al., 2025)
+80.22
+82.03
+79.50
+83.33
+76.10
+78.50
+78.70
+64.63
+69.60
+57.98
+75.36
+StreamForest-7B (Zeng et al., 2026)
+83.11
+82.81
+82.65
+84.26
+77.50
+78.19
+76.85
+69.11
+75.64
+54.40
+77.26
+Memory-based
+LiveVLM-7B (Ning et al., 2025)
+79.84
+79.69
+84.86
+80.72
+67.08
+70.09
+74.07
+66.26
+67.99
+42.49
+72.36
+InfiniPot-V-7B (Kim et al., 2026)
+–
+–
+–
+–
+–
+–
+–
+–
+–
+–
+76.40
+HERMES-7B (Zhang et al., 2026)
+83.65
+81.25
+88.01
+87.46
+76.73
+86.60
+82.41
+76.02
+73.94
+46.63
+79.44
+FluxMem-7B (Xie et al., 2026)
+80.20
+81.10
+81.40
+85.30
+78.00
+83.80
+80.60
+65.90
+69.60
+52.10
+76.40
+CausalMem-7B (Song et al., 2026)
+82.60
+79.70
+83.20
+83.20
+69.60
+78.40
+75.00
+67.30
+70.90
+39.40
+74.30
+StreamFlow-9B (ours)
+84.01
+87.50
+87.38
+85.53
+82.28
+80.69
+88.89
+78.05
+76.42
+67.02
+81.55
+and ranks first on seven of the ten task types. Most notably, StreamFlow achieves 67.02% on Counting (CT),
+outperforming TimeChat-Online-7B by 9.04%. Moreover, for a fairer comparison, we reimplemented selected
+baselines with the same Qwen3.5-9B backbone and otherwise identical settings. As reported in Appendix C.1,
+StreamFlow outperforms the strongest baseline, StreamingTOM, by 1.17% on StreamingBench. These results
+demonstrate the effectiveness of the StreamFlow across diverse streaming video understanding tasks.
+StreamFlow Achieves Strong Offline Video Understanding. As shown in Table 1, StreamFlow demonstrates
+consistently strong performance on both MLVU and VideoMME. On MLVU, StreamFlow obtains 75.34%,
+outperforming the strongest baseline, FluxMem-7B, by 2.24%. Moreover, on VideoMME, StreamFlow achieves
+the best results across the short, medium, and long subsets, with scores of 87.78%, 70.67%, and 62.11%,
+respectively, leading to an overall score of 73.52%. These results exceed the corresponding second-best scores
+by 10.88%, 5.57%, 8.11%, and 8.22%. Under the same Qwen3.5-9B backbone and otherwise identical settings,
+StreamFlow also outperforms the strongest baseline, ReKV, by 1.63% on VideoMME, as reported in Appendix C.1.
+The consistent improvements across different video durations suggest that StreamFlow preserves both recent
+visual details and long-range evidence while enabling the frozen MLLM backbone to remain effective on
+conventional offline video understanding.
+7
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+4.3. Framework Analysis
+Original
+Frames
+Retained
+Frames
+Percentage (%)
+I-frame
+P-frame 1
+P-frame 2
+P-frame 3
+Motion
+Appearance
+Static
+40
+50
+75
+100
+StreamFlow
+Random
+Uniform Spatial
+Uniform Temporal
+Motion
+46
+48
+50
+Appearance
+46
+48
+50
+Static
+46
+48
+50
+Figure 3 | Patch-level residual scoring preserves dy-
+namic visual content while rejecting static patches.
+Patch-Level Residual Scoring Preserves Dynamic
+Visual Content. Figure 3 compares four patch-
+retention policies under 50% P-frame retention and
+an identical GOP-wide budget (see Appendix C.3 for
+baseline details). By concentrating on dynamic re-
+gions rather than repeated background, StreamFlow
+preserves 61.08% of camera-motion-compensated
+local motion, versus 49.93% for the strongest alterna-
+tive, while rejecting 95.28% of independently identi-
+fied static patches, versus at most 49.37%. It similarly
+retains 71.96% of motion-compensated appearance
+change, compared with 50.03% for the strongest
+alternative. These results show that patch-level resid-
+ual scoring prioritizes evolving visual evidence with-
+out repeatedly allocating memory to static regions
+already captured by the complete I-frame.
+StreamFlow Sustains Visual Grounding. Figure 4(a) reveals attention drift: as the linguistic context grows, all
+visual-prefix baselines attend less to visual evidence. In contrast, StreamFlow maintains higher visual attention
+throughout decoding, raising mean VAS from 0.066 under Vanilla to 0.105, a relative gain of 59.1%. We next
+examine whether this restoration of visual attention is accompanied by improved grounding in relevant historical
+evidence. In Figure 4(b), the shuffled condition replaces each sample’s matched long-term memory with memory
+from another sample, while all other inputs, model parameters, and the visual-token budget remain fixed.
+0
+20
+40
+60
+80
+100
+Generation Progress (%)
+0.00
+0.03
+0.06
+0.09
+0.12
+0.15
+Visual Attention Score
+(a) Visual Attention Dynamics
+Vanilla
+StreamingTOM
+StreamFlow
+InfiniPot-V
+SimpleStream
+0.0
+0.2
+0.4
+VAS Change (Matched − Shuffled)
+-2
+0
+2
+4
+Grounding Gain (Log-odds)
+Spearman ρ = 0.24
+p < 0.001
+(b) VAS Change vs. Grounding Gain
+Figure 4 | Generation-time VAS and grounding gain
+under matched versus shuffled memory.
+Compared with shuffled memory, matched memory
+increases correct-answer log-odds by 0.27 on aver-
+age, with larger VAS gains associated with greater
+grounding gains (Spearman 𝜌= 0.24, 𝑝< 0.001). By
+changing only memory relevance, this intervention
+shows that StreamFlow’s higher VAS is tied to the
+use of relevant historical evidence. Together, these
+results demonstrate that StreamFlow sustains visual
+grounding throughout reasoning. Details of the VAS
+computation and counterfactual intervention are pro-
+vided in Appendices B.1 and B.2; case studies in Ap-
+pendix C.5 show how VAS-guided insertion restores
+long-range evidence.
+Table 3 | Inference efficiency on RTVU across the visual
+front end, decoder, and complete task. Stage-level rows
+isolate their named scope, while complete-task rows
+cover the full inference pipeline.
+Metric ↓
+Vanilla
+StreamFlow
+Red.
+Visual front end
+Pre-ViT patches
+36,318
+22,781
+37.3%
+VFE latency (ms)
+450.4
+225.1
+50.0%
+Decoder
+Context length
+9,161
+5,700
+37.8%
+KV-cache memory (MiB)
+1,288.3
+801.5
+37.8%
+Attention latency (ms)
+3,162.6
+1,156.4
+63.4%
+Complete task
+Task peak memory (GiB)
+13.68
+10.80
+21.1%
+Task latency (s)
+7.36
+3.65
+50.4%
+Pre-ViT Sparsification and Bounded Memory Re-
+duce Inference Overhead. Table 3 reports efficiency
+at three levels: the visual front end, the decoder,
+and the complete task (see Appendix C.4). At the vi-
+sual front end, Vanilla encodes every patch, whereas
+StreamFlow retains the complete I-frame and only
+the highest-residual 50% of P-frame patches within
+each GOP. On RTVU, this selective encoding reduces
+the mean Pre-ViT patch count by 37.3%. Crucially,
+even after accounting for residual scoring and sparse
+packing, visual-front-end latency decreases by 50.0%,
+confirming that patch selection yields substantial net
+savings. At the decoder, bounded memory shortens
+the context from 9,161 to 5,700 tokens (37.8%), cor-
+respondingly reduces KV-cache memory by 37.8%,
+and cuts self-attention latency by 63.4%. These stage-
+level gains reduce end-to-end latency by 50.4% and
+peak memory by 21.1%.
+8
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+4.4. Sensitivity Analysis and Ablation Studies
+0.25
+0.5
+0.75
+1.0
+Retention Ratio
+78
+80
+82
+84
+Accuracy (%)
+(a) Retention Ratio
+Ours
+Delimiter Random No insert.
+Insertion Policy
+80.0
+80.5
+81.0
+81.5
+Accuracy (%)
+(b) VAS-guided Insertion
+RTVU
+VideoMME-Long
+Benchmark
+0
+20
+40
+60
+80
+Accuracy (%)
+(c) Component Ablation
+Full StreamFlow
+w/o Mid-term Memory
+w/o Long-term Memory
+Figure 5 | (a) Retention-ratio sensitivity on RTVU. (b)
+Insertion-policy sensitivity on RTVU. (c) Component
+ablation on RTVU and VideoMME-Long.
+Sensitivity Analysis. On RTVU, Figure 5(a) ana-
+lyzes the retention ratio 𝜌. Increasing the ratio from
+0.25 to 0.50 improves accuracy from 78.75% to
+81.55%, while subsequent increases to 0.75 and 1.00
+yield smaller gains of 0.85% and 0.55%. This clear
+diminishing-return trend indicates that retaining half
+of the P-frame patches ranked by residual score cap-
+tures most of the useful intermediate evidence, mo-
+tivating the default ratio of 0.50 as a balance be-
+tween accuracy and visual-token cost. Figure 5(b)
+further examines the generation-time insertion pol-
+icy. VAS-guided insertion achieves 81.55% accuracy,
+outperforming budget-matched delimiter and ran-
+dom insertion by 0.23% and 0.49%, respectively, in-
+dicating that VAS provides a reliable signal for timely
+memory access. Disabling insertion, which effectively
+removes access to long-term memory, reduces accu-
+racy by 1.37% to 80.18%. These results suggest that
+the learned visual latents are relatively robust to their exact insertion positions, while VAS-guided insertion
+provides a consistent additional benefit by determining when the memory should be activated during subsequent
+generation. Additional analyses are provided in Appendix C.3.
+Component Ablation. Figure 5(c) isolates the contribution of the two memory timescales on RTVU and
+VideoMME-Long. All variants share the same evaluation protocol: removing mid-term memory drops its records
+from the raw visual prefix, whereas removing long-term memory disables its construction and dynamic insertion.
+Removing mid-term memory reduces accuracy from 81.55% to 76.86% on RTVU and from 62.11% to 60.33%
+on VideoMME-Long, corresponding to drops of 4.69% and 1.78%, respectively. Removing long-term memory
+lowers accuracy to 80.18% on RTVU and 51.67% on VideoMME-Long, corresponding to drops of 1.37% and
+10.44%. Thus, high-fidelity mid-term evidence contributes more strongly to real-time understanding, whereas
+compressed long-term memory is critical for the longest offline videos. Together, these results establish the
+complementarity of the two pathways: mid-term memory supplies detailed recent context, while long-term
+memory preserves evidence required for long-horizon reasoning.
+5. Conclusion
+In this work, we introduced StreamFlow, a memory framework that equips frozen MLLMs with efficient
+streaming video understanding. By combining a dynamics-aware mid-term memory with a latent long-term
+memory, StreamFlow selectively preserves informative visual evidence from continuously evolving video streams
+under a fixed memory budget. We further developed a VAS-guided memory injection mechanism that reactivates
+relevant long-term latents when the model’s reliance on visual evidence weakens during generation, thereby
+mitigating visual attention drift. Extensive experiments establish state-of-the-art performance on streaming
+benchmarks and strong results on offline long-video understanding. Mechanistic analyses demonstrate improved
+visual grounding and substantial efficiency gains, validating dynamic visual-information management across
+encoding, consolidation, and generation.
+9
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+References
+Shuai Bai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng, Lianghao Deng, Wei Ding,
+Chang Gao, Chunjiang Ge, et al. Qwen3-vl technical report. arXiv preprint arXiv:2511.21631, 2025.
+Kevin Black, Noah Brown, Danny Driess, Adnan Esmail, Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy
+Groom, Karol Hausman, Brian Ichter, et al. 𝜋0: A vision-language-action flow model for general robot control.
+arXiv preprint arXiv:2410.24164, 2024.
+Joya Chen, Zhaoyang Lv, Shiwei Wu, Kevin Qinghong Lin, Chenan Song, Difei Gao, Jia-Wei Liu, Ziteng Gao,
+Dongxing Mao, and Mike Zheng Shou. Videollm-online: Online video large language model for streaming
+video. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 18407–
+18418, 2024.
+Tao Chen, Kun Zhang, Qiong Wu, Xiao Chen, Chao Chang, Xiaoshuai Sun, Yiyi Zhou, and Rongrong Ji. Scaling
+the long video understanding of multimodal large language models via visual memory mechanism. arXiv
+preprint arXiv:2603.29252, 2026a.
+Xueyi Chen, Keda Tao, Kele Shao, and Huan Wang. Streamingtom: Streaming token compression for efficient
+video understanding. arXiv preprint arXiv:2510.18269, 2025.
+Yilong Chen, Xiang Bai, Zhibin Wang, Chengyu Bai, Yuhan Dai, and Ming Lu. Streamkv: Streaming video
+question-answering with segment-based kv cache retrieval and compression. In Proceedings of the AAAI
+Conference on Artificial Intelligence, volume 40, pages 3120–3128, 2026b.
+Shangzhe Di, Zhelun Yu, Guanghao Zhang, Haoyuan Li, Hao Cheng, Bolin Li, Wanggui He, Fangxun Shu, and
+Hao Jiang. Streaming video question-answering with in-context video kv-cache retrieval. In International
+Conference on Learning Representations, volume 2025, pages 42115–42127, 2025.
+Chaoyou Fu, Yuhan Dai, Yongdong Luo, Lei Li, Shuhuai Ren, Renrui Zhang, Zihan Wang, Chenyu Zhou, Yunhang
+Shen, Mengdan Zhang, et al. Video-mme: The first-ever comprehensive evaluation benchmark of multi-modal
+llms in video analysis. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition,
+pages 24108–24118, 2025a.
+Haoyu Fu, Diankun Zhang, Zongchuang Zhao, Jianfeng Cui, Dingkang Liang, Chong Zhang, Dingyuan Zhang,
+Hongwei Xie, Bing Wang, and Xiang Bai. Orion: A holistic end-to-end autonomous driving framework by
+vision-language instructed action generation. In Proceedings of the IEEE/CVF International Conference on
+Computer Vision, pages 24823–24834, 2025b.
+Yiran Guan, Liang Yin, Dingkang Liang, Jianzhong Ju, Zhenbo Luo, Jian Luan, Yuliang Liu, and Xiang Bai.
+Video streaming thinking: Videollms can watch and think simultaneously. arXiv preprint arXiv:2603.12262,
+2026.
+Bo He, Hengduo Li, Young Kyun Jang, Menglin Jia, Xuefei Cao, Ashish Shah, Abhinav Shrivastava, and Ser-
+Nam Lim. Ma-lmm: Memory-augmented large multimodal model for long-term video understanding. In
+Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 13504–13514, 2024.
+Siyuan Huang, Xiaoye Qu, Yafu Li, Tong Zhu, Zefeng He, Muxin Fu, Daizong Liu, Wei-Long Zheng, and
+Yu Cheng. Persistent visual memory: Sustaining perception for deep generation in lvlms. arXiv preprint
+arXiv:2605.00814, 2026.
+Zhenpeng Huang, Xinhao Li, Jiaqi Li, Jing Wang, Xiangyu Zeng, Cheng Liang, Tao Wu, Xi Chen, Liang Li, and
+Limin Wang. Online video understanding: Ovbench and videochat-online. In Proceedings of the Computer
+Vision and Pattern Recognition Conference, pages 3328–3338, 2025.
+Minsoo Kim, Kyuhong Shim, Jungwook Choi, and Simyung Chang. Infinipot-v: Memory-constrained kv cache
+compression for streaming video understanding. Advances in Neural Information Processing Systems, 38:
+138983–139013, 2026.
+Kunchang Li, Yali Wang, Yinan He, Yizhuo Li, Yi Wang, Yi Liu, Zun Wang, Jilan Xu, Guo Chen, Ping Luo, et al.
+Mvbench: A comprehensive multi-modal video understanding benchmark. In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition, pages 22195–22206, 2024.
+10
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Zhijia Liang, Jiaming Li, Weikai Chen, Yanhao Zhang, Haonan Lu, and Guanbin Li. Oasis: On-demand
+hierarchical event memory for streaming video reasoning. In Proceedings of the IEEE/CVF Conference on
+Computer Vision and Pattern Recognition, pages 2821–2831, 2026.
+Junming Lin, Zheng Fang, Chi Chen, Haoxuan Cheng, Zihao Wan, Fuwen Luo, Ziyue Wang, Peng Li, Yang Liu,
+and Maosong Sun. Streamingbench: Assessing the gap for mllms to achieve streaming video understanding.
+In ICASSP 2026-2026 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP),
+pages 12147–12151. IEEE, 2026.
+Chengzhi Liu, Zhongxing Xu, Qingyue Wei, Juncheng Wu, James Zou, Xin Eric Wang, Yuyin Zhou, and Sheng
+Liu. More thinking, less seeing? assessing amplified hallucination in multimodal reasoning models. arXiv
+preprint arXiv:2505.21523, 2025.
+Zikang Liu, Longteng Guo, Handong Li, Ru Zhen, Xingjian He, Ruyi Ji, Xiaoming Ren, Yanhao Zhang, Haonan
+Lu, and Jing Liu. Thinking in streaming video. arXiv preprint arXiv:2603.12938, 2026.
+Ruilin Luo, Chufan Shi, Yizhen Zhang, Cheng Yang, Songtao Jiang, Tongkun Guan, Ruizhe Chen, Ruihang Chu,
+Peng Wang, Mingkun Yang, et al. From narrow to panoramic vision: Attention-guided cold-start reshapes
+multimodal reasoning. arXiv preprint arXiv:2603.03825, 2026.
+Jiahao Meng, Yue Tan, Qi Xu, Kuan Gao, Weisong Liu, Yanwei Li, Jason Li, Lingdong Kong, Haochen Wang,
+Qianyu Zhou, et al. Watch, remember, reason: Human-view video understanding with mllms. arXiv preprint
+arXiv:2606.07433, 2026.
+Zhenyu Ning, Guangda Liu, Qihao Jin, Chengwei Li, Wenchao Ding, Minyi Guo, and Jieru Zhao. Livevlm:
+Efficient online video understanding via streaming-oriented kv cache and retrieval.
+arXiv preprint
+arXiv:2505.15269, 2025.
+Rui Qian, Xiaoyi Dong, Pan Zhang, Yuhang Zang, Shuangrui Ding, Dahua Lin, and Jiaqi Wang. Streaming long
+video understanding with large language models. Advances in Neural Information Processing Systems, 37:
+119336–119360, 2024.
+Rui Qian, Shuangrui Ding, Xiaoyi Dong, Pan Zhang, Yuhang Zang, Yuhang Cao, Dahua Lin, and Jiaqi Wang.
+Dispider: Enabling video llms with active real-time interaction via disentangled perception, decision, and
+reaction. In Proceedings of the Computer Vision and Pattern Recognition Conference, pages 24045–24055,
+2025.
+Lianlei Shan, Shixian Luo, Zezhou Zhu, Yu Yuan, and Yong Wu. Cognitive memory in large language models.
+arXiv preprint arXiv:2504.02441, 2025.
+Yujiao Shen, Shulin Tian, Jingkang Yang, and Ziwei Liu. A simple baseline for streaming video understanding.
+arXiv preprint arXiv:2604.02317, 2026.
+Baiyang Song, Yuli Lin, Qiong Wu, Tao Chen, Jun Peng, Xiao Chen, Yiyi Zhou, and Rongrong Ji. Towards
+a dynamic and fixed-budget memory bank for efficient streaming video understanding. arXiv preprint
+arXiv:2606.25658, 2026.
+Enxin Song, Wenhao Chai, Guanhong Wang, Yucheng Zhang, Haoyang Zhou, Feiyang Wu, Haozhe Chi, Xun Guo,
+Tian Ye, Yanting Zhang, et al. Moviechat: From dense token to sparse memory for long video understanding.
+arXiv preprint arXiv:2307.16449, 2023.
+Weihao Tan, Wentao Zhang, Xinrun Xu, Haochong Xia, Ziluo Ding, Boyu Li, Bohan Zhou, Junpeng Yue, Jiechuan
+Jiang, Yewen Li, et al. Cradle: Empowering foundation agents towards general computer control. arXiv
+preprint arXiv:2403.03186, 2024.
+Feilong Tang, Xiang An, Yunyao Yan, Yin Xie, Bin Qin, Kaicheng Yang, Yifei Shen, Yuanhan Zhang, Chunyuan
+Li, Shikun Feng, et al. Onevision-encoder: Codec-aligned sparsity as a foundational principle for multimodal
+intelligence. arXiv preprint arXiv:2602.08683, 2026.
+Yansong Tang, Dajun Ding, Yongming Rao, Yu Zheng, Danyang Zhang, Lili Zhao, Jiwen Lu, and Jie Zhou.
+Coin: A large-scale dataset for comprehensive instructional video analysis. In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition, pages 1207–1216, 2019.
+11
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Yunlong Tang, Jing Bi, Siting Xu, Luchuan Song, Susan Liang, Teng Wang, Daoan Zhang, Jie An, Jingyang Lin,
+Rongyi Zhu, et al. Video understanding with large language models: A survey. IEEE Transactions on Circuits
+and Systems for Video Technology, 2025.
+Qwen Team. Qwen3.5-omni technical report. arXiv preprint arXiv:2604.15804, 2026.
+Yuxuan Wang, Yiqi Song, Cihang Xie, Yang Liu, and Zilong Zheng. Videollamb: Long streaming video un-
+derstanding with recurrent memory bridges. In Proceedings of the IEEE/CVF International Conference on
+Computer Vision, pages 24170–24181, 2025.
+Bo Wu, Shoubin Yu, Zhenfang Chen, Joshua B Tenenbaum, and Chuang Gan. Star: A benchmark for situated
+reasoning in real-world videos. arXiv preprint arXiv:2405.09711, 2024a.
+Shiwei Wu, Joya Chen, Kevin Qinghong Lin, Qimeng Wang, Yan Gao, Qianli Xu, Tong Xu, Yao Hu, Enhong
+Chen, and Mike Zheng Shou. Videollm-mod: Efficient video-language streaming with mixture-of-depths
+vision computation. Advances in Neural Information Processing Systems, 37:109922–109947, 2024b.
+Yebo Wu, Han Jin, Zhijiang Guo, and Li Li. Spotlight and shadow: Attention-guided dual-anchor introspective
+decoding for mllm hallucination mitigation. In Findings of the Association for Computational Linguistics: ACL
+2026, pages 13219–13233, 2026.
+Junbin Xiao, Xindi Shang, Angela Yao, and Tat-Seng Chua. Next-qa: Next phase of question-answering to
+explaining temporal actions. In Proceedings of the IEEE/CVF conference on computer vision and pattern
+recognition, pages 9777–9786, 2021.
+Jingyi Xie, Jintao Yang, Zhunchen Luo, Yunbo Cao, Qiang Gao, Mengyuan Zhang, and Wenpeng Hu. Adadare-
+gamma: Balancing stability and plasticity in multi-modal llms through efficient adaptation. In Proceedings of
+the Computer Vision and Pattern Recognition Conference, pages 19758–19768, 2025.
+Yiweng Xie, Bo He, Junke Wang, Xiangyu Zheng, Ziyi Ye, and Zuxuan Wu. Fluxmem: Adaptive hierarchical
+memory for streaming video understanding. arXiv preprint arXiv:2603.02096, 2026.
+Yanlai Yang, Zhuokai Zhao, Satya Narayan Shukla, Aashu Singh, Shlok Kumar Mishra, Lizhu Zhang, and
+Mengye Ren. Streammem: Query-agnostic kv cache memory for streaming video understanding. arXiv
+preprint arXiv:2508.15717, 2025.
+Linli Yao, Yicheng Li, Yuancheng Wei, Lei Li, Shuhuai Ren, Yuanxin Liu, Kun Ouyang, Lean Wang, Shicheng Li,
+Sida Li, et al. Timechat-online: 80% visual tokens are naturally redundant in streaming videos. In Proceedings
+of the 33rd ACM International Conference on Multimedia, pages 10807–10816, 2025.
+Kexin Yi, Chuang Gan, Yunzhu Li, Pushmeet Kohli, Jiajun Wu, Antonio Torralba, and Joshua B Tenenbaum.
+Clevrer: Collision events for video representation and reasoning. arXiv preprint arXiv:1910.01442, 2019.
+Xinlei Yu, Chengming Xu, Guibin Zhang, Zhangquan Chen, Yudong Zhang, Yongbo He, Peng-Tao Jiang,
+Jiangning Zhang, Xiaobin Hu, and Shuicheng Yan. Vismem: Latent vision memory unlocks potential of
+vision-language models. arXiv preprint arXiv:2511.11007, 2025.
+Xiangyu Zeng, Kefan Qiu, Qingyu Zhang, Xinhao Li, Jing Wang, Jiaxin Li, Ziang Yan, Kun Tian, Meng Tian,
+Xinhai Zhao, et al. Streamforest: Efficient online video understanding with persistent event memory. Advances
+in Neural Information Processing Systems, 38:75804–75835, 2026.
+Dianxing Zhang, Wendong Li, Kani Song, Jiaye Lu, Gang Li, Liuchun Yang, and Sheng Li. Memory in large
+language models: Mechanisms, evaluation and evolution. arXiv preprint arXiv:2509.18868, 2025.
+Haowei Zhang, Shudong Yang, Jinlan Fu, See-Kiong Ng, and Xipeng Qiu. Hermes: Kv cache as hierarchical
+memory for efficient streaming video understanding. arXiv preprint arXiv:2601.14724, 2026.
+Yuanhan Zhang, Jinming Wu, Wei Li, Bo Li, Zejun Ma, Ziwei Liu, and Chunyuan Li. Llava-video: Video
+instruction tuning with synthetic data. arXiv preprint arXiv:2410.02713, 2024.
+Junjie Zhou, Yan Shu, Bo Zhao, Boya Wu, Zhengyang Liang, Shitao Xiao, Minghao Qin, Xi Yang, Yongping
+Xiong, Bo Zhang, et al. Mlvu: Benchmarking multi-task long video understanding. In Proceedings of the
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 13691–13701, 2025.
+12
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Xiongtao Zhou, Jie He, Yuhua Ke, Guangyao Zhu, Víctor Gutiérrez-Basulto, and Jeff Pan. An empirical study
+on parameter-efficient fine-tuning for multimodal large language models. In Findings of the Association for
+Computational Linguistics: ACL 2024, pages 10057–10084, 2024.
+Heqing Zou, Tianze Luo, Guiyang Xie, Fengmao Lv, Guangcong Wang, Junyang Chen, Zhuochen Wang,
+Hansheng Zhang, Huaijian Zhang, et al. From seconds to hours: Reviewing multimodal large language
+models on comprehensive long video understanding. arXiv preprint arXiv:2409.18938, 2024.
+A. Experimental Details
+A.1. Benchmark Descriptions
+The entries below summarize the scale and task organization of each evaluation benchmark.
+• StreamingBench (Lin et al., 2026) contains 900 videos and 4,500 human-curated question–answer
+pairs. Its 18 tasks are organized into real-time visual understanding, omni-source understanding, and
+contextual understanding, with five questions associated with distinct timestamps in each video. The
+real-time visual understanding subset contains ten tasks.
+• MVBench (Li et al., 2024) comprises 20 multiple-choice video tasks organized under a static-to-dynamic
+taxonomy, including action order, object interaction, motion, and scene transition.
+• MLVU (Zhou et al., 2025) comprises long videos from several genres, including movies, surveillance
+footage, egocentric recordings, and cartoons. It defines seven multiple-choice tasks, and M-Avg denotes
+the mean of their task-level accuracies.
+• VideoMME (Fu et al., 2025a) contains 900 videos and 2,700 multiple-choice questions, totaling approxi-
+mately 254 hours. The videos cover six visual domains and 30 subfields, span 11 seconds to one hour,
+and are partitioned into short, medium, and long subsets.
+A.2. Baseline Setup
+The entries below summarize the defining mechanism of each comparison baseline.
+• VideoLLM-Online (Chen et al., 2024) uses the Learning-In-Video-Stream (LIVE) framework, which
+combines a streaming language-modeling objective, offline-to-streaming dialogue construction, and
+interleaved frame processing and response generation.
+• Dispider (Qian et al., 2025) separates active streaming interaction into perception, decision, and reaction.
+A lightweight module monitors the stream and determines when to respond; response generation and
+subsequent video perception are executed asynchronously.
+• TimeChat-Online (Yao et al., 2025) uses Differential Token Drop to retain visual tokens associated with
+temporal changes while removing redundant content across adjacent frames. It preserves the original
+spatiotemporal positions of retained tokens and supports online interaction through continuous frame
+processing.
+• StreamForest (Zeng et al., 2026) organizes long-term visual history into event-level trees through a
+Persistent Event Memory Forest. Temporal distance, content similarity, and merge frequency determine
+event consolidation, while a spatiotemporal window stores recent observations.
+• ReKV (Di et al., 2025) stores historical video KV caches in an external memory and retrieves query-relevant
+entries when a question arrives. This decouples streaming video encoding from question answering while
+keeping the active language-model context compact.
+• LiveVLM (Ning et al., 2025) is a training-free, query-agnostic method that compresses streaming video KV
+caches with Vision Sink Bucketing, using token importance and temporal coverage as retention criteria.
+Position-agnostic KV Retrieval combines retrieved long-term cache pages with a sliding window of recent
+KVs.
+• StreamMem (Yang et al., 2025) is a training-free, query-agnostic method that incrementally encodes
+video while maintaining a fixed-size KV cache. It uses attention from generic chat-template tokens to
+prune visual KVs and frame-wise merging to retain compact prototype representations of observed
+frames.
+13
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+• InfiniPot-V (Kim et al., 2026) is training-free and query-agnostic, maintaining a length-independent
+KV-cache budget during video encoding. Temporal-axis Redundancy removes repetitive cache entries,
+and Value-Norm ranking determines the retained entries.
+• StreamingTOM (Chen et al., 2025) is a training-free method that manages visual tokens before and
+after the language model. Causal Temporal Reduction selects a fixed-budget subset from each frame,
+while Online Quantized Memory stores historical groups in 4-bit form and retrieves selected groups on
+demand.
+• HERMES (Zhang et al., 2026) is a training-free method that treats the Video-LLM KV cache as hierarchical
+memory containing visual information at multiple granularities. The cache is updated incrementally and
+reused when a question arrives without a separate auxiliary query-time processor.
+• FluxMem (Xie et al., 2026) is a training-free method that organizes visual context into short-, mid-, and
+long-term memory. Temporal Adjacency Selection removes redundant tokens across adjacent frames, while
+Spatial Domain Consolidation merges repetitive spatial regions using adaptive, per-frame thresholds.
+• SimpleStream (Shen et al., 2026) retains a fixed-size sliding window of recent frames and supplies
+the window directly to an off-the-shelf VLM. It uses neither explicit long-term memory nor retrieval,
+compression, or streaming-specific training.
+• CausalMem (Song et al., 2026) is a training-free method that maintains a fixed-budget visual memory
+bank. It estimates token redundancy with an incrementally updated semantic basis and balances semantic
+novelty with temporal recency when selecting retained tokens.
+A.3. Training Data
+In this section, we provide detailed descriptions of each dataset used in our experiment.
+NeXT-QA. NeXT-QA (Xiao et al., 2021) is a video question-answering dataset designed to move beyond scene
+description toward causal and temporal action reasoning. It contains 5,440 videos with approximately 52K
+manually annotated question–answer pairs, organized into causal, temporal, and descriptive categories. The
+benchmark supports both multiple-choice QA, with five answer candidates per question, and open-ended
+QA requiring a short generated answer. We use its official training partition, whose daily-activity videos and
+manually written questions provide supervision for event causes, temporal order, and object interactions.
+COIN. COIN (Tang et al., 2019) is a large-scale instructional-video dataset containing 11,827 videos across
+180 tasks and 12 domains of daily life. Its annotation hierarchy organizes videos by domain and task, and
+each video is labeled with a sequence of step descriptions together with their temporal boundaries. We use the
+official training partition and convert its temporally localized procedure annotations into question-conditioned
+training examples. This source provides supervision in which the ordering and dependency of procedural steps
+are central to understanding the video.
+STAR. STAR (Wu et al., 2024a) is a diagnostic benchmark for situated reasoning in real-world videos, comprising
+approximately 22K situation clips and 60K questions. It defines four question types—interaction, sequence,
+prediction, and feasibility—over videos involving human actions and human–object interactions. Each situation
+is represented by a hypergraph connecting entities and relations such as people, objects, actions, and their
+relationships; questions and answers are procedurally generated, and the reasoning process for each question is
+specified by a functional program grounded in that hypergraph. We use the official training partition to provide
+supervision for action interaction, temporal progression, future prediction, and feasible-action reasoning.
+CLEVRER. CLEVRER (Yi et al., 2019) is a controlled diagnostic dataset for temporal and causal reasoning
+about physical events. It contains 20,000 synthetic videos of moving and colliding objects and more than 300K
+questions spanning descriptive, explanatory, predictive, and counterfactual reasoning. The dataset provides
+ground-truth object motion traces and event histories, and each question is paired with a functional program
+that expresses its underlying logic. We use the official training partition, which supplies explicit supervision for
+object dynamics, collision causality, future outcomes, and counterfactual physical events.
+LLaVA-Video-178K. LLaVA-Video-178K (Zhang et al., 2024) is a synthetic video instruction-following dataset
+built from 178,510 videos ranging from zero to three minutes. The full release contains approximately 1.3M
+instruction-following samples, including 178K detailed captions, 960K open-ended QA pairs, and 196K multiple-
+choice QA pairs. Its annotations were constructed with GPT-4o and human effort, with question types derived
+from a survey of public video captioning and QA benchmarks. The dataset complements the more structured
+14
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Table 4 | Hyperparameter settings used in our experiments.
+Parameter
+Setting
+Answering backbone
+Qwen3.5-9B
+Memory compressor
+Qwen3.5-9B with LoRA
+Answering-backbone update
+Frozen
+Compressor adaptation
+LoRA, rank 16
+Trainable modules
+Compressor LoRA, latent queries, and pro-
+jections
+Training objective
+Token-level cross-entropy
+Supervision scheme
+Teacher forcing
+Training hardware
+4× NVIDIA L20X GPUs
+Evaluation frame rate
+1 FPS
+GOP length 𝑇
+4 frames
+Mid-term memory capacity
+32 frames
+P-frame retention ratio 𝜌
+0.5
+Latent tokens per injection 𝐿
+32
+Long-term memory capacity 𝐶
+96 GOPs
+Merge operator Fmerge
+Similarity-guided anchor merge
+Retrieved GOPs per injection 𝐾
+4
+VAS threshold 𝜏
+0.10
+Maximum dynamic injections
+5
+Minimum injection interval
+8 decoding steps
+reasoning sources above with diverse real-world videos and broader instruction formats.
+A.4. Implementation Details
+The hyperparameter configuration used for all benchmark comparisons, sensitivity studies, ablations, mecha-
+nistic VAS analyses, and counterfactual grounding experiments is summarized in Table 4.
+Teacher Label Construction. We use Qwen3.5-27B as a video-conditioned teacher to construct evidence-
+augmented SFT labels. Given a processed video and its question context, the teacher produces two fields:
+Evidence, a concise factual paragraph grounded in visible content, and Answer, the predicted answer. The
+prompt excludes reasoning traces, answer comparisons, uncertainty, conclusions, and meta commentary from
+the evidence.
+As shown in Algorithm 1, generation proceeds from weak to stronger supervision. We first perform answer-
+unconditioned greedy decoding, followed, when necessary, by answer-unconditioned nucleus sampling. Only
+unresolved examples enter the final stage, which supplies the reference answer to guide evidence extraction
+while prohibiting disclosure of this supervision signal. A candidate is valid only if it satisfies the output and
+evidence constraints and predicts the reference answer. Within each sampling stage, we select the valid
+candidate with the highest mean token log-probability. Examples without a valid candidate after all stages are
+recorded as failures.
+B. Technical Details
+Notation. The notation below is grouped by pipeline stage. Bold uppercase symbols denote frame- or sequence-
+level tensors, bold lowercase symbols denote vectors, calligraphic symbols denote memories, sets, and operators,
+and italic symbols denote scalar indices and budgets.
+• Video stream and mid-term memory. 𝑔indexes groups of pictures (GOPs), and 𝑇is the number of
+frames per GOP. The 𝑔-th GOP is G𝑔= {X𝑔
+0, . . . , X𝑔
+𝑇−1}, where 𝑓indexes frames, X𝑔
+0 is the I-frame, and X𝑔
+𝑓
+for 𝑓> 0 is a P-frame. u denotes a spatial location; R𝑔
+𝑓(u) is the RGB residual at that location. For patch 𝑖,
+P𝑖is its pixel set and 𝑠𝑔
+𝑓,𝑖is its residual score. 𝑁is the number of I-frame patches, 𝜌is the P-frame retention
+15
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Algorithm 1 Staged construction of video-evidence SFT labels.
+Require: Processed video 𝑉, question context 𝑞, reference answer 𝑦, teacher T, sampling configurations 𝜃u
+and 𝜃c
+Ensure: Evidence-augmented label ℓor failure
+1: Cg ←Greedy(T , 𝑉, 𝑞)
+2: 𝑐★←BestValid(Cg, 𝑦)
+3: if 𝑐★= ∅then
+4:
+Cu ←Nucleus(T , 𝑉, 𝑞; 𝜃u)
+5:
+𝑐★←BestValid(Cu, 𝑦)
+6: end if
+7: if 𝑐★= ∅then
+8:
+Cc ←Nucleus(T , 𝑉, 𝑞, 𝑦; 𝜃c)
+9:
+𝑐★←BestValid(Cc, 𝑦)
+10: end if
+11: if 𝑐★= ∅then
+12:
+fail
+13: end if
+14:
+15: return ℓ←Label(𝑐★)
+ratio, and S𝑔
+𝑓is the set of ⌈𝜌𝑁⌉retained P-frame patches. b
+G𝑔denotes the sparse GOP representation
+stored in the mid-term memory MM.
+• Encoded GOPs and long-term memory. E𝑣denotes the visual encoder. The encoded representation of
+GOP 𝑔is
+H𝑔= [h𝑔
+1, . . . , h𝑔
+𝑁𝑔]⊤∈ℝ𝑁𝑔×𝑑𝑣,
+where 𝑁𝑔is its number of retained visual tokens and 𝑑𝑣is the visual hidden dimension. The long-term
+memory is ML = [H(1), . . . , H(𝑛)], where 𝐶is its capacity in GOPs and 0 ≤𝑛≤𝐶. H( 𝑗) = [I𝑗, P1
+𝑗, . . . , P𝑇−1
+𝑗
+]
+is the 𝑗-th stored GOP, with I𝑗and P 𝑓
+𝑗denoting its I-frame and P-frame token sequences; Hnew denotes an
+incoming GOP. 𝑠𝑗is the adjacent-GOP I-frame similarity, 𝑝is the index of the most similar adjacent pair,
+Fmerge is the GOP merge operator, and H
+(𝑝) is the merged representation.
+• Attention and retrieval. 𝑡indexes autoregressive generation steps, 𝑐indexes context positions, and ℓand
+ℎindex layers and attention heads. 𝐴ℓ,ℎ
+𝑡,𝑐is the corresponding normalized attention weight; 𝑁ℓand 𝑁ℎare
+the numbers of layers and heads, and V𝑡is the set of accessible visual-token positions. VAS𝑡is their layer-
+and head-averaged attention mass, and 𝜏is the retrieval threshold. P𝑣denotes the visual projector, Q𝑡
+the query-token set, and e𝑢the embedding of query token 𝑢; q𝑡is the pooled query. For frame 𝑓in stored
+GOP 𝑗, h( 𝑗)
+𝑓,𝑖is its 𝑖-th valid visual token, 𝑁𝑗, 𝑓is the number of valid tokens, and k𝑗, 𝑓is the pooled frame
+key. 𝑟𝑡,𝑗is the relevance score of GOP 𝑗and I𝑡is the chronologically sorted index set of at most 𝐾retrieved
+GOPs; H(I𝑡) denotes their concatenation. C𝜙is the compressor parameterized by 𝜙, 𝐿is the number of
+learned queries, L denotes those queries, and Z𝑡is the resulting length-𝐿visual latent sequence.
+Disambiguation. Superscript 𝑔indexes GOPs at arrival, whereas parenthesized superscript ( 𝑗) indexes their
+order in long-term memory. The symbols 𝑠𝑔
+𝑓,𝑖and 𝑠𝑗denote patch residual and adjacent-GOP similarity, respec-
+tively. The counts 𝑁, 𝑁𝑔, and 𝑁𝑗, 𝑓refer to the full I-frame patch/token count, the retained-token count of an
+encoded GOP, and the valid-token count of a stored frame. The symbols P𝑖, P 𝑓
+𝑗, and P𝑣denote a patch pixel set,
+a P-frame token sequence, and the visual projector. I in the patch selection constraint is a dummy candidate
+set, whereas I𝑡is the retrieved GOP index set. 𝐿is a count and L is the learned-query sequence. The symbol 𝜌
+denotes the P-frame retention ratio; Spearman’s 𝜌in the analysis denotes the rank-correlation coefficient.
+Causal Setting. At a question timestamp, the input is restricted to the question and the video frames observed
+up to that timestamp. Future frames are excluded. The memory states MM and ML contain only representations
+of the observed video prefix.
+16
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Key / context position
+1
+t
+Query position
+1
+Nh
+Attention head
+1
+Nℓ
+Layer
+0.00
+0.05
+0.10
+0.15
+0.20
+Visual attention mass
+Sum over
+visual tokens
+for each layer and head
+(a) Single Layer--Head VAS
+(b) Layer--Head VAS Map
+Each cell aggregates the current token's attention to visual context
+Text
+Visual
+Memory
+Figure 6 | Computation of the Visual Attention Score at generation step 𝑡. Left: for one layer and attention head,
+VAS aggregates the current token’s normalized attention weights over the visual-prefix and inserted-memory
+positions. Right: repeating this aggregation for every layer–head pair produces a visual-attention-mass map,
+whose mean is VAS𝑡.
+B.1. Visual Attention Score Computation
+The Visual Attention Score (VAS) measures how much attention the token currently being decoded assigns to
+accessible visual evidence. At generation step 𝑡, let 𝐴ℓ,ℎ
+𝑡,𝑐denote the normalized causal attention weight from
+the current query position to context position 𝑐at layer ℓand head ℎ. Let V𝑡contain the indices of all visual
+context tokens available at that step, including the visual prefix and any long-term memory latents inserted
+earlier in generation. We first sum the attention weights over V𝑡for each layer–head pair and then average
+these visual attention masses across all 𝑁ℓlayers and 𝑁ℎheads:
+VAS𝑡=
+1
+𝑁ℓ𝑁ℎ
+𝑁ℓ
+∑︁
+ℓ=1
+𝑁ℎ
+∑︁
+ℎ=1
+∑︁
+𝑐∈V𝑡
+𝐴ℓ,ℎ
+𝑡,𝑐.
+(12)
+As illustrated in Figure 6, the inner sum in Equation (12) reduces one attention row to the mass assigned
+specifically to visual context, rather than to previously generated text. Averaging the resulting layer–head
+map yields a single token-level score in [0, 1]. A high VAS indicates that the current decoding state is actively
+using available visual evidence, whereas a low VAS indicates that linguistic context dominates the attention
+distribution. StreamFlow uses this score online and triggers retrieval when VAS𝑡< 𝜏, so the decision to expose
+additional long-term memory is tied directly to the model’s current visual reliance.
+B.2. Counterfactual Intervention
+A counterfactual asks how an outcome would change under a specific alternative condition while holding all
+other relevant factors fixed. Unlike an ordinary comparison between two independently configured systems, a
+counterfactual intervention changes only the variable whose causal contribution is being tested. The observed
+condition serves as the factual reference, and the intervened condition represents what would have happened
+to the same example had that variable taken a controlled alternative value. Differences between the paired
+outcomes can therefore be attributed to the intervention under the stated controls.
+In our grounding analysis, the factual condition supplies each sample with its own matched long-term visual
+memory. The counterfactual condition replaces only that memory with the memory of another sample, while
+keeping the query, raw visual tokens, model parameters, answer options, decoding procedure, and visual-token
+budget unchanged. This intervention preserves the presence and amount of memory but breaks its semantic
+correspondence with the current video. Comparing matched and shuffled memory therefore tests whether VAS
+tracks the use of relevant visual evidence, rather than merely responding to the existence of additional visual
+tokens. We measure the effect through paired changes in VAS and in the correct-option log-odds.
+17
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+C. Extra Results
+C.1. Additional Benchmark Results
+Beyond the main-paper comparison, we further adapt a selected subset of baselines to use Qwen3.5-9B as their
+shared backbone. We evaluate these adapted methods on StreamingBench, MVBench, and VideoMME. This
+controlled comparison complements the main results by reducing differences in backbone capability and more
+directly comparing the streaming-memory strategies of the evaluated methods. The results are reported in
+Table 5.
+Table 5 | Additional comparison of selected baselines adapted to the Qwen3.5-9B backbone on StreamingBench,
+MVBench, and VideoMME. All entries are accuracy (%). The best and second-best results are in bold and
+underlined, respectively.
+Method
+StreamingBench
+MVBench VideoMME
+CU
+OSU
+RTVU Overall
+Qwen3.5-9B
+37.60
+43.40
+76.34
+63.26
+67.43
+70.74
+ReKV (Di et al., 2025)
+35.20
+46.00
+78.26
+65.78
+68.75
+71.89
+LiveVLM (Ning et al., 2025)
+38.00
+45.00
+79.14
+65.46
+68.77
+69.26
+InfiniPot-V (Kim et al., 2026)
+35.10
+45.90
+79.82
+65.78
+67.45
+70.89
+StreamingTOM (Chen et al., 2025)
+37.60
+46.30
+80.46
+66.56
+69.00
+66.30
+SimpleStream (Shen et al., 2026)
+38.20
+47.70
+79.02
+66.08
+67.43
+63.15
+StreamFlow-9B (ours)
+39.20
+47.50
+81.55
+67.73
+68.90
+73.52
+StreamFlow Leads the Controlled Streaming Comparison. As shown in Table 5, StreamFlow achieves the
+best StreamingBench overall accuracy of 67.73%, outperforming the strongest competing memory strategy,
+StreamingTOM, by 1.17 percentage points. The advantage is particularly clear on RTVU, where StreamFlow
+reaches 81.55% and exceeds StreamingTOM by 1.09 points. It also obtains the highest CU score of 39.20%,
+while its OSU score of 47.50% is within 0.20 points of the best result. Relative to the vanilla Qwen3.5-9B
+backbone, StreamFlow improves CU, OSU, RTVU, and overall accuracy by 1.60, 4.10, 5.21, and 4.47 points,
+respectively. These gains under a shared answering backbone indicate that the improvements arise from the
+proposed streaming-memory design rather than from differences in backbone capacity.
+StreamFlow Generalizes Strongly to Offline Video Understanding. The same controlled comparison further
+demonstrates that StreamFlow generalizes strongly beyond StreamingBench. It achieves 68.90% on MVBench
+and the highest VideoMME accuracy of 73.52%, surpassing the second-best ReKV result by 1.63 points.
+Overall, StreamFlow ranks first on four of the six reported metrics and second on the remaining two. This
+consistency demonstrates that its two-stage memory preserves both recent details and long-range evidence
+while maintaining the general video-understanding capability of the frozen backbone.
+C.2. Single-Sample Attention Dynamics
+Figure 7 examines the prospective-reasoning question “What might the speaker discuss next?” The video ends
+with a rotating disc divided into colored regions, and the correct continuation concerns the probability of
+the disc landing on the blue region. Visual-prefix baselines exhibit pronounced attention drift: after an early
+rise, their VAS falls steadily as generation proceeds. In contrast, StreamFlow maintains a mean VAS of 0.152,
+compared with 0.081 for the strongest baseline on this sample, and remains above every baseline for 89.2% of
+normalized generation.
+18
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+0
+20
+40
+60
+80
+100
+Generation Progress (%)
+0.00
+0.03
+0.06
+0.09
+0.12
+0.15
+0.18
+Visual Attention Score
+τ = 0.10
+Adaptive Latent-Memory Insertion
+Vanilla
+StreamingTOM
+StreamFlow
+InfiniPot-V
+SimpleStream
+I1
+I2
+I3
+Figure 7 | Generation-time VAS trajectories for an illustrative RTVU prospective-reasoning sample. Curves are
+resampled by normalized generation progress and smoothed for visualization. 𝐼1–𝐼3 mark the three dynamic
+long-term-memory insertions made by StreamFlow; the dashed line denotes the trigger threshold 𝜏= 0.10.
+The three markers show how the online policy responds to this drift. VAS reaches 0.100, 0.086, and 0.086
+immediately before 𝐼1, 𝐼2, and 𝐼3, respectively. After the corresponding memories are inserted, VAS on the next
+generated text token rises to 0.203, 0.152, and 0.177, giving absolute lifts of 0.103, 0.066, and 0.091. Thus,
+each retrieval event is followed by a local recovery of attention to accessible visual evidence, while repeated
+insertions keep the trajectory above the visual-prefix baselines later in decoding. This example illustrates the
+token-level behavior underlying the aggregate trend in the main paper.
+19
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+C.3. Sensitivity Analysis
+Latent Length
+We evaluate the number of latent tokens produced per memory insertion on MLVU while holding the remaining
+configuration fixed. As shown in Figure 8, accuracy increases monotonically from 71.16% at 𝐿= 4 to 75.83%
+at 𝐿= 64. The largest gain occurs between 𝐿= 8 and 𝐿= 16 (+2.25 points), after which the increments narrow
+to +0.89 points from 𝐿= 16 to 𝐿= 32 and +0.49 points from 𝐿= 32 to 𝐿= 64. Consequently, the default
+𝐿= 32 improves over 𝐿= 4 by 4.18 points and captures 89.5% of the total improvement observed over the
+tested range while using half as many latent tokens as 𝐿= 64. This saturation establishes 𝐿= 32 as a practical
+operating point that combines 75.34% accuracy with a compact latent representation.
+4
+8
+16
+32
+64
+Latent length L
+71
+72
+73
+74
+75
+76
+MLVU accuracy (\%)
+Default: L = 32
+Figure 8 | Sensitivity to the latent length per memory insertion on MLVU. Accuracy improves monotonically as
+𝐿increases, with diminishing gains beyond the default 𝐿= 32.
+P-Frame Retention Ratio
+Selection Baselines. All policies use the same GOP-wide patch budget. Residual Top-𝐾(StreamFlow) retains
+the P-frame patches with the largest residuals from the I-frame. Random samples patches uniformly, Uniform
+Spatial selects approximately evenly spaced locations within each P-frame, and Uniform Frames retains complete
+P-frames at regular intervals while assigning any remaining budget to one additional frame.
+Retention-Ratio Visualization. We visualize how the P-frame retention ratio changes the spatial support
+selected by dynamics-aware residual scoring. Each frame is partitioned into a 16 × 28 grid of 448 patches.
+The I-frame is always retained in full, whereas each P-frame retains exactly 56, 112, 224, or 336 patches at
+𝜌= 0.125, 0.25, 0.50, or 0.75, respectively. For each sample, all four masks use the same residual ranking, so
+the selected sets are strictly nested as the budget increases.
+Figure 9 shows that the portrait sequence concentrates its lowest-budget mask around the moving brush
+and the changing facial region. In Figure 10, the mask follows the presenter’s changing pose while initially
+suppressing much of the static instruction board. Figure 11 further shows that newly appearing words and
+graphics are retained together with the moving speaker. Across all three examples, the 12.5% masks suppress
+broad temporally stable regions but preserve localized changes that distinguish each P-frame from its I-frame.
+The 25% and default 50% ratios expand coverage around the same dynamic evidence, rather than replacing
+it with unrelated patches, while the 75% ratio mainly restores additional static context. Together, Figures 9
+to 11 show that increasing retention broadens contextual coverage, but the most salient temporal changes are
+already prioritized at lower budgets.
+Figure 12 confirms that the qualitative behavior generalizes across retention budgets. At 12.5% retention,
+20
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+StreamFlow captures 18.57% of local motion and 26.19% of appearance change, compared with at most 12.75%
+and 12.74%, respectively, for the fixed-budget alternatives; it simultaneously rejects 99.44% of independently
+identified static patches, versus at most 87.59%. At the default 50% ratio, motion coverage and appearance-
+change coverage rise to 61.08% and 71.96%, while static rejection remains 95.28%. Even at 75% retention,
+StreamFlow retains 82.96% of local motion and 90.05% of appearance change while rejecting 87.69% of static
+patches. The consistent separation across budgets shows that residual ranking allocates additional capacity
+to evolving regions before admitting redundant background, rather than obtaining its advantage only at the
+default operating point.
+Original
+I-frame
+P-frame 1
+P-frame 2
+P-frame 3
+ρ = 0.125
+ρ = 0.25
+ρ = 0.5
+ρ = 0.75
+Figure 9 | Retention-ratio masks for a Clips Summarize sample involving a portrait being painted. At 𝜌= 0.125,
+retained P-frame patches concentrate around the moving brush and the changing mouth and face regions.
+Larger ratios progressively restore the surrounding portrait and background while preserving earlier selections.
+Original
+I-frame
+P-frame 1
+P-frame 2
+P-frame 3
+ρ = 0.125
+ρ = 0.25
+ρ = 0.5
+ρ = 0.75
+Figure 10 | Retention-ratio masks for a Counting sample with a moving presenter beside a largely static
+instruction board. The lowest budget emphasizes the presenter’s changing pose and boundary regions; increasing
+𝜌adds the board and broader scene context.
+21
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Original
+I-frame
+P-frame 1
+P-frame 2
+P-frame 3
+ρ = 0.125
+ρ = 0.25
+ρ = 0.5
+ρ = 0.75
+Figure 11 | Retention-ratio masks for a Prospective Reasoning sample. At 𝜌= 0.125, residual selection preserves
+the moving speaker together with newly appearing textual and graphic elements. Higher-ratio masks expand
+around these regions and recover progressively more of the background.
+12.5
+25
+50
+75
+100
+Retained P-frame Patches (%)
+0
+20
+40
+60
+80
+100
+Coverage (%)
+Local Motion Coverage
+12.5
+25
+50
+75
+100
+Retained P-frame Patches (%)
+0
+20
+40
+60
+80
+100
+Coverage (%)
+Appearance-Change Coverage
+12.5
+25
+50
+75
+100
+Retained P-frame Patches (%)
+0
+20
+40
+60
+80
+100
+Rejection (%)
+Static Redundancy Rejection
+StreamFlow
+Random Patches
+Uniform Spatial
+Uniform Frames
+Figure 12 | Quantitative patch-retention analysis on RTVU. We vary the retained P-frame patch ratio while
+holding the budget identical across residual Top-K, random patches, uniform spatial selection, and uniform
+frame selection. Curves report video-level means, and shaded regions denote 95% bootstrap confidence intervals.
+The dashed line marks the default retention ratio 𝜌= 0.50.
+C.4. Efficiency Measurement Boundaries
+We report efficiency under three explicitly separated measurement scopes on RTVU: the visual front end, the
+decoder, and the complete task. Vanilla and StreamFlow are evaluated on identical questions and processed
+records, with the same 16×28 pre-merge patch grid and greedy decoding; StreamFlow uses a P-frame retention
+ratio of 50%. Each entry in the main-paper efficiency table is the arithmetic mean of the corresponding per-
+example measurements. Given a Vanilla measurement 𝑚V and a StreamFlow measurement 𝑚S, we compute
+the reported reduction as (𝑚V −𝑚S)/𝑚V × 100%. Table 6 makes the accounting boundary of each scope explicit.
+22
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Table 6 | Measurement boundaries for the efficiency results on RTVU. The three scopes provide complementary
+measurements of distinct inference stages.
+Scope
+Measurement boundary
+Visual front end
+Includes: residual scoring, grouped Top-𝐾, sparse packing, host-to-device transfer, and ViT
+encoding. Excludes: disk reads, shared resizing, model loading, and compilation.
+Decoder
+Includes: valid context length, backbone BF16 K/V cache, and isolated causal attention. Ex-
+cludes: vision, projections, MLPs, compressor, retrieval, VAS, and other decoder operations.
+Complete task
+Includes: input materialization, vision, memory compression, retrieval, VAS, post-insertion
+forward passes, and greedy decoding. Excludes: disk reads, model loading, compilation,
+frame arrival, and GOP waiting.
+Metric Definitions. Pre-ViT patches denote the number of valid patches presented to the vision transformer
+before spatial merging, summed over the observed video prefix of each example. Context length includes all
+valid text tokens, raw visual tokens, and retrieved latent tokens supplied to the answering backbone. KV-cache
+memory accounts for the BF16 keys and values retained across all backbone layers. Visual-front-end latency
+and self-attention latency isolate their respective stages, whereas task latency measures the complete inference
+path defined below. Task peak memory is the maximum allocator-reported memory observed within the same
+complete-task boundary.
+Visual-Front-End Measurement. Timing begins after the patch payloads and source images are resident in
+host memory. Vanilla packs and encodes every patch, whereas StreamFlow first performs raw-pixel residual
+scoring, grouped Top-𝐾selection, sparse packing, and host-to-device transfer before encoding the retained
+patches. All static shapes are precompiled before timing. We measure each input three times and report the
+mean of the per-input medians over RTVU. This protocol measures offline benchmark execution rather than
+per-frame service latency; consequently, the reported 50.0% reduction already includes the selection and
+packing overhead introduced by StreamFlow.
+Decoder Measurement. KV-cache memory includes only the retained keys and values, excluding model weights,
+temporary activations, and the compressor. For the isolated causal-attention benchmark, we pad sequences to
+128-token blocks, perform two warm-up runs followed by seven timed runs, and scale the median per-layer
+latency by the decoder depth. This scope excludes projections, MLPs, vision, retrieval, and VAS computation.
+Complete-Task Measurement and VAS Overhead. Complete-task timing begins with the processed video
+records and question resident in host memory and ends when greedy decoding finishes. This boundary includes
+the visual front end, compressor, memory maintenance, retrieval, token-wise VAS computation, and every
+post-insertion forward pass. At each decoding step, VAS is accumulated over all attention heads in every decoder
+layer and reduced on device to per-layer scalars; full attention matrices are neither materialized nor transferred
+to the host. We synchronize device execution before stopping the timer. Unlike the isolated KV-cache metric,
+allocator-sampled peak memory covers the complete model state, temporary execution state, and compressor.
+Under this end-to-end boundary, StreamFlow reduces mean peak memory from 13.68 to 10.80 GiB (21.1%)
+and mean task latency from 7.36 to 3.65 seconds (50.4%).
+Complete-task timing excludes disk video decoding, model loading, first-time compilation, and frame-arrival
+time, including the wall-clock delay required to collect a GOP at 1 FPS.
+C.5. Case Studies
+Figures 13 and 14 align available memory and retrieved GOPs with answer generation and VAS trajectories
+in two representative cases. Together, they visualize how evolving answer prefixes guide retrieval and how
+dynamic insertion restores access to long-range visual evidence.
+VideoMME-Long. Figure 13 traces an approximately 50-minute example. Mid-term memory covers the final
+four minutes, while long-term retrieval reaches earlier disease-history evidence, including the Mycobacterium
+tuberculosis frame at 00:06:15 and the lung X-ray at 00:38:02.
+As the response develops, five VAS-guided insertions raise visual attention from below 𝜏= 0.10 to above 0.31.
+The retrieved evidence spans distant parts of the video and progressively grounds the model’s disease-focused
+23
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+reasoning in the relevant visual history.
+MLVU. Figure 14 examines a 78.8-minute surveillance video. Mid-term memory covers 01:12:22–01:18:44,
+while retrieved GOPs revisit the fire, emergency vehicles, and responders from as early as 00:12:25, supplying
+temporally distributed evidence for anomaly recognition.
+Five dynamic insertions again lift VAS from below 0.10 to above 0.30 as the response identifies the explosion and
+accumulates supporting details about the fireball, smoke, debris, and arriving emergency services. StreamFlow
+consequently produces a complete evidence-grounded response and correctly selects “A: Explosion.”
+24
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Question
+In accordance with the video footage, which of the following diseases causes the most deaths?
+A. Tuberculosis   B. Malaria   C. Cholera   D. Typhoid
+Model output
+✓  Correct
+Evidence: The video displays a series of charts and graphs comparing the number of deaths caused by different diseases. The chart titled
+'Disease Deaths' clearly shows that Tuberculosis has the highest number of deaths, followed by Malaria, Cholera, and Typhoid. The visual
+representation confirms that Tuberculosis is the leading cause of death among the listed diseases.  Answer: A
+Mid-term memory
+recent window
+45:50–49:52
+Retrieved long-term GOPs
+two representative keyframes per event
+M0
+fixed · extra
+I1
+token 12
+I2
+token 30
+I3
+token 39
+I4
+token 58
+I5
+token 66
+A
+Memory contents at each insertion
+generation
+M0  answer start
+I1  …charts and graphs comparing
+I2  …‘Disease Deaths’ clearly
+I3  …the highest number of
+I4  …The visual representation
+I5  …is the leading cause
+B
+Insertion positions in the generated response
+C
+Visual-attention dynamics
+0
+10
+20
+30
+40
+50
+60
+70
+Generated-token offset
+0.0
+0.1
+0.2
+0.3
+0.4
+Visual attention score (VAS)
+Total VAS
+Trigger τ = 0.10
+M0
+extra
+I1  .097→.314
+I2  .095→.336
+I3  .092→.332
+I4  .095→.328
+I5  .070→.332
+45:50
+46:22
+47:00
+47:32
+49:21
+04:42
+17:43
+03:08
+13:33
+06:15
+38:02
+06:15
+16:09
+13:33
+32:49
+06:15
+32:49
+Figure 13 | Token-aligned case study for an approximately 50-minute VideoMME-Long sample. The top card
+shows the question and correct model output. (A) Mid-term memory and retrieved long-term GOPs. (B)
+Insertion positions during generation. (C) VAS dynamics across generated tokens.
+25
+
+
+StreamFlow: Dynamic Memory Flows for Streaming Video Understanding
+Question
+Does this surveillance footage contain any anomalies? If yes, which kind of anomaly?
+A. Explosion   B. Robbery   C. Arson   D. Shoplifting
+Model output
+✓  Correct
+Evidence: The video shows a large crowd of people gathered around a building. At approximately 00:00, a significant explosion occurs near
+the building, causing a massive fireball and smoke. The explosion is followed by a large plume of smoke and debris, indicating a destructive
+event. The crowd reacts with shock and panic, and emergency services are seen arriving on the scene.  Answer: A
+Mid-term memory
+recent window
+01:12:22–01:18:44
+Retrieved long-term GOPs
+two representative keyframes per event
+M0
+fixed · extra
+I1
+token 26
+I2
+token 41
+I3
+token 54
+I4
+token 62
+I5
+token 70
+A
+Memory contents at each insertion
+generation
+M0  answer start
+I1  …a significant
+I2  …smoke. The
+I3  …debris,
+I4  …crowd reacts
+I5  …emergency
+B
+Insertion positions in the generated response
+C
+Visual-attention dynamics
+0
+10
+20
+30
+40
+50
+60
+70
+Generated-token offset
+0.0
+0.1
+0.2
+0.3
+0.4
+Visual attention score (VAS)
+Total VAS
+Trigger τ = 0.10
+M0
+extra
+I1  .098→.312
+I2  .099→.311
+I3  .094→.307
+I4  .090→.322
+I5  .097→.328
+01:12:30
+01:14:00
+01:15:30
+01:17:00
+01:18:30
+00:34:50
+01:08:30
+00:23:20
+01:07:40
+00:23:20
+00:31:35
+00:12:40
+00:36:30
+00:37:20
+01:17:35
+00:44:45
+01:08:30
+Figure 14 | Token-aligned case study for an approximately 79-minute MLVU anomaly-recognition sample.
+The top card shows the question and correct model output. (A) Mid-term memory and retrieved GOPs. (B)
+Insertion positions during generation. (C) VAS dynamics across generated tokens.
+26
