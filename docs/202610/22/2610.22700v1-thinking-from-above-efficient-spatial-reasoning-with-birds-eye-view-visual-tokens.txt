@@ -1,0 +1,467 @@
+Title: Thinking from Above: Efficient Spatial Reasoning with Bird's-Eye-View Visual Tokens
+
+URL Source: https://arxiv.org/pdf/2610.22700v1
+
+Published Time: Mon, 19 Oct 2026 00:27:54 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# Thinking from Above: Efficient Spatial Reasoning with Bird’s-Eye-View Visual Tokens 
+
+# Faizan Siddiqui Nirav Savaliya Sahith Reddy Chada Enna Sachdeva Honda Research Institute USA 
+
+> faizan siddiqui@honda-ri.com
+
+# Abstract 
+
+Existing video multimodal large language models (MLLMs) organize observations primarily in time, but embodied spa-tial reasoning requires organizing them in space. Conse-quently, their visual representations can remain locally con-sistent across nearby frames while lacking a persistent spa-tial context that is stable across viewpoints and time. We ex-ploit depth and camera pose, which are naturally available to embodied agents, to explicitly establish this spatial cor-respondence. We introduce Cambrian-BEV, which extends Cambrian-S with a parameter-free geometric tokenization scheme that back-projects visual patch features from each frame into a shared bird’s-eye-view (BEV) coordinate frame and averages features that fall within the same spatial cell. Thus, observations of the same physical location, regard-less of viewpoint or time step, are aggregated into a com-mon spatial token. In addition to providing a persistent scene representation, this formulation acts as an efficient compression mechanism: 128 frames containing approxi-mately 100K DINOv3 patch features are consolidated into a fixed 27 ×27 grid of only 729 BEV tokens, cutting LLM prefill time by 2.9× and peak memory by 3.6×. Cambrian-BEV requires no architectural modification beyond BEV to-kenization and uses a frozen DINOv3 vision encoder with a trainable multimodal projector and LLM. On VSI-Bench, our model reaches 63.48, +8 .5 points over an identically fine-tuned frame-token control with 12 .6× fewer visual to-kens, with particularly large gains on room size ( +24 .5)and relative direction ( +34 .1). On ReVSI, it reaches 44.68, 
+
++4 .5 over the corresponding control. 
+
+# 1. Introduction 
+
+Multimodal large language models (MLLMs) have become highly capable at recognizing and describing visual content, yet they remain substantially weaker at reasoning about the geometry of a scene. In video-based spatial question an-swering, a scene is typically represented as a sequence of frame-level visual tokens [21, 28, 33] (Fig. 1, top). Each token is indexed by the image coordinates of a particular viewpoint, rather than by the physical location it observes. Consequently, overlapping views produce redundant evi-dence, while the language model must implicitly estab-lish cross-view correspondence, reconcile revisited regions, and infer metric relationships from a long token sequence. VSI-Bench highlights this limitation: although local spa-tial awareness emerges in modern MLLMs, constructing and reasoning over a coherent scene-level representation re-mains a major bottleneck [31]. Increasing the number of frames can provide broader visual coverage, but also in-creases the visual context approximately linearly, creating a particularly unfavorable trade-off for compact models in-tended for embodied deployment. This trade-off is unnecessary in many embodied settings. Robots, augmented-reality devices, and mobile scanning platforms commonly provide, or can estimate, depth, cam-era intrinsics, and camera pose. These signals are also avail-able in indoor datasets such as ScanNet, ScanNet++, and ARKitScenes [2, 8, 35]. Given this information, an image patch can be associated with a location in a common 3D coordinate frame without learning a view transformation. Spatial mapping and BEV perception have long used this principle to align observations across viewpoints [4, 13, 24]. Recent spatial MLLMs have also begun to incorporate cam-era pose, reconstructed geometry, BEV renderings, or ex-plicit 3D memories [9, 12, 25, 32, 40]. However, these methods often retain frame-indexed visual tokens, depend on learned geometric modules, render object-level maps, or maintain variable-length spatial memories. We instead ask whether known geometry can be used directly as a visual tokenization rule, converting a long video into a fixed set of scene-indexed features before language reasoning begins, so the model reasons over the scene from above rather than frame by frame. We build on Cambrian-S [33], a video MLLM whose spatial instruction tuning on the VSI-590K corpus improves spatial reasoning but leaves this frame-indexed interface in place. We introduce Cambrian-BEV , which keeps the Cambrian-S architecture, data, and training recipe and re-1arXiv:2610.22700v1 [cs.CV] 15 Oct 2026 Figure 1. From frame-indexed tokens to BEV visual tokens. Top: A conventional video MLLM represents each frame independently, producing repeated evidence for regions observed from multiple viewpoints. Bottom: We use depth and camera pose to back-project patch features into a shared metric coordinate frame and aggregate them on a fixed 27 × 27 bird’s-eye-view grid. Repeated observations of the same spatial region are fused into common BEV cells, replacing approximately 9K frame tokens with 729 spatially indexed tokens at the LLM interface. 
+
+places only the visual interface with a parameter-free ge-ometric one: a compact bird’s-eye-view representation in place of frame tokens (Fig. 1, bottom). Using depth, cam-era intrinsics, and pose, we back-project dense patch fea-tures from a frozen DINOv3 encoder into a shared scene coordinate frame, average them within a fixed 27 × 27 BEV grid, and supply the resulting 729 scene-indexed tokens to the LLM in place of the frame-token sequence. For a 128-frame input, this reduces the visual context presented to the LLM by approximately 12 .6× relative to our frame-token baseline. The BEV operator introduces no learnable param-eters and requires no object detector or map supervision; only the multimodal projector and LLM are fine-tuned, on the depth-and-pose subset of VSI-590K. Geometric rearrangement also imposes a requirement that conventional video MLLMs hide: a patch feature must remain spatially tied to the image region from which it was extracted, a property that frame-token performance cannot reveal because tokens are normally consumed in their orig-inal image order. Comparing SigLIP2 [29], the vision en-coder used by Cambrian-S, with DINOv3 [27], we find that the two perform nearly identically as frame-token models but diverge substantially once their patch features are rear-ranged in BEV space, making dense feature locality a key, and previously underexamined, criterion for selecting vi-sion encoders for geometry-aware MLLMs (Sec. 3.3). On VSI-Bench, Cambrian-BEV with a compact 0.5B-parameter language backbone reaches 63.48, improving by 8.50 points over an identically fine-tuned frame-token control while using 12 .6× fewer LLM-side visual tokens, which cuts LLM prefill time 2.9× and peak memory 3.6×.The largest gains occur on room size, relative direction, and route planning; the metric gains hold across every BEV con-figuration we trained, whereas the relative-direction gain re-quires anchoring the grid to the first camera’s heading. The principal trends replicate on the independently re-annotated ReVSI benchmark [38], where Cambrian-BEV improves over the corresponding control by 4.51 points. Our contributions are threefold: • A parameter-free BEV tokenization interface for video MLLMs. We use depth and camera pose to co-register dense patch features in a fixed metric grid, replac-ing a long frame-token sequence with 729 scene-indexed visual tokens and reducing the LLM visual context by ap-proximately 12 .6×.• An empirical study of encoder locality under geomet-ric rearrangement. We show that comparable frame-token performance does not imply comparable BEV per-formance, identifying spatially localized dense features as a key requirement for geometry-aware visual tokeniza-tion. • Strong spatial reasoning with a compact language backbone. Cambrian-BEV reaches 63.48 on VSI-Bench and 44.68 on ReVSI, with robust improvements on met-2ric questions (room size, distances) and, given an egocen-tric grid frame, on relative direction, demonstrating the value of explicit geometric alignment for efficient embod-ied video understanding. 
+
+# 2. Related Work 
+
+## 2.1. Spatial Reasoning in Video MLLMs 
+
+Spatial question answering initially focused on benchmarks and models that operate on explicit 3D scene representa-tions [1, 14, 23, 43]. Subsequent methods introduced spatial awareness into 2D vision-language models through spatial instruction tuning, depth prediction, and RGB-D condition-ing [3, 5, 7]. More recently, video-based benchmarks such as VSI-Bench and ReVSI have shown that modern MLLMs remain particularly limited in metric, configurational, and cross-view reasoning [31, 38]. Geometry-aware video MLLMs address these limitations using 3D positional en-codings, pretrained reconstruction features, spatial instruc-tion tuning, pose-grounded camera tokens, or combinations of implicit and explicit geometry [9, 16, 20, 32, 33, 39, 40]. Despite substantial progress, many of these approaches re-tain observations as frame- or view-indexed tokens and in-corporate geometry as auxiliary information. Repeated ob-servations of the same physical region can therefore remain represented by separate tokens, leaving the language model to infer their correspondence. Our approach instead uses available depth and camera pose to establish this correspon-dence before language reasoning by organizing visual fea-tures in a shared spatial coordinate frame. 
+
+## 2.2. Allocentric and BEV Scene Representations 
+
+Allocentric representations provide a persistent coordinate system in which observations from different viewpoints can be spatially aligned. Semantic MapNet and Trans4Map project egocentric visual features into top-down memo-ries for semantic-map prediction [4, 6], while VLMaps and ConceptFusion associate geometric maps with open-vocabulary visual-language features for navigation and multimodal retrieval [15, 18]. Recent work increasingly ex-poses structured allocentric representations to multimodal language models. GPT4Scene renders a BEV map and uses consistent object identifiers to connect top-down and egocentric observations [25]; Struct2D combines BEV ren-derings with object-level metadata [42]; and Video2Layout and Map2Thought reconstruct metric layouts that support explicit spatial computation [10, 17]. Cog3DMap instead constructs a variable-length 3D token memory, recurrently merging semantic and geometric features associated with overlapping spatial locations [12]. These methods demon-strate the value of allocentric representations, but typically render symbolic maps, reconstruct object-level layouts, use learned mapping modules, or maintain variable-size 3D memories. In contrast, we directly back-project dense vi-sual patch features into a fixed metric BEV grid and aver-age all features assigned to each cell. The geometric pro-jection and aggregation are parameter-free and require no object detector, semantic-map supervision, map decoder, or learned view transformation. The resulting BEV cells are supplied to the MLLM as spatially aligned visual tokens. 
+
+## 2.3. Token-Efficient Video Modeling 
+
+The visual context of a video MLLM grows rapidly with the number of processed frames, motivating representa-tions that preserve long-range evidence under a bounded to-ken budget. Prior approaches maintain compact working and episodic memories [22], fold streaming observations into persistent memory structures [30], or incrementally compress geometry-aware features through spatial cluster-ing or voxelization [12, 36]. Structured scene graphs and 3D memories provide another form of compression by re-taining object-level entities and relations rather than dense frame features [11, 34, 37]. Such methods generally reduce context through learned memory updates, selective reten-tion, object abstraction, or adaptive spatial grouping. Our method instead uses deterministic geometric correspon-dence as the compression criterion. Features are merged when their back-projected locations fall within the same physical BEV cell, regardless of the frame or viewpoint from which they were observed. Consequently, the token budget is bounded by the BEV grid resolution rather than video length, making spatial alignment and video compres-sion two outcomes of the same operation. 
+
+# 3. Methodology 
+
+Our goal is to replace the frame-sequential visual context of a video MLLM with a compact, metrically structured one while modifying the model as little as possible. Figure 2 shows the pipeline. The base model’s frozen encoder and projector produce patch tokens (Sec. 3.1); a parameter-free geometric module fuses them across frames into a single BEV grid (Sec. 3.2); and the LLM consumes this grid in place of image tokens (Sec. 3.4). Section 3.3 analyzes the encoder property that makes this fusion viable. 
+
+## 3.1. Preliminaries 
+
+We build on Cambrian-S [33], a video MLLM compris-ing a vision encoder, a two-layer MLP projector into the language embedding space, and a Qwen2.5-0.5B language model [26] with hidden size 896. Cambrian-S is trained in four stages: (1) projector alignment on image–caption pairs, (2) image instruction tuning, (3) video instruction tun-ing, and (4) spatial instruction tuning on VSI-590K. Only stage 1 restricts training to the projector; the LLM is trained thereafter, and the vision encoder stays frozen throughout (Tab. S3). The input is a scene video of T =128 RGB-D frames with per-frame camera intrinsics Kt ∈ R3×3
+
+and world-to-camera extrinsics T w2ct ∈ SE (3) . These 3Figure 2. Cambrian-BEV architecture. Patch tokens leave the frozen encoder and the vision-to-language projector already in the language embedding space, so the parameter-free geometric module (steps 1–6) can pool them directly into a metric BEV grid whose cells become the BEV tokens that replace the frame tokens in the LLM context. The BEV projection (green) is introduced only in the final fine-tuning stage (stage 5, Tab. S3); the encoder, projector, and LLM are inherited from the unmodified four-stage Cambrian-S recipe, which trains on frame tokens. 
+
+quantities are natively available on embodied platforms and are provided by the ScanNet [8], ScanNet++ [35], and ARKitScenes [2] scenes underlying VSI-590K and VSI-Bench. Each frame is encoded at 448 ×448 by a frozen DINOv3 [27] ViT-L/16 into a 28 ×28 grid of patch fea-tures, which the projector maps to language-model width. This yields patch tokens Ft ∈ RNp×D with Np=784 and 
+
+D=896 per frame. The baseline model compresses these 
+
+T · Np ≈ 100 K features per scene: Cambrian-S’s multi-image/video (MIV) pathway bilinearly downsamples each 
+
+28 ×28 grid to 8×8 tokens, appends a learnable newline to-ken per row, and concatenates the 72 tokens per frame in time, giving 9,216 visual tokens. We discard that pathway entirely and instead route the full-resolution patch tokens through the BEV module. 
+
+## 3.2. Parameter-free BEV projection 
+
+The BEV module assigns each patch token a 3D location by closed-form geometry and then pools tokens by ground-plane cell. All geometric computation is deterministic given depth and pose, and nothing is learned. The module is dif-ferentiable with respect to the input features, so gradients from the language loss backpropagate through the pooling operation to the projector (Sec. A). Because pooling oper-ates on projector outputs , the resulting BEV tokens already live in the language embedding space, and no adapter of any kind is required (Sec. 3.4). 
+
+Back-projection. The patch at row i, column j of frame 
+
+t has center pixel (u, v ) =  (j+ 12 )P, (i+ 12 )P  for patch size P . We sample the depth map bilinearly at this point to obtain zcam , discarding patches whose depth is invalid or outside [0 .1, 100] m. The pinhole model lifts the patch center into the camera frame, 
+
+pcam = zcam K−1 
+
+> t
+
+(u, v, 1) ⊤, (1) and the inverse extrinsics carry it to the world frame: 
+
+pw = R⊤
+
+> t
+
+ pcam − tt
+
+, T w2ct =
+
+Rt tt
+
+0 1
+
+
+
+. (2) 
+
+Grid orientation and binning. The BEV grid is an 
+
+Hb×Wb Cartesian lattice on the ground plane, with rows spanning the forward axis and columns the lateral axis. World-frame axes are arbitrary with respect to both the room and the observer, and the choice of grid frame mat-ters a great deal. We therefore rotate ground-plane co-ordinates so that the grid’s forward axis aligns with the first camera’s heading (its optical axis projected onto the ground plane). This gives the grid an egocentric, trajectory-anchored meaning: “forward as the video first saw it.” This choice of frame turns out to be the largest positive lever in our ablations (Sec. 4.3). The grid is centered on the cen-troid of the valid points and spans [−5, 5] m in both axes at Hb=Wb=27 (0.37 m per cell). The range is set from the training scenes’ spatial extent rather than tuned: a cen-tered ±5 m window retains 99% of back-projected points, and smaller windows discard scene content faster than they gain resolution (Sec. D). Each surviving point is assigned to the cell containing its ground-plane coordinates. Sec-tion A specifies the frame conventions, the PCA-rectified alternative, the centering and binning rules, and the degen-erate cases in full. 
+
+Aggregation. Each surviving point p deposits its patch feature fp into the cell containing its ground-plane coordi-4nates, and every cell averages the features it receives: 
+
+Bij =
+
+
+
+1
+
+|P ij |
+
+X
+
+> p∈P ij
+
+fp, |P ij | > 0,
+
+0, |P ij | = 0 ,
+
+(3) where Pij is the set of points assigned to cell (i, j ) and 
+
+0 ∈ RD is the zero vector. Cells that receive no points are therefore exactly zero rather than undefined or im-puted, and these zero tokens are passed to the LLM un-changed (Sec. A). We implement this as a single batched 
+
+scatter add followed by a count normalization. On an H100, the full projection of a 128-frame scene ( 128 ×784 
+
+points), from depth sampling to the normalized grid, takes 1.9 ms (Sec. E). We also evaluate a bilinear variant that splats each point onto its four surrounding cells with bilin-ear weights and normalizes by accumulated weight, with the same zero-vector convention for cells whose accumu-lated weight is zero; we compare the two in Sec. 4.3 and Sec. 4.4. The per-cell averaging of Eq. (3) is where multi-view fusion happens. The same physical location observed from ten viewpoints contributes ten features to one cell, so redundant observations collapse into a stable estimate rather than ten near-duplicate tokens. 
+
+Vertical structure. Collapsing the height axis means that a cell can mix an object with the wall, floor, and ceiling behind it. Measured on our final 27 ×27 , ±5 m grid, an ob-ject in the 0.3–1.2 m height band typically shares its cell with 1.5–2.7 × its own feature mass, and up to 169 × in the worst case. We therefore support an optional per-scene floor-relative height filter (Sec. B). Whether removing the diluting mass helps is an empirical question; it does not (Tab. 2e, Sec. C), and the final model uses no height filter. The output is a grid B ∈ RHb×Wb×D , flattened row-major into HbWb = 729 BEV tokens. This is a fixed-size, scene-indexed set of BEV tokens, 12 .6× smaller than the frame-token context it replaces, in which neighboring to-kens are metric neighbors in the world. 
+
+## 3.3. Fusion needs locally grounded features 
+
+BEV aggregation implicitly assumes that a patch token de-scribes the physical surface at that patch. If each token is instead a mixture of scene-global context, then rearranging tokens by 3D position is meaningless, and averaging tokens from different views of the same place blurs whatever struc-ture they carried. Whether the assumption holds is a prop-erty of the encoder’s training objective. Language-supervised encoders such as SigLIP2 [29] re-ceive their contrastive signal through an attention-pooling head over patch tokens. The objective constrains only the pooled global embedding, leaving individual patch to-kens free to distribute evidence across the image. Prob-ing SigLIP2 directly confirms this (Fig. 3). We read its patch tokens in the way most favorable to it, carrying each through the value pathway of the pooling head so that it becomes the per-patch analogue of the embedding the text tower is trained against; the raw pre-head tokens are less lo-calized still (Sec. H). Even so, the resulting text-similarity maps scatter evidence for a queried object across the im-age, whereas those of DINOv3 follow the object’s extent. DINOv3 [27], in contrast, is trained with dense patch-level self-distillation and adds Gram anchoring , a regularizer that preserves the pairwise similarity structure of patch features throughout training. Its features are therefore designed to preserve stronger dense feature structure. This leads to a testable prediction. If BEV fusion de-pends on feature locality, then two encoders that perform equally as conventional frame-token models should diverge once their tokens are geometrically fused, with the locally grounded encoder benefiting more. We test this by train-ing both encoders through the identical four-stage recipe (Tab. S3) followed by the identical BEV fine-tuning stage (Sec. 4.3). 
+
+## 3.4. Integration into the language model 
+
+The 729 BEV tokens are spliced into the embedded se-quence at the position of the <image> placeholder, ex-actly where the frame tokens would have gone. The LLM architecture, tokenizer, and prompt format are untouched. The final model introduces no new BEV-specific parame-ters, BEV tokens are already language-embedding vectors, and an interposed MLP adapter is not only unnecessary but harmful ( −12 .0 points, Tab. 2d). We also evaluate richer in-terfaces, namely a learnable empty-cell token, a small self-attention BEV encoder with axial 2D rotary embeddings, and temporally chunked (iterative) BEV sequences. None improves on the plain parameter-free grid (Tab. 2, Sec. C). 
+
+Training. Starting from the stage-4 (spatial IT) check-point, we fine-tune the projector and LLM with the vision encoder frozen, using the standard next-token loss on an-swer tokens only. Because the BEV grid is a per-scene quantity, training batches are scene-grouped so that the vi-sion encoding and projection are computed once per scene and shared across its QA pairs. Hyperparameters are given in Sec. 4.1. 
+
+# 4. Experiments 
+
+## 4.1. Setup 
+
+Training data. Models are fine-tuned on the subset of VSI-590K [33] whose scenes provide registered depth and pose, which we refer to as VSI-288K-Depth : 288,478 QA pairs over 4,955 scenes (1,201 ScanNet, 855 ScanNet++, 2,899 ARKitScenes), with 128 uniformly sampled frames per scene. Depth is raw sensor depth (16-bit, millimeter) and poses are the datasets’ ground-truth trajectories; we per-form no reconstruction or pose estimation. VSI-590K cov-ers counting, distance, size, direction, and appearance order 5but contains no route-planning questions. Route planning, one of the eight VSI-Bench categories, is therefore a held-out task for every fine-tuned model below. 
+
+Models. All 0.5B rows in Tab. 1 share the same architec-ture and the same four-stage Cambrian-S recipe (Sec. 3.1, Tab. S3); they differ only in the vision encoder and in the visual representation presented to the LLM. Frames (SigLIP2) is our reproduction of Cambrian-S-0.5B with its original SigLIP2-So400M encoder. Frames (DINOv3) re-places the encoder with DINOv3 ViT-L/16 and serves as the parent checkpoint of every BEV model below. Cambrian-BEV continues this parent with a fifth fine-tuning stage on VSI-288K-Depth in which the 9,216 frame tokens (128 frames × 72 MIV tokens, Sec. 3.1) are replaced by 729 BEV tokens ( 27 ×27 grid, ±5 m range, hard assignment, first-pose orientation, no adapter). Frames + spatial FT 
+
+is the critical control. It gives the same DINOv3 parent the identical fifth stage on the identical data but retains its 
+
+9,216 frame tokens, so the gap between this row and ours isolates the effect of the representation from the effect of the extra training. For reference, we also report the offi-cial Cambrian-S releases at 0.5B and 7B, evaluated in our harness. 
+
+Implementation details. The fifth stage shared by Cambrian-BEV and the control runs for 2 epochs (2,176 steps) with the projector and LLM fully trainable (no LoRA), both at learning rate 2×10 −5 with a cosine sched-ule, 3% warmup, and no weight decay. The global batch is 256, organized as 8 QA pairs per scene. As in stages 1–4, training runs under bf16 autocast with fp32 master weights (Sec. G). Training takes about 6 hours on 2 ×H100 80 GB GPUs. 
+
+Benchmarks and metrics. Our primary benchmark is the full VSI-Bench [31] suite of 5,130 questions over 288 real indoor scene videos from ScanNet, ScanNet++, and ARKitScenes, in eight categories (Tab. 1). The four numerical categories are scored by Mean Relative Ac-curacy (MRA), the fraction of relative-error thresholds in {0.50 , 0.55 , . . . , 0.95 } that a prediction satisfies; the four multiple-choice categories by accuracy, with the three relative-direction splits averaged into one category as in the official protocol. The overall score is the unweighted mean of the eight. We additionally evaluate on ReVSI [38], an expert-re-annotated rebuild of VSI-Bench (Sec. 4.4). Train-ing and evaluation are disjoint at the scene level: none of the 288 VSI-Bench scenes occurs among the 4,955 train-ing scenes, so every benchmark scene, on VSI-Bench and ReVSI alike, is unseen at every training stage. Generation is greedy with at most 16 new tokens, and answers are parsed with the official lmms-eval rules; unparseable numeric an-swers score 0. All models receive up to 128 frames per scene; ours additionally receives the sensor depth maps, in-trinsics, and poses shipped with the benchmark scenes. 
+
+Reproduction gap. Our reproduced frame baselines fall 
+
+∼10 points below the official 0.5B release. The cause is our use of bf16 autocast, adopted for compute budget, in place of the official full-fp32 training. This gap only strength-ens the comparison: our BEV model starts from the weaker base and still surpasses the official release by nearly 12 points. Section G gives the details. 
+
+## 4.2. Main results 
+
+Table 1 presents the main comparison. Relative to its stage-4 parent, Cambrian-BEV gains +21 .5 points. The frames-only control attributes +13 .0 of this to the additional fine-tuning and +8 .5 to the representation itself, obtained with 
+
+12 .6× fewer visual tokens. The zero-shot row confirms the split from the other side: BEV tokens fed to the same par-ent without fine-tuning score 41.6, no better than its frame tokens (42.0), so the gain requires the LLM to learn the new layout, and two epochs on VSI-288K-Depth suffice. The gains follow the geometry. Wherever the answer is a property of the metric grid, BEV wins for every config-uration in Tab. 2. Room size improves by +24 .5, since the grid’s occupied extent is the room footprint; here our 0.5B model exceeds the official 7B ( 85 .0 vs. 69 .6). Ab-solute distance ( +7 .3) and relative distance ( +6 .3) follow the same pattern. Relative direction shows the largest gain (+34 .1), but this gain is conditional on an egocentric grid frame (Sec. 4.3). Route planning, which receives no train-ing supervision (Sec. 4.1), also improves ( +12 .4). The main cost is appearance order ( −14 .4): a time-collapsed grid can-not represent visitation order, and this category accounts for most of the remaining gap to the 7B. Prepending the frames to the grid recovers appearance order but scores 7.4 points lower overall at 13 .6× the tokens (Tab. 2e, Sec. C). 
+
+Token efficiency. Profiled on one H100 (Sec. E), the 
+
+12 .6× shorter visual context cuts prefill 2.9× (16 vs. 46 ms per question) and peak memory 3.6× (2.5 vs. 9.1 GB). Building the BEV grid costs 1.9 ms per scene, 0.5% of the vision encoder it already requires. The efficiency gain is therefore confined to the part of inference that depends on the visual context: prefill and memory. Decode time is unchanged, since for a 0.5B LLM it is bound by per-step launch overhead rather than context length, so the end-to-end saving per question is 1.13 ×.
+
+## 4.3. Ablations 
+
+Table 2 collects the single-variable ablations, organized around three questions: how the grid should be defined (a, c), what should be pooled into it (b), and whether the parameter-free interface benefits from added capacity or al-ternative representations (d, e). Blocks (d) and (e) are dis-cussed in Sec. C; none of their variants improves on the plain grid. 6Table 1. VSI-Bench results (%). The first four categories are scored by MRA, the last four by accuracy; Avg is their unweighted mean. All models see the same ≤128 frames per scene. Rows below the rule share our recipe and data (0.5B) and are trained under bf16 autocast, which accounts for their gap to the official full-fp32 releases (Sec. G); the grey row feeds BEV tokens to the frame-trained parent without fine-tuning. Bold marks the best among our rows. Method Encoder #Vis. tok. Obj. Count Abs. Dist. Obj. Size Room Size Rel. Dist. Rel. Dir. Route Plan App. Order Avg Cambrian-S-7B [33] (full fp32) SigLIP2 9,216 72.81 49.90 74.72 69.62 68.45 74.38 42.27 81.39 66.69 Cambrian-S-0.5B [33] (full fp32) SigLIP2 9,216 68.37 33.51 53.92 52.92 55.35 48.98 29.90 70.87 51.73 Frames SigLIP2 9,216 61.31 32.10 43.28 27.85 42.39 47.70 29.90 50.97 41.94 Frames DINOv3 9,216 63.01 29.53 47.72 26.04 43.38 46.66 30.41 49.03 41.97 Frames parent + BEV tokens, zero-shot DINOv3 729 61.91 32.10 46.99 25.90 45.49 46.43 26.80 47.25 41.61 Frames + spatial FT (control) DINOv3 9,216 69.79 37.49 69.97 60.49 49.86 48.58 26.80 76.86 54.98 
+
+Cambrian-BEV (ours) DINOv3 729 70.16 44.78 67.36 85.00 56.20 82.67 39.18 62.46 63.48 
+
+∆ ours vs. control – 12 .6× fewer +0.37 +7.29 −2.61 +24.51 +6.34 +34.09 +12.38 −14.40 +8.50 
+
+Table 2. Ablations . Single-variable changes to the recipe of Tab. 1, on VSI-Bench (overall average, room size, relative direc-tion) and ReVSI (overall average, all frame , Sec. 4.4). “FP” is first-pose orientation. Bold marks the best in each column. We adopt hard ×FP as the default because it ties bilinear ×FP on VSI-Bench with a 3.4× cheaper projection (Sec. 4.3); bilinear ×FP is the stronger variant on ReVSI. Blocks (d) and (e) are discussed in Sec. C. VSI-Bench ReVSI Variant Avg Room Rel. Dir. Avg 
+
+(a) Grid frame: aggregation × orientation 
+
+hard × world 55.69 84.44 46.87 41.79 hard × PCA-rectified 52.09 82.92 47.52 41.16 
+
+hard × FP (ours) 63.48 85.00 82.67 44.68 bilinear × world 60.32 81.81 78.27 45.20 bilinear × FP 63.39 84.79 77.49 46.39 
+
+(b) Encoder (hard × FP) 
+
+DINOv3 ViT-L/16 63.48 85.00 82.67 44.68 SigLIP2-So400M 55.06 84.41 45.64 40.56 
+
+(c) Grid resolution at ±5 m (hard × FP) 
+
+18 ×18 (324 tok.) 55.70 83.85 48.48 41.02 
+
+27 ×27 (729 tok.) 63.48 85.00 82.67 44.68 
+
+36 ×36 (1,296 tok.) 57.90 85.90 49.09 43.45 
+
+(d) Learnable interface components (hard × FP) 
+
++ 2-layer MLP adapter 51.45 84.17 46.34 41.11 + grid self-attention encoder 44.69 70.52 46.97 35.47 + learned empty-cell token 60.07 84.93 77.00 43.38 
+
+(e) Alternative representations (hard × FP) 
+
+16 temporal chunks + global grid 54.44 84.69 45.17 40.48 hybrid: 128 frames + BEV 56.06 82.50 47.18 40.78 height filter 0.05–2.0 m 57.55 81.53 50.99 42.51 
+
+(a) Grid frame: orientation and aggregation. Room size is nearly flat across the table (81.5–85.9 for all but one BEV row, against 60.5 for the frames-only control): the grid’s metric content depends little on how it is ori-ented, splatted, or sized. Relative direction behaves in the opposite way. It requires a consistent egocentric reference frame, which the two grid-frame levers supply by differ-ent routes. Orientation : rotating the grid so that its for-ward axis follows the first camera’s heading lifts the over-all score from 55.7 to 63.5 and relative direction from 46 .9
+
+to 82 .7, the largest single effect in the paper, because a trajectory-anchored frame gives directional language (“to the left of”) a consistent geometric meaning across training scenes, whereas world or scene-PCA axes (Sec. A) make it arbitrary per scene. Aggregation : with world axes fixed, bi-linear splatting alone recovers most of the same effect (rel-ative direction 78 .3); we report this without isolating the mechanism. The two levers are not additive on VSI-Bench (63.5 vs. 63.4): relative direction saturates once either de-fect is fixed. We adopt hard ×first-pose as the default be-cause it ties on VSI-Bench with a 3.4× cheaper projection (Sec. E) and the simpler operator; bilinear splatting is less sensitive to the grid frame and scores higher on ReVSI in every configuration (Sec. 4.4), and we recommend it when projection cost is not a constraint. 
+
+(b) Encoder. At matched geometry, replacing DINOv3 with SigLIP2 costs 8.4 points on VSI-Bench and 4.1 on ReVSI, concentrated in relative direction ( 82 .7 vs. 45 .6). Since the two encoders tie as frame-token models (42.0 vs. 41.9, Tab. 1), this is the end-to-end signature of the feature-locality argument of Sec. 3.3: both encoders benefit from the BEV representation, but the locally grounded one bene-fits dramatically more. 
+
+(c) Grid resolution has a narrow optimum on VSI-Bench. At a fixed ±5 m range, 27 ×27 (0.37 m cells) is best. Both 18 ×18 and 36 ×36 lose the directional capabil-ity. The optimum is less pronounced on ReVSI, where the same three checkpoints span 3.7 points against 7.8 on VSI-Bench, so 27 ×27 is a well-supported default rather than a fragile requirement. 
+
+## 4.4. Results on ReVSI 
+
+VSI-Bench inherits noisy 3D annotations from its source re-constructions. ReVSI [38] is an expert re-annotated rebuild that adds 3RScan and MultiScan captures to VSI-Bench’s 7Table 3. ReVSI results . Avg is the unweighted mean of the seven categories; both subsets cover the same 380 scenes. all frame :6,808 questions, 128 frames per scene; 64 frame : 6,616 questions, 64 frames per scene. Per-category scores are in Sec. I. All rows are 0.5B; ours are trained under bf16 autocast (Sec. G). Bold marks the best among our rows. Method all frame 64 frame                             
+
+> Cambrian-S-0.5B (official, full fp32) 37.68 37.59 Frames (SigLIP2) 32.10 31.92 Frames (DINOv3) 33.41 33.10 Frames + spatial FT (control) 40.17 40.02 BEV, SigLIP2 (hard ×FP) 40.56 40.34 BEV, hard ×world 41.79 42.27
+> Cambrian-BEV (hard ×FP) 44.68 45.00 BEV, bilinear ×world 45.20 45.02 BEV, bilinear ×FP 46.39 46.21
+
+three sources. Table 3 evaluates the same checkpoints, with-out retraining, under both its 128-frame and 64-frame pro-tocols. The main conclusions transfer. Every BEV variant beats the frames-only control; our default leads it by +4 .5 (44.7 vs. 40.2), room size is again the diagnostic category (58.7 vs. 45.3), the encoder-locality gap replicates ( +4 .1), and BEV again wins route planning (49.5 vs. 42.1) without route supervision. The gains are also more uniform across recipes: relative direction varies by 11 points across our grid configurations on ReVSI against 36 on VSI-Bench, so on the expert-annotated benchmark the BEV advantage does not hinge on a single geometry choice. Bilinear splatting with first-pose orientation adds +1 .7 over our default and leads six of the seven categories, and the 64-frame budget reproduces the same ordering (Tab. 3). 
+
+## 4.5. Qualitative analysis 
+
+Feature locality. Figure 3 compares patch-level text-similarity maps from SigLIP2 and DINOv3 (probe details in Sec. H). SigLIP2 distributes high similarity across object and background regions, whereas DINOv3 more closely follows the queried object’s extent. This is the locality that BEV aggregation requires (Sec. 3.3) and is the mechanism behind the 8.4-point encoder gap in Tab. 2. Frame-token accuracy therefore cannot be used to select an encoder for geometric fusion. 
+
+Qualitative examples and failure modes. Section Jshows BEV occupancy on three VSI-Bench scenes with room-size and relative-direction questions that the frames-only control answers incorrectly and Cambrian-BEV an-swers correctly (Fig. S1), and the three characteristic failure modes of the representation: lost visitation order, sub-cell objects, and corrupted geometry (Fig. S2).  
+
+> Figure 3. Patch-level text similarity, SigLIP2 vs. DINOv3.
+> SigLIP2 distributes evidence for the queried object (row label) across the image, whereas DINOv3 more closely follows the ob-ject’s extent. Warm colors indicate higher similarity; color scales are normalized per panel. Details in Sec. H.
+
+# 5. Conclusion 
+
+We introduced Cambrian-BEV, a parameter-free geometric tokenization that uses depth and camera pose to aggregate video features into a shared BEV grid. By replacing 9,216 
+
+frame tokens with 729 BEV tokens, our method shrinks the LLM visual context 12 .6×, cutting prefill time 2.9×
+
+and peak memory 3.6×, while improving spatial reasoning on VSI-Bench and ReVSI. We further showed that frame-token performance does not predict performance under geo-metric rearrangement: two encoders that tie as frame-token models diverge substantially once their patches are fused in BEV, making dense feature locality a necessary selec-tion criterion for geometry-aware MLLMs. The represen-tation has clear limits: a single time-collapsed grid dis-cards visitation order, the one category where frame to-kens remain clearly ahead, and flattens vertical structure, so thin or stacked objects share a cell with the surfaces behind them; simple remedies such as temporal chunk-ing, frame–BEV hybrids, and height filtering did not close these gaps (Sec. C). The method also assumes calibrated depth and pose and is best suited to static, room-scale in-door scenes. Future work will pursue temporal encod-ings that preserve grid resolution, height-aware pooling, ro-bustness to estimated geometry, and larger or dynamically expanding grids for longer trajectories and larger back-bones. 
+
+# References   
+
+> [1] Daichi Azuma, Taiki Miyanishi, Shuhei Kurita, and Mo-toaki Kawanabe. ScanQA: 3D question answering for spatial scene understanding. In CVPR , 2022. 3 [2] Gilad Baruch, Zhuoyuan Chen, Afshin Dehghan, Tal Dimry, Yuri Feigin, Peter Fu, Thomas Gebauer, Brandon Joffe, Daniel Kurz, Arik Schwartz, and Elad Shulman. ARK-
+
+8itScenes: A diverse real-world dataset for 3D indoor scene understanding using mobile RGB-D data. In NeurIPS Datasets and Benchmarks Track , 2021. 1, 4 [3] Wenxiao Cai, Iaroslav Ponomarenko, Jianhao Yuan, Xiaoqi Li, Wankou Yang, Hao Dong, and Bo Zhao. SpatialBot: Pre-cise spatial understanding with vision language models. In 
+
+ICRA , 2025. 3 [4] Vincent Cartillier, Zhile Ren, Neha Jain, Stefan Lee, Irfan Essa, and Dhruv Batra. Semantic MapNet: Building allo-centric semantic maps and representations from egocentric views. In AAAI , 2021. 1, 3 [5] Boyuan Chen, Zhuo Xu, Sean Kirmani, Brian Ichter, Danny Driess, Pete Florence, Dorsa Sadigh, Leonidas Guibas, and Fei Xia. SpatialVLM: Endowing vision-language models with spatial reasoning capabilities. In CVPR , 2024. 3 [6] Chang Chen, Jiaming Zhang, Kailun Yang, Kunyu Peng, and Rainer Stiefelhagen. Trans4Map: Revisiting holistic bird’s-eye-view mapping from egocentric images to allocentric se-mantics with vision transformers. In WACV , 2023. 3 [7] An-Chieh Cheng, Hongxu Yin, Yang Fu, Qiushan Guo, Rui-han Yang, Jan Kautz, Xiaolong Wang, and Sifei Liu. Spatial-RGPT: Grounded spatial reasoning in vision language mod-els. In NeurIPS , 2024. 3 [8] Angela Dai, Angel X. Chang, Manolis Savva, Maciej Hal-ber, Thomas Funkhouser, and Matthias Nießner. ScanNet: Richly-annotated 3D reconstructions of indoor scenes. In 
+
+CVPR , 2017. 1, 4 [9] Zhiwen Fan, Jian Zhang, Renjie Li, Junge Zhang, Runjin Chen, Hezhen Hu, Kevin Wang, Huaizhi Qu, Shijie Zhou, Dilin Wang, Zhicheng Yan, Hongyu Xu, Justin Theiss, Tian-long Chen, Jiachen Li, Zhengzhong Tu, Zhangyang Wang, and Rakesh Ranjan. VLM-3R: Vision-language models augmented with instruction-aligned 3D reconstruction. In 
+
+CVPR , 2026. 1, 3 [10] Xiangjun Gao, Zhensong Zhang, Dave Zhenyu Chen, Song-cen Xu, Long Quan, Eduardo P´ erez-Pellitero, and Youngky-oon Jang. Map2Thought: Explicit 3D spatial reasoning via metric cognitive maps. In CVPR Findings , 2026. 3 [11] Qiao Gu, Alihusein Kuwajerwala, Sacha Morin, Kr-ishna Murthy Jatavallabhula, Bipasha Sen, Aditya Agarwal, Corban Rivera, William Paul, Kirsty Ellis, Rama Chellappa, Chuang Gan, Celso Miguel de Melo, Joshua B. Tenenbaum, Antonio Torralba, Florian Shkurti, and Liam Paull. Concept-Graphs: Open-vocabulary 3D scene graphs for perception and planning. In ICRA , 2024. 3 [12] Chanyoung Gwak, Yoonwoo Jeong, Byungwoo Jeon, Hyun-seok Lee, Jinwoo Shin, and Minsu Cho. Cog3DMap: Multi-view vision-language reasoning with 3D cognitive maps. 
+
+arXiv preprint arXiv:2603.23023 , 2026. 1, 3 [13] Adam W. Harley, Zhaoyuan Fang, Jie Li, Rares Ambrus, and Katerina Fragkiadaki. Simple-BEV: What really matters for multi-sensor BEV perception? In ICRA , 2023. 1 [14] Yining Hong, Haoyu Zhen, Peihao Chen, Shuhong Zheng, Yilun Du, Zhenfang Chen, and Chuang Gan. 3D-LLM: In-jecting the 3D world into large language models. In NeurIPS ,2023. 3 [15] Chenguang Huang, Oier Mees, Andy Zeng, and Wolfram Burgard. Visual language maps for robot navigation. In 
+
+ICRA , 2023. 3 [16] Ting Huang, Zhenyu Zhang, Wenyuan Huang, Jian Yang, and Hao Tang. ConsiSpace: Learning geometric consistency matters for video spatial reasoning. In ECCV , 2026. 3 [17] Yibin Huang, Wang Xu, Wanyue Zhang, Helu Zhi, Jingjing Huang, Yangbin Xu, Yangang Sun, Conghui Zhu, and Tiejun Zhao. Video2Layout: Recall and reconstruct metric-grounded cognitive map for spatial reasoning. arXiv preprint arXiv:2511.16160 , 2025. 3 [18] Krishna Murthy Jatavallabhula, Alihusein Kuwajerwala, Qiao Gu, Mohd Omama, Tao Chen, Alaa Maalouf, Shuang Li, Ganesh Iyer, Soroush Saryazdi, Nikhil Keetha, Ayush Tewari, Joshua B. Tenenbaum, Celso Miguel de Melo, Mad-hava Krishna, Liam Paull, Florian Shkurti, and Antonio Tor-ralba. ConceptFusion: Open-set multimodal 3D mapping. In 
+
+RSS , 2023. 3 [19] Cijo Jose, Th´ eo Moutakanni, Dahyun Kang, Federico Baldassarre, Timoth´ ee Darcet, Hu Xu, Daniel Li, Marc Szafraniec, Micha¨ el Ramamonjisoa, Maxime Oquab, Oriane Sim´ eoni, Huy V. Vo, Patrick Labatut, and Piotr Bojanowski. DINOv2 meets text: A unified framework for image- and pixel-level vision-language alignment. In CVPR , 2025. 14 [20] Wenhao Li, Xueying Jiang, Quanhao Qian, Deli Zhao, Ran Xu, Shijian Lu, and Gongjie Zhang. 3D-Aware VLMs with implicit and explicit geometries. In ECCV , 2026. 3 [21] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee. Visual instruction tuning. In NeurIPS , 2023. 1 [22] Zuntao Liu, Yi Du, Taimeng Fu, Shaoshu Su, Cherie Ho, and Chen Wang. Vision-language memory for spatial reasoning. In ECCV , 2026. 3 [23] Xiaojian Ma, Silong Yong, Zilong Zheng, Qing Li, Yitao Liang, Song-Chun Zhu, and Siyuan Huang. SQA3D: Situ-ated question answering in 3D scenes. In ICLR , 2023. 3 [24] Jonah Philion and Sanja Fidler. Lift, splat, shoot: Encoding images from arbitrary camera rigs by implicitly unprojecting to 3D. In ECCV , 2020. 1 [25] Zhangyang Qi, Zhixiong Zhang, Ye Fang, Jiaqi Wang, and Hengshuang Zhao. GPT4Scene: Understand 3D scenes from videos with vision-language models. In ICLR , 2026. 1, 3 [26] Qwen Team. Qwen2.5 technical report. arXiv preprint arXiv:2412.15115 , 2024. 3 [27] Oriane Sim´ eoni, Huy V. Vo, Maximilian Seitzer, Federico Baldassarre, Maxime Oquab, Cijo Jose, Vasil Khalidov, Marc Szafraniec, Seungeun Yi, Micha¨ el Ramamonjisoa, et al. DINOv3. arXiv preprint arXiv:2508.10104 , 2025. 2, 4, 5, 14 [28] Shengbang Tong, Ellis Brown, Penghao Wu, Sanghyun Woo, Manoj Middepogu, Sai Charitha Akula, Jihan Yang, Shusheng Yang, Adithya Iyer, Xichen Pan, Ziteng Wang, Rob Fergus, Yann LeCun, and Saining Xie. Cambrian-1: A fully open, vision-centric exploration of multimodal LLMs. In NeurIPS , 2024. 1 [29] Michael Tschannen, Alexey Gritsenko, Xiao Wang, Muham-mad Ferjad Naeem, Ibrahim Alabdulmohsin, Nikhil Parthasarathy, Talfan Evans, Lucas Beyer, Ye Xia, Basil 
+
+9Mustafa, et al. SigLIP 2: Multilingual vision-language en-coders with improved semantic understanding, localization, and dense features. arXiv preprint arXiv:2502.14786 , 2025. 2, 5 [30] Yuxi Wei, Wei Huang, Qirui Chen, Lu Hou, and Xiao-juan Qi. See, remember, explore: A benchmark and baselines for streaming spatial reasoning. arXiv preprint arXiv:2603.23864 , 2026. 3 [31] Jihan Yang, Shusheng Yang, Anjali W. Gupta, Rilyn Han, Li Fei-Fei, and Saining Xie. Thinking in space: How mul-timodal large language models see, remember, and recall spaces. In CVPR , 2025. 1, 3, 6 [32] Jihan Yang, Zifan Zhao, Xichen Pan, Shusheng Yang, Junyi Zhang, Bingyi Kang, Hu Xu, Shang-Wen Li, and Sain-ing Xie. Cambrian-P: Pose-grounded video understanding. 
+
+arXiv preprint arXiv:2605.22819 , 2026. 1, 3 [33] Shusheng Yang, Jihan Yang, Pinzhi Huang, Ellis Brown, Zi-hao Yang, Yue Yu, Shengbang Tong, Zihan Zheng, Yifan Xu, Muhan Wang, Daohan Lu, Rob Fergus, Yann LeCun, Li Fei-Fei, and Saining Xie. Cambrian-S: Towards spatial super-sensing in video. In ICLR , 2026. 1, 3, 5, 7, 14 [34] Yuncong Yang, Han Yang, Jiachen Zhou, Peihao Chen, Hongxin Zhang, Yilun Du, and Chuang Gan. 3D-Mem: 3D scene memory for embodied exploration and reasoning. In 
+
+CVPR , 2025. 3 [35] Chandan Yeshwanth, Yueh-Cheng Liu, Matthias Nießner, and Angela Dai. ScanNet++: A high-fidelity dataset of 3D indoor scenes. In ICCV , 2023. 1, 4 [36] Hanxun Yu, Xuan Qu, Lei Ke, Boqiang Zhang, Yuxin Wang, Jianke Zhu, and Dong Yu. Stream3D-VLM: Online 3D spatial understanding with incremental geometry priors. In 
+
+ECCV , 2026. 3 [37] Tatiana Zemskova and Dmitry Yudin. 3DGraphLLM: Com-bining semantic graphs and large language models for 3D scene understanding. In ICCV , 2025. 3 [38] Yiming Zhang, Jiacheng Chen, Jiaqi Tan, Yongsen Mao, Wenhu Chen, and Angel X. Chang. ReVSI: Rebuilding vi-sual spatial intelligence evaluation for accurate assessment of VLM 3D reasoning. In ICML , 2026. 2, 3, 6, 7 [39] Duo Zheng, Shijia Huang, Yanyang Li, and Liwei Wang. Learning from videos for 3D world: Enhancing MLLMs with 3D vision geometry priors. In NeurIPS , 2025. 3 [40] Duo Zheng, Shijia Huang, and Liwei Wang. Video-3D LLM: Learning position-aware video representation for 3D scene understanding. In CVPR , 2025. 1, 3 [41] Chong Zhou, Chen Change Loy, and Bo Dai. Extract free dense labels from CLIP. In ECCV , 2022. 14 [42] Fangrui Zhu, Hanhui Wang, Yiming Xie, Jing Gu, Tianye Ding, Jianwei Yang, and Huaizu Jiang. Struct2D: A perception-guided framework for spatial reasoning in MLLMs. In NeurIPS , 2025. 3 [43] Ziyu Zhu, Xiaojian Ma, Yixin Chen, Zhidong Deng, Siyuan Huang, and Qing Li. 3D-VisTA: Pre-trained transformer for 3D vision and text alignment. In ICCV , 2023. 3 
+
+10 Thinking from Above: Efficient Spatial Reasoning with Bird’s-Eye-View Visual Tokens 
+
+# Supplementary Material 
+
+# A. BEV projection details 
+
+This section gives a complete specification of the parameter-free BEV module of Sec. 3.2, including the co-ordinate conventions, default values, and degenerate cases that the main text only summarizes. All choices below are those of the final model unless stated otherwise; the alterna-tives are the ablation arms of Tab. 2. 
+
+Inputs and rescaling. A scene contributes T =128 
+
+frames sampled uniformly over the recorded trajectory (linspace over the frame indices, so frame 0 of the video is always the first sampled frame; scenes shorter than 128 frames contribute all of their frames). Each frame pro-vides an RGB image, a 16-bit depth map in millimeters, intrinsics Kt, and a world-to-camera pose T w2ct . RGB and depth are resized to the encoder resolution of 448 ×448 
+
+without preserving aspect ratio (bicubic for RGB, nearest-neighbor for depth so that no interpolated depth values are created), and the intrinsics are rescaled to match: the first row of Kt is multiplied by 448 /W native and the sec-ond row by 448 /H native , so the anisotropic resize intro-duces no geometric error. The encoder (DINOv3 ViT-L/16) yields a 28 ×28 patch grid per frame, so a scene produces 
+
+128 ×784 = 100 ,352 candidate points, each carrying one projector-output token fp ∈ R896 .
+
+Depth sampling and validity. The depth of patch (i, j )
+
+is read at the patch center (u, v ) = (( j+ 12 )P, (i+ 12 )P ),
+
+P =16 , by bilinear interpolation of the resized depth map (border padding). A patch is discarded if its sampled depth is non-finite, non-positive, or outside [0 .1, 100] m; missing sensor depth is stored as zero and therefore falls in this category. A patch whose center lands in a depth hole is dropped even when its RGB content is valid. We also im-plemented a masked average-pooling variant that averages all valid depth pixels inside the 16 ×16 patch footprint; it is more robust to speckle but was not used in any reported run. 
+
+Common world frame. The three capture sources ship poses in different conventions. We convert all of them to a single right-handed, gravity-aligned world frame with Z
+
+up and an OpenCV camera ( X right, Y down, Z forward). ScanNet and ScanNet++ scan frames are already Z-up; ARKitScenes poses are expressed with an OpenGL cam-era ( Y up, Z backward) in a Y -up world and are converted with diag(1 , −1, −1) on the camera side and a 90 ◦ rotation about X on the world side (the shipped .align.json 
+
+transforms do not give a clean gravity-aligned frame and are ignored). The vertical axis is therefore consistent across datasets, which is what the height statistics of Sec. 3.2 and the floor anchor of Sec. B rely on, but the horizontal axes and the origin remain whatever each capture pipeline pro-duced: ScanNet frames are roughly aligned to the room’s walls, ScanNet++ and ARKitScenes frames are not, and the origin may lie anywhere relative to the room. In the final model, nothing downstream depends on the absolute hori-zontal position or heading of the world frame; both are re-moved by the centering and orientation steps below. The 
+
+world orientation arm of Tab. 2 is the only configuration in which the raw horizontal axes reach the grid. 
+
+Orientation. Only the horizontal coordinates (x, y ) of the world points are used for binning; height is dropped af-ter the optional filter. Before centering, they are rotated by a per-scene 2×2 rotation Rθ , where θ is chosen by one of three rules. World : Rθ = I. First-pose : the first camera’s optical axis is carried to the world frame, 
+
+d = R⊤ 
+
+> 0
+
+(0 , 0, 1) ⊤, projected onto the ground plane, and normalized, ˆd = ( dx, d y )/∥(dx, d y )∥; the rotation maps ˆd
+
+to the grid’s forward axis, 
+
+Rθ =
+
+ ˆdx ˆdy
+
+− ˆdy ˆdx
+
+
+
+, Rθ ˆd = (1 , 0) ⊤. (S1) Only the yaw of the first camera enters; its pitch and roll are discarded by the projection, and its position is not used (see the centering paragraph). Because the first sampled frame is frame 0 of the video, the grid frame is a deterministic func-tion of the scene and does not depend on how many frames are sampled. PCA-rectified : let ¯x be the mean of the valid horizontal points; points farther than the 95th percentile of distances from ¯x are trimmed, the 2×2 covariance of the remaining points is diagonalized, and its leading eigenvec-tor e1 takes the place of ˆd in Eq. (S1). Eigenvectors are defined up to sign, so e1 is flipped to have a non-negative dot product with the mean over all frames of the cameras’ ground-plane forward directions; scenes with fewer than three valid points fall back to Rθ = I. PCA thus aligns the grid with the room’s long axis, a property of the scene geometry, whereas first-pose aligns it with the observer, a property of the trajectory; Tab. 2 shows that only the latter gives relative-direction language a consistent meaning. In every mode Rθ is a proper rotation about the vertical axis, so left and right are never mirrored. 
+
+Centering. After rotation, the grid is centered on the cen-troid c = 1
+
+> |V|
+
+P 
+
+> p∈V
+
+(xp, y p) of the valid points V, that is, of all patches that survived the depth test and the optional height filter, weighted equally per patch. The centroid is 11 computed before the ±5 m crop, so a scene is centered on everything it observed, including distant outliers; this is why corrupted poses can move the grid away from the room entirely (Fig. S2c). It is also a feature-mass centroid rather than a geometric one: surfaces observed in many frames pull the center toward themselves. Rotation and centering commute, so the grid frame is equivalently “rotate about the centroid.” The grid is not centered on the first camera: in the final model the orientation is egocentric (first-pose yaw) but the position is scene-centric (centroid). 
+
+Binning and token layout. With x′ = Rθ x − c the ro-tated, centered coordinates, a point falls in row r = ⌊(5 −
+
+x′)/∆⌋ and column k = ⌊(5 − y′)/∆⌋ with ∆ = 10 /27 = 0.370 m. Row 0 is therefore the most forward strip of the scene and column 0 the leftmost, so the grid, read as a ma-trix, is a top-down map drawn with forward at the top and the observer’s left on the left. Points with r or k outside 
+
+[0 , 26] are dropped (1.1% of points, Tab. S1). The 27 ×27 
+
+cells are flattened row-major into 729 tokens, token n being cell (⌊n/ 27 ⌋, n mod 27) , and spliced into the sequence in place of the <image> placeholder with no separator, new-line token, or positional embedding of their own; the only positional signal the LLM receives is its own rotary embed-ding over the sequence index, from which it must infer the 
+
+27 -wide row structure. 
+
+Hard assignment. Each surviving point deposits its to-ken in the single cell that contains it. All B scenes of a batch are scattered in one scatter add into a flat 
+
+[B·729 , 896] buffer, with a parallel scatter of ones giving the per-cell count nrk . The cell token is Brk = 1
+
+> nrk
+
+P 
+
+> p∈P rk
+
+fp
+
+(Eq. (3)). 
+
+Bilinear splatting. In the alternative aggregation, the continuous grid coordinate (ρ, κ ) = ((5 − x′)/∆, (5 −
+
+y′)/∆) is split into an integer part (r0, k 0) = ( ⌊ρ⌋, ⌊κ⌋)
+
+and fractional part (δr , δ k), and the token is distributed to the four cells (r0+a, k 0+b), a, b ∈ { 0, 1}, with weights 
+
+wab = δar (1 −δr )1−a δbk(1 −δk)1−b. Weights are accumu-lated alongside the features and each cell is normalized by its accumulated weight, so the result is again a weighted mean. Corner cells that fall outside the grid are dropped individually, so a point in the border strip loses part of its mass. The weights are defined with respect to the inte-ger lattice of cell origins, so a point on the boundary be-tween two hard-assignment cells is split evenly between them, whereas a point exactly on a cell origin contributes to that cell only. Splatting touches four cells per point and runs four scatters, which is the source of the 6× cost differ-ence in the scatter ( 5.3 vs. 0.9 ms per scene on an H100; 6.4
+
+vs. 1.9 ms for the full projection). 
+
+Empty cells and occupancy. Cells that receive no point keep a zero vector and are recorded in a Boolean occupancy mask. In the final model the zero tokens are passed to the LLM unchanged and are attended like any other token; the count of empty cells is itself informative (it is the comple-ment of the room footprint). The ablations of Tab. 2 replace the zero vector with a learned token, which does not im-prove on the plain grid. 
+
+Numerics and gradients. All geometry (depth sampling, unprojection, pose transform, rotation, centering, binning) runs in fp32 with autocast disabled and under no grad ; it produces only indices, weights, and masks. The scatter it-self is applied to the tokens in their training dtype (bf16), while the per-cell counts and splat weights are accumu-lated in fp32, because a bf16 counter cannot exceed 256 :above that value the representable numbers are two apart, so adding one rounds back to 256 . Because scatter-add fol-lowed by count normalization is linear in the tokens, the gradient that reaches a patch token is the gradient of its cell divided by the cell count (or scaled by its splat weight). The module therefore has no parameters but is fully differen-tiable with respect to the projector, which is trained through it. 
+
+Degenerate cases. (i) A first camera pointing straight up or down has a vanishing ground-plane heading; the normal-ization in Eq. (S1) is guarded with a small ϵ, but the result-ing yaw is arbitrary; handheld and head-mounted record-ings start roughly level, and we apply no further guard. (ii) Pose drift or gross pose errors make the centroid meaning-less and can push every point outside the ±5 m window, leaving all 729 tokens empty (Fig. S2c); the model then an-swers from its prior. (iii) Scenes in which a large fraction of patches have no depth (reflective or distant surfaces) lose those patches entirely rather than receiving an approximate location. 
+
+# B. Height-filter details 
+
+The floor-relative height filter of Sec. 3.2 estimates a per-scene floor anchor as the 2nd percentile of valid world-frame point heights and drops points outside [zmin , z max ]
+
+above it. A per-scene anchor is necessary because absolute height references differ across capture sources: ScanNet-family scenes are floor-referenced whereas ARKitScenes scenes are device-referenced, so no global threshold works. The band evaluated in Tab. 2 is [0 .05 , 2.0] m, which removes floor speckle and ceiling mass; it costs 5.9 points on the VSI-Bench average and is therefore disabled in the final model. 
+
+# C. Ablations (d) and (e): added capacity and alternative representations 
+
+This section discusses blocks (d) and (e) of Tab. 2, which the main text only summarizes. All variants are single-variable changes to the final recipe (hard assignment, first-pose ori-entation, 27 ×27 grid at ±5 m) and are compared against its 12 63.5 VSI-Bench average. 
+
+(d) Added parameters do not help. Every learnable component we tried costs performance relative to the parameter-free interface, all measured on the first-pose grid against the 63.5 anchor: a 2-layer MLP adapter between pooled tokens and the LLM ( −12 .0), a zero-initialized axial-RoPE self-attention encoder over the grid with train-able newline tokens ( −18 .8), and a learned token for empty cells ( −3.4). The first two also erase the orientation ef-fect: relative direction falls from 82 .7 to 46 .3 and 47 .0, the world-frame level of (a), so the modules are not merely non-additive with first-pose but mask it. The encoder is the only variant that also degrades the metric categories (room size 
+
+85 .0 → 70 .5), and it is worst on ReVSI as well ( −9.2). Pooled projector outputs are already language-space vec-tors, and randomly initialized modules only disturb them under the short fine-tuning budget. 
+
+(e) Alternative representations. Three natural modifica-tions all underperform the single grid. Temporal chunking :16 per-chunk grids plus a global grid leave relative direction at world level ( 45 .2); the first-pose benefit does not trans-fer to chunked grids. Hybrid frames+BEV : prepending up to 128 frames to the first-pose grid scores 56.1, 7.4 points below BEV-only at 13 .6× the token budget, with relative direction back at world level ( 47 .2 vs. 82 .7). The only cat-egory the hybrid wins is appearance order, which is exactly what frames in temporal order supply. Height filtering : a floor-relative 0.05–2.0 m band costs −5.9 and drops rela-tive direction from 82 .7 to 51 .0, even though the vertical-dilution analysis of Sec. 3.2 predicts a gain. We hypothe-size, without testing it here, that the floor and ceiling mass keeps the full scene footprint represented in the grid, and that this geometric context outweighs the dilution it causes. 
+
+# D. Grid range 
+
+The ±5 m range of the BEV grid is a data-driven choice. For each of the 4,955 scenes of VSI-288K-Depth we back-projected 128 uniformly sampled frames with the final model’s geometry (DINOv3 at 448 ×448 , patch 16, first-pose orientation), centered the points on their centroid as in Sec. 3.2, and measured the fraction of points falling inside a symmetric ±R window for R ∈ { 3, 4, 5, 6, 7.5, 10 } m(Tab. S1). At ±5 m the grid retains 98.9% of all observed points, with a median per-scene retention above 99.8% on every source dataset, and 96% of scenes retain at least 95% of their points. Shrinking the window discards scene con-tent quickly: ±4 m drops 2.9% of points and ±3 m 8.7%, with ScanNet++ scenes losing 13%. Widening it buys lit-tle: ±7.5 m recovers a further 0.9% of points, but at a fixed 
+
+27 ×27 resolution it enlarges each cell from 0.37 to 0.56 m, so the same tokens carry a coarser description of the scene.                                               
+
+> Table S1. Grid range vs. coverage. Fraction (%) of valid back-projected points inside a centered ±Rwindow over the 4,955 scenes of VSI-288K-Depth, and cell size at 27 ×27 . Bold marks the range used by the final model. Range Cell (m) ScanNet ScanNet++ ARKitScenes All
+> ±3m0.22 93.79 86.98 91.75 91.29
+> ±4m0.30 98.43 94.60 97.47 97.14
+> ±5m0.37 99.55 97.40 99.19 98.94
+> ±6m0.44 99.85 98.59 99.72 99.54
+> ±7.5m0.56 99.97 99.30 99.94 99.83
+> ±10 m0.74 100.00 99.61 99.99 99.92
+
+# E. Inference cost 
+
+Table S2 profiles where inference time goes for Cambrian-BEV and the frames-only control, measured on one H100 (SXM) with CUDA events, bf16, FlashAttention-3 and a fixed 15-step decode budget (medians over 96 questions on 8 VSI-Bench scenes with exactly 128 frames each; the two arms differ only in the visual tokens they present to the LLM). The cost splits into a per-scene part, paid once and cached across a scene’s questions, and a per-question 
+
+part. Per scene, the DINOv3 encoder and projector domi-nate ( 365 ms, 99% of scene encoding) and is identical for both models; constructing the BEV grid from 128 ×784 
+
+patch features (depth sampling, unprojection, grid assign-ment and scatter) adds 1.9 ms, 0.5% of scene encoding and within the run-to-run noise of the encoder. The bilinear-splatting variant of Tab. 2 raises this to 6.4 ms (the scatter alone is 6.1× slower, 5.3 vs. 0.9 ms), still 1.7% of scene en-coding. Per question, the 12 .6× shorter visual context cuts LLM prefill by 2.9× (15 .7 vs. 45 .9 ms; the +30 ms gap is stable to ±0.3 ms across two independent runs) and peak memory by 3.6× (2.5 vs. 9.1 GB). The saving is sub-linear in tokens because at these lengths prefill is not yet attention-dominated. Decode is unchanged ( 211 ms for 15 steps for both models, with run-to-run drift larger than the model-to-model difference), since for a 0.5B LLM it is bound by per-step launch overhead rather than by context length, and it dilutes the end-to-end gap to 1.13 × (236 vs. 267 ms per question). Because small launch-bound kernels are the most hardware-sensitive, the ratios depend on the accelerator: on an H200 NVL the same code gives a 2.1× prefill saving, so ratios should be quoted with the hardware. The representa-tion therefore costs nothing to build on top of the encoder it already requires and removes 66% of prefill time and 72% of peak memory; further per-question savings would have to come from the decode loop, not from the visual repre-sentation. 
+
+# F. Training recipe 
+
+Table S3 lists the four Cambrian-S stages as run in our re-production, and the fifth stage that produces Cambrian-BEV and the frames-only control. Data at stages 1–4 are the com-13 Table S2. Inference cost of Cambrian-BEV and the frames-only control, median GPU ms on one H100 SXM (bf16, FlashAttention-3, 128-frame scenes, 15 decode steps). Scene en-coding is paid once per scene and cached across its questions; the remaining rows are paid per question. Peak memory is measured over the whole pipeline. Frames BEV Ratio Visual tokens 9,216 729 12 .6×                    
+
+> Per scene (ms) Vision encoder + projector 366.0 364.8 1.0×
+> Frame downsample / BEV build 0.4 1.9 –
+> Per question (ms) LLM prefill 45.9 15.7 2.9×
+> LLM decode (15 steps) 211.4 211.0 1.0×
+> End-to-end 267.0 236.2 1.13 ×
+> Peak GPU memory (GB) 9.1 2.5 3.6×
+
+plete released sets [33]; the vision encoder is frozen at every stage, and all stages use a cosine schedule under bf16 auto-cast (Sec. G). Stage 5 differs from stage 4 only in restricting the data to VSI-288K-Depth (Sec. 4.1) and, for Cambrian-BEV, in replacing the frame tokens with BEV tokens. 
+
+# G. Reproduction gap 
+
+Our reproduced frame baselines sit ∼10 points below the official 0.5B release. The training data are the complete released sets at every stage; the difference is numerical pre-cision. The official recipe trains all four stages in full fp32, whereas we keep fp32 master weights and optimizer states but run the forward and backward passes under bf16 au-tocast, a choice made to stay within our compute budget: on matched hardware full fp32 is 4.8–6.9 × slower per step at stages 1–2, and slower still at the long-sequence video stages, where fp32 has no fused attention kernel and forces gradient checkpointing; weighted by compute, the four-stage programme would cost roughly 7.5 × more. A con-trolled stage-2 comparison confirms the direction of the ef-fect (+1.55 on the image-benchmark average for full fp32), and the loss compounds through the later stages (Tab. S3). We expect our conclusions to carry over to full-precision training and to larger decoders because every comparison in this paper is made within a precision and a base model: the frames-only control and the BEV model share the same par-ent, data, schedule, and precision, so precision shifts both arms together. Moreover, the gains concentrate in room size and relative direction, where our 0.5B model already exceeds the official fp32 7B, and in absolute distance: these answers depend on metric information that frame tokens do not carry at any precision or model size, and the BEV tokens are an input-side representation that leaves the de-coder and the four-stage recipe unchanged. The gap only strengthens the comparison: our BEV model starts from the 
+
+weaker base and still surpasses the official release by nearly 12 points. 
+
+# H. Patch-level text-similarity probe 
+
+This section specifies how the maps of Fig. 3 are produced. The probe asks one question of a frozen encoder: given a text concept, which patch tokens of an image carry evi-dence for it? It involves only the published encoders. No component of any model we train enters it, so it cannot be confounded by our fine-tuning. 
+
+Why a joint-space probe. Patch tokens are comparable to text only in the space that the encoder’s own text tower was trained against. Each encoder is therefore probed with its own text tower and with the patch features that live in that tower’s space. Scoring both encoders through a third, shared text encoder would measure that encoder’s align-ment rather than the locality of the features our BEV grid pools. 
+
+Encoders and text towers. For SigLIP2 we use 
+
+google/siglip2-so400m-patch14-384 , with the pooled output of its text tower as the text embedding. For DINOv3 we use DINO.txt [19, 27] ( dinov3_vitl16_ dinotxt_tet1280d20h24l ), the text encoder and vi-sion head aligned to the same DINOv3 ViT-L/16 backbone as the models in Tab. 1. Its 1280 -d text embedding consists of a CLS-aligned half and a patch-aligned half; we keep the patch-aligned half. Both are the public base checkpoints rather than the towers of our fine-tuned models, because our trained projector maps patch features into the language model’s embedding space, to which no text encoder is com-parable. 
+
+Dense image features. For DINOv3 the patch features are the projected patch tokens of the DINO.txt vision head, which is what its text tower was trained against. For SigLIP2 the raw last hidden state patch tokens sit one projection short of the text-aligned space and score as noise per patch. We therefore carry each token through the value pathway of the attention-pooling head, in the man-ner of MaskCLIP [41]: v = WV x, followed by the head’s output projection and residual MLP, v + mlp(ln( v)) . Atten-tion in that head only determines how much of each token’s value vector reaches the pooled embedding, so this quantity is the per-patch analogue of what the text tower is trained against. The choice favors SigLIP2: its raw pre-head to-kens give maps that are more scattered still. 
+
+Preprocessing. Both encoders see the image shown in the first column of Fig. 3. For this probe the photograph is padded to a square with the processor’s mean color (the grey bars) rather than cropped or stretched, so that every patch keeps its aspect ratio; this is the standard Cambrian-S image preprocessing and is specific to the probe. Our BEV pipeline instead resizes each frame anisotropically to 448 ×448 and rescales the intrinsics to match (Sec. A). 14 Stage Data Trainable Frames Seq. len. LR Ep. 1 Alignment Cambrian-Alignment (2.5M) Proj. 1 2,048 10 −3 12 Image IT Cambrian-7M Proj. + LLM 1 8,192 10 −5 13 Video IT Cambrian-S-3M + Cambrian-7M (737K) Proj. + LLM 64 8,192 10 −5 14 Spatial IT VSI-590K + Cambrian-S-3M (590K) + Cambrian-7M (120K) Proj. + LLM 128 16,384 10 −5 15 BEV / frames FT VSI-288K-Depth Proj. + LLM 128 16,384 2×10 −5 2Table S3. Training recipe. Stages 1–4 are the Cambrian-S recipe as run in our reproduction; stage 5 is the fine-tuning stage of Sec. 4.1, run once with frame tokens (control) and once with BEV tokens (Cambrian-BEV). The vision encoder is frozen throughout. Parenthesized sizes are subsets of the named corpus. 
+
+Figure S1. BEV occupancy on the floor plan and questions the frame baseline gets wrong. Three VSI-Bench scenes (ARKitScenes living room and kitchen, ScanNet++ office). Top: for each object named in the direction question, the video frame in which it is most visible, with the dataset’s annotated 3D box projected into the image. Middle: top-down rendering of the RGB-D reconstruction with the model’s 27 ×27 grid ( 0.37 m cells, ±5 m) in the grid’s own frame; grey cells receive at least one patch token, the dark line is the camera path, and the arrow marks the first camera pose whose heading defines the grid’s forward axis. Coloured cells and outlines are the same annotated boxes seen from above (orange: standing by, blue: facing, pink: asked about). Bottom: the room-size and relative-direction questions from these scenes; the frames-only control (“frames”, 9,216 frame tokens) answers them incorrectly and Cambrian-BEV (“ours”, 729 BEV tokens) correctly. The occupied area and the egocentric frame of the grid are the two quantities behind the largest gains in Tab. 1 (room size +24 .5, relative direction +34 .1). Table S4. Statistics of each panel of Fig. 3: cosine similarity over all patch tokens, with p2 and p98 the endpoints of that panel’s col-orbar, and Moran’s I (4-neighbour spatial autocorrelation). Grids are 27 ×27 (SigLIP2) and 28 ×28 (DINOv3). Query Encoder min mean max p2 p98 I
+
+“tv” SigLIP2 −0.105 −0.001 0 .255 −0.084 0 .216 0 .33 
+
+“tv” DINOv3 −0.058 0.041 0 .214 −0.021 0 .167 0 .75 
+
+“bicycle” SigLIP2 −0.167 0.001 0 .219 −0.088 0 .176 0 .33 
+
+“bicycle” DINOv3 −0.058 0.024 0 .200 −0.033 0 .125 0 .74 
+
+The padded image is bilinearly resampled to each tower’s native resolution and normalized in that tower’s conven-tion, namely 384 ×384 with [−1, 1] scaling for SigLIP2 and 
+
+448 ×448 with ImageNet mean and standard deviation for DINOv3. With patch sizes 14 and 16 the patch grids are 
+
+27 ×27 and 28 ×28 ; since the grids differ, the panels are compared on spatial structure rather than cell for cell. Patch features and text embeddings are L2-normalized, so their inner product is a cosine. 15 Table S5. ReVSI all frame per category (6,808 questions, 380 scenes, 128 frames per scene). Avg is the unweighted mean of the seven categories. All rows are 0.5B. Bold marks the best among our rows. Method Obj. Count Abs. Dist. Obj. Size Room Size Rel. Dist. Rel. Dir. Route Avg Cambrian-S-0.5B (official, full fp32) 40.77 32.92 46.30 37.72 34.20 35.54 36.33 37.68 Frames (SigLIP2) 32.14 38.36 32.22 25.36 30.05 34.75 31.83 32.10 Frames (DINOv3) 32.44 36.90 34.98 31.39 30.35 36.63 31.19 33.41 Frames + spatial FT (control) 38.91 38.12 47.34 45.30 33.01 36.41 42.12 40.17 BEV, SigLIP2 (hard × FP) 37.34 36.00 46.83 54.37 31.31 36.27 41.80 40.56 BEV, hard × world 39.44 39.16 46.44 58.54 31.53 34.68 42.77 41.79                                                                                                                             
+
+> Cambrian-BEV (hard ×FP) 38.09 41.14 46.80 58.74 34.72 43.76 49.52 44.68 BEV, bilinear ×world 38.52 40.34 47.40 59.50 35.83 45.64 49.20 45.20 BEV, bilinear ×FP 38.50 44.01 47.37 61.19 37.45 46.07 50.16 46.39
+> Table S6. ReVSI 64 frame per category (6,616 questions, 380 scenes, 64 frames per scene). Avg is the unweighted mean of the seven categories. All rows are 0.5B. Bold marks the best among our rows. Method Obj. Count Abs. Dist. Obj. Size Room Size Rel. Dist. Rel. Dir. Route Avg Cambrian-S-0.5B (official, full fp32) 44.57 32.09 44.04 32.52 35.34 35.14 39.43 37.59 Frames (SigLIP2) 32.45 36.91 32.17 24.93 31.20 33.86 31.90 31.92 Frames (DINOv3) 32.09 36.02 35.60 31.36 29.63 36.56 30.47 33.10 Frames + spatial FT (control) 36.59 36.07 48.13 45.03 32.53 37.69 44.09 40.02 BEV, SigLIP2 (hard ×FP) 37.71 37.79 46.36 48.97 30.65 36.49 44.44 40.34 BEV, hard ×world 38.61 39.58 46.89 60.86 31.20 35.06 43.73 42.27
+> Cambrian-BEV (hard ×FP) 37.65 41.72 46.31 60.23 34.64 44.29 50.18 45.00 BEV, bilinear ×world 38.32 39.92 47.21 60.03 35.03 45.50 49.10 45.02 BEV, bilinear ×FP 37.96 44.53 47.21 62.48 37.45 46.17 47.67 46.21
+
+Query embedding. The query is the bare noun in the row label (“tv”, “bicycle”). In both spaces every text prompt car-ries a large query-independent component, roughly “some image content”, and if it is left in place the maps of different queries share most of their spatial structure. We remove it. Let b be the L2-normalized mean embedding of 16 generic prompts ( a photo, an object, a thing, background, a surface, a room, an image, texture, the scene, an area, material, a place, something, indoor scene, empty space, clutter ); the query embedding t is replaced by normalize( t − b (t · b)) .In a held-out check this lowered the correlation between the maps of different queries from 0.43 to 0.29 . The same pro-jection is applied to both encoders, and the contrast in Fig. 3 is present with or without it. 
+
+Display. The similarity map is upsampled bilinearly to the image resolution, colored with the jet colormap, and alpha-blended over the image with α = 0 .6. The color range of each panel is that panel’s 2nd and 98th percentile of cosine similarity; values outside are clipped, and the two percentiles are printed at the ends of the panel’s colorbar. Clipping is a display choice, not a change to the data: it keeps a few extreme patches from flattening the rest of the map. It is also why each panel has its own colorbar. The two encoders occupy different similarity ranges (Tab. S4), and a single shared bar would misrepresent one of them. 
+
+Panel statistics. Table S4 gives, for each panel, the cosine distribution over all patch tokens and Moran’s I, the spatial autocorrelation of the map over 4-neighbouring patches ( +1 
+
+for smooth regions, 0 for a spatially random map; shuffling the patches of any of the four maps gives |I| < 0.002 ). The distribution statistics justify the per-panel colorbars: the two encoders differ in mean, floor, and spread, so one shared range would clip one of them. They do not by themselves speak to locality, since they are unchanged under any spa-tial permutation of the patches. Moran’s I does: it is 0.33 
+
+for both SigLIP2 maps and 0.74 to 0.75 for both DINOv3 maps. Neighbouring SigLIP2 patches are only weakly cor-related, which is the speckle visible in Fig. 3; neighbouring DINOv3 patches agree, which is the compact response over the object. 
+
+Images. The two images are natural photographs from the held-out image validation split used by our visualizer, not VSI-Bench scenes; the probe is run on ordinary pho-tographs on purpose, to show that the property belongs to the encoders rather than to scan data. 
+
+# I. ReVSI per-category results 
+
+Table S5 and Tab. S6 give the per-category breakdown be-hind the averages of Tab. 3, for the all frame annotation (128 frames per scene) and the 64 frame annotation (64 frames per scene) respectively. 16 Figure S2. Failure cases. (a) Appearance order (ScanNet scene0164 02 ): the frames in which each object first becomes visible (annotated boxes projected into the video: counter, refrigerator, backpack, door) are all pooled into one grid, so this order is not represented; the control answers all nine appearance-order questions of this scene, ours one. (b) Thin structures: the token of a cell averages every surface inside it. Measured with the datasets’ object annotations, a door or a whiteboard contributes 71% and 53% of the points pooled into its cells, a 38 cm television 20%, a telephone 10% and a 31 cm coat hanger 1%; three of the four desk monitors in the office share a single cell. Size and count questions about such objects fail for both models. (c) Corrupted geometry: in ScanNet++ d755b3d9d8 the shipped poses drift kilometres from the first frame, so the centroid and the floor anchor are meaningless, no point falls inside the ±5 m grid, every BEV token is empty, and the model answers from its prior (room size 2.8 vs. 16.9 m 2). In ARKitScenes 45261150 spurious depth below the floor (5.6% of points) pulls the 2nd-percentile floor anchor 0.30 m below the true floor; this affects only the floor-relative height filter of Sec. B, which the final model does not use. 
+
+# J. Qualitative examples and failure cases 
+
+Figure S1 overlays the model’s BEV occupancy on top-down renderings of three VSI-Bench scenes together with questions that the identically fine-tuned frames-only con-trol answers incorrectly and Cambrian-BEV answers cor-rectly. The occupied cells trace the metric footprint of the room and the first-pose arrow fixes the egocentric frame, the two quantities behind the room-size and relative-direction gains of Tab. 1. The positions of the objects named in each question are taken from the datasets’ own 3D annota-tions (ARKitScenes 3DOD boxes, ScanNet++ instance seg-ments), registered to the benchmark’s camera poses, and the ground-truth answer of every question shown was checked against these footprints. Figure S2 shows the three charac-teristic failure modes of the representation: temporal order is discarded by the time-collapsed grid, objects thinner than a 0.37 m cell are averaged with the surfaces behind them, and scenes with corrupted poses or depth outliers produce 17 a meaningless centroid and floor anchor. All model an-swers are copied verbatim from the evaluation logs of the two models. 18

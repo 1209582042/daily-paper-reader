@@ -48,17 +48,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-10-21</span>
+      <span class="dpr-home-dashboard-kicker">2026-10-22</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 21 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 17 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>10</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-10-21 22:39:38 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-10-22 22:40:15 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,9 +69,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今天把21篇新论文过了一遍：10篇精读、11篇速读，主线落在“记忆+空间理解”。</p>
-<p>最值得看的是两篇9.0——MemAct用记忆与主动探索做流式空间理解，另一篇追问MLLM空间理解需要什么样的视觉表征；速读中的MemoryVLN、槽记忆长视频生成和3D几何“脚手架记忆”也在延续这条线。</p>
-<p>普通读者可先读这两篇9.0搭起“记忆机制如何服务空间与长时序任务”的框架，再按兴趣挑一篇8.0速读看应用场景。</p>
+<p>今天共筛选 17 篇论文（精读 6 篇、速读 11 篇），重点聚焦视频理解与空间推理。</p>
+<p>最值得看的是两篇 9.0 分精读：DeltaStreamer 的类人流式视频理解，以及 Thinking from Above 的鸟瞰图视觉 token 高效空间推理。</p>
+<p>普通读者可先读这两篇精读，再按兴趣浏览速读中的自我中心视频、视觉-语言-动作对齐与具身记忆方向。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -80,12 +80,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">10 篇</strong>
+    <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MemAct: Streaming Spatial Understanding with Memory and Active Exploration">MemAct: Streaming Spatial Understanding with Memory and Active Exploration</span></li><li><span class="dpr-home-dashboard-paper-title" title="What Makes a Good Visual Representation for Spatial Understanding in MLLMs?">What Makes a Good Visual Representation for Spatial Understanding in MLLMs?</span></li><li><span class="dpr-home-dashboard-paper-title" title="GeoReader: Learning Latent Geometry for Spatial Reasoning in Vision-Language Models">GeoReader: Learning Latent Geometry for Spatial Reasoning in Vision-Language Models</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="DeltaStreamer: Towards Human-Like Agentic Streaming Video Understanding">DeltaStreamer: Towards Human-Like Agentic Streaming Video Understanding</span></li><li><span class="dpr-home-dashboard-paper-title" title="Thinking from Above: Efficient Spatial Reasoning with Bird&#x27;s-Eye-View Visual Tokens">Thinking from Above: Efficient Spatial Reasoning with Bird&#x27;s-Eye-View Visual Tokens</span></li><li><span class="dpr-home-dashboard-paper-title" title="LVMem: Image-Augmented Memory for Long-Horizon Question Answering">LVMem: Image-Augmented Memory for Long-Horizon Question Answering</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>10</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>6</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -96,7 +96,7 @@
     <strong class="dpr-home-dashboard-count">11 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MemoryVLN: From Ego-Aware Memory Representation to Cross-Context Memory Reuse in Vision-Language Navigation">MemoryVLN: From Ego-Aware Memory Representation to Cross-Context Memory Reuse in Vision-Language Navigation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Long-horizon Video Generation with Slot Memory Addressed By Region Tokens">Long-horizon Video Generation with Slot Memory Addressed By Region Tokens</span></li><li><span class="dpr-home-dashboard-paper-title" title="Remember, Revisit, Revise: Scaffold Memory for Long-Horizon 3D Geometry">Remember, Revisit, Revise: Scaffold Memory for Long-Horizon 3D Geometry</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="EgoP$^{2}$C: Internalizing Plan-Perceive-Compose for Spatial Reasoning in Egocentric Video">EgoP$^{2}$C: Internalizing Plan-Perceive-Compose for Spatial Reasoning in Egocentric Video</span></li><li><span class="dpr-home-dashboard-paper-title" title="Relational Spatial Alignment for Vision-Language-Action Models">Relational Spatial Alignment for Vision-Language-Action Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="DialogMem: Evaluating Dialogue-Grounded Embodied Memory in 3D Environments">DialogMem: Evaluating Dialogue-Grounded Embodied Memory in 3D Environments</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>11</strong></span></div>
 </section>
