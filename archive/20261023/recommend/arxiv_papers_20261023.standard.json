@@ -1,0 +1,716 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-10-23T21:55:56.081449+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 8,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 25,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2610.23302v1",
+      "source": "arxiv",
+      "title": "Look, Reason, Draw a Region: Recursive Refinement for Spatial Context Prediction",
+      "abstract": "Spatial context prediction requires visual grounding and spatial reasoning to identify vacant regions relative to objects in a scene. Spatial relationships and physical constraints remain challenging for large vision-language models (VLMs). Recursive reasoning has demonstrated strong performance on discrete and abstract reasoning tasks, motivating its use for improving spatial context prediction in natural images. Weight sharing enables higher accuracy with a small trainable parameter count. We introduce Spatial-TRM, a compact recursive model with frozen vision-language features, a convex region decoder, and just 11.2M trainable parameters. This weight-tied reasoner supports six spatial relationships, three reference frames, and open-vocabulary anchor objects. On the RoboSpatial-Home benchmark, Spatial-TRM achieves 29.51% context accuracy, a gain of 9.02 percentage points (44.0% relative) over a separately trained single-step model with the same parameter count. Including the frozen encoders, the model has 877.8M total parameters, approximately $15\\times$ fewer than the reported 13B size of RoboPoint. These results show that repeated refinement improves spatial context prediction from pretrained vision-language features at a fixed trainable parameter count on this benchmark.",
+      "authors": [
+        "Wajeeha Tahir",
+        "Anna Tegon",
+        "Lionnus Kesting",
+        "Gamze İslamoğlu",
+        "Kristóf Karacs",
+        "Luca Benini",
+        "Thorir Mar Ingolfsson"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-10-16T11:06:34+00:00",
+      "link": "https://arxiv.org/pdf/2610.23302v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Recursive VLM reasoning for spatial context and spatial relationship prediction",
+      "llm_evidence_cn": "面向空间上下文与空间关系预测的递归视觉语言推理",
+      "llm_evidence": "面向空间上下文与空间关系预测的递归视觉语言推理",
+      "canonical_evidence": "面向空间上下文与空间关系预测的递归视觉语言推理",
+      "llm_tldr_en": "Spatial-TRM uses a compact weight-tied recursive reasoner over frozen vision-language features to predict vacant regions and spatial relationships, improving spatial context prediction with few trainable parameters.",
+      "llm_tldr_cn": "针对视觉语言模型在空间关系与物理约束上仍易出错的问题，本文提出Spatial-TRM，用冻结视觉语言特征和凸区域解码器进行递归细化，以预测场景中相对物体的空白区域。模型采用权重共享的紧凑递归推理器，仅需约1120万可训练参数，并支持六类空间关系、三种参考系和开放词表。该工作说明递归推理能以较低参数代价增强视觉语言模型的空间上下文预测能力。",
+      "llm_tldr": "针对视觉语言模型在空间关系与物理约束上仍易出错的问题，本文提出Spatial-TRM，用冻结视觉语言特征和凸区域解码器进行递归细化，以预测场景中相对物体的空白区域。模型采用权重共享的紧凑递归推理器，仅需约1120万可训练参数，并支持六类空间关系、三种参考系和开放词表。该工作说明递归推理能以较低参数代价增强视觉语言模型的空间上下文预测能力。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial reasoning",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2610.28354v1",
+      "source": "arxiv",
+      "title": "S-Agent 2.0: Spatial Reasoning with a General Coding Agent",
+      "abstract": "Spatial reasoning asks a model to work out where objects are in 3D space, how they relate to one another, and how they move. Agentic VLMs have recently brought large improvements on such tasks by letting the model actively gather evidence with 3D perception tools instead of answering in a single pass. Even so, on many questions the tools return the right evidence and the model still does not arrive at the correct answer: the gap between model and tools, where raw readings become usable conclusions, is left unfilled. We present S-Agent 2.0, a spatial reasoning agent that equips an off-the-shelf general coding agent with a command-line perception toolkit, and we design the interface around one principle: help the VLM close the evidence loop: acquire scene evidence, remember it in a persistent scene memory, and interpret each reading in plain spatial language. This design keeps the full flexibility of a coding agent, and every reading it acts on stays grounded in the tools' geometry. On MMSI-Bench and ReVSI, the toolkit improves a strong open-source model, Qwen3.8-27B, by +13.9 and +20.5 points over the same agent without tools, and a strong closed-source model, Gemini-3.8-Flash, by +11.2 and +9.6 points. With the open backbone S-Agent 2.0 reaches 66.5 on MMSI-Bench and 82.3 on ReVSI, ahead of the specialized system SpatialClaw on the same backbone (62.6 and 74.5), and with Gemini-3.8-Flash it reaches 74.1 and 90.5 against its 67.0 and 79.7. Both tool gains shrink as the backbone grows more capable, but SpatialClaw's shrinks far more on ReVSI, from +13.2 to +2.7, while ours stays at +9.6. S-Agent 2.0 also works across different general coding agent harnesses, such as Codex and Claude Code.",
+      "authors": [
+        "Rui Gong",
+        "Ruoyu Wang",
+        "Yalun Dai",
+        "Hao Li",
+        "Sidi Yang",
+        "Qihao Zhao",
+        "Hongyu Li",
+        "Zeyang Guan",
+        "Fangzhou Hong",
+        "Zhaoxi Chen",
+        "Kim-Hui Yap",
+        "Ziwei Liu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-10-20T15:20:00+00:00",
+      "link": "https://arxiv.org/pdf/2610.28354v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "spatial reasoning agent using 3D perception tools to close the evidence loop",
+      "llm_evidence_cn": "使用三维感知工具闭合证据回路的空间推理智能体",
+      "llm_evidence": "使用三维感知工具闭合证据回路的空间推理智能体",
+      "canonical_evidence": "使用三维感知工具闭合证据回路的空间推理智能体",
+      "llm_tldr_en": "S-Agent 2.0 equips a general coding agent with a command-line 3D perception toolkit, designing the interface so VLMs can turn raw geometric readings into correct spatial reasoning conclusions.",
+      "llm_tldr_cn": "空间推理要求模型判断三维空间中物体的位置、相互关系与运动，智能体式视觉语言模型通过主动调用三维感知工具取得进展，但常出现工具返回正确证据而模型仍答错的情况。论文提出 S-Agent 2.0，为通用编程智能体配备命令行感知工具箱，并围绕闭合证据回路设计接口，使模型能够获取场景证据、理解几何读数并形成结论。该工作填补了原始测量与可用结论之间的鸿沟，提升了三维空间问答的可靠性。",
+      "llm_tldr": "空间推理要求模型判断三维空间中物体的位置、相互关系与运动，智能体式视觉语言模型通过主动调用三维感知工具取得进展，但常出现工具返回正确证据而模型仍答错的情况。论文提出 S-Agent 2.0，为通用编程智能体配备命令行感知工具箱，并围绕闭合证据回路设计接口，使模型能够获取场景证据、理解几何读数并形成结论。该工作填补了原始测量与可用结论之间的鸿沟，提升了三维空间问答的可靠性。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial reasoning",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2610.29229v1",
+      "source": "arxiv",
+      "title": "Cache Locally, Recompute Selectively for Streaming Video Understanding",
+      "abstract": "Streaming video understanding (SVU) requires video-LLMs to process incoming video continuously while answering user queries with low latency. Recent methods reduce query-time cost by prefilling frames into KV caches during idle time and reusing the cached KVs at query time. To bound per-frame computation over unbounded video streams, these methods restrict the context available during prefill. This creates a fundamental context mismatch: the restricted context may omit information needed to properly contextualize video tokens, yet, still contain information irrelevant to the eventual query, which is unknown during prefill. We propose FrameBlend, a simple yet effective plug-and-play method to address this mismatch through selective KV recomputation, without requiring any additional training. At query time, FrameBlend re-prefills selected video tokens using query-relevant context and replaces their cached KVs with recomputed ones. Crucially, this recomputation enables shorter attention windows during idle-time prefill, substantially reducing prefill cost while improving accuracy. Experiments across three SVU frameworks and five streaming and offline benchmarks demonstrate accuracy gains of up to 3.9 pp. On RVS-Ego, FrameBlend reduces per-frame prefill FLOPs by over 20% and total processing time by 14-59% for retrieval-based frameworks, including the cost of query-time recomputation. These results demonstrate that a simple change in how contextualization is distributed between idle time and query time can improve the accuracy-efficiency trade-off for SVU.",
+      "authors": [
+        "Junhyeok Lee",
+        "Sangyoon Lee",
+        "Jaeho Lee"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-10-21T05:39:35+00:00",
+      "link": "https://arxiv.org/pdf/2610.29229v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "bounded causal KV memory with selective recomputation for streaming video QA",
+      "llm_evidence_cn": "流式视频问答中的有界KV记忆与选择性重算",
+      "llm_evidence": "流式视频问答中的有界KV记忆与选择性重算",
+      "canonical_evidence": "流式视频问答中的有界KV记忆与选择性重算",
+      "llm_tldr_en": "FrameBlend addresses the context mismatch in streaming video understanding by selectively recomputing KV entries, bounding per-frame computation while restoring query-relevant context for low-latency answering.",
+      "llm_tldr_cn": "流式视频理解要求视频大模型持续处理输入并低延迟作答，现有方法在空闲时预填充KV缓存以降低查询开销，但为限制每帧计算而裁剪上下文，造成预填充上下文与查询需求错配。作者提出即插即用的FrameBlend，通过选择性KV重算，在保留有界计算的同时恢复与查询相关的必要上下文。实验表明该方法在无界视频流上兼顾效率与问答准确性。该思路为流式视频的有界因果记忆与查询条件化检索提供了可行方案。",
+      "llm_tldr": "流式视频理解要求视频大模型持续处理输入并低延迟作答，现有方法在空闲时预填充KV缓存以降低查询开销，但为限制每帧计算而裁剪上下文，造成预填充上下文与查询需求错配。作者提出即插即用的FrameBlend，通过选择性KV重算，在保留有界计算的同时恢复与查询相关的必要上下文。实验表明该方法在无界视频流上兼顾效率与问答准确性。该思路为流式视频的有界因果记忆与查询条件化检索提供了可行方案。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Build bounded causal memory for long and streaming videos through query agnostic online frame or token selection, compression, retention, eviction, and question conditioned retrieval, including memory policies learned from downstream question answering rewards.",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2610.29317v1",
+      "source": "arxiv",
+      "title": "SpatialBrain: Spatial Intelligence Growing from Experience",
+      "abstract": "Spatial reasoning requires more than access to geometric tools: a reasoner must decide when direct observation is sufficient and when to reconstruct, measure, or change reference frames. We present SpatialBrain, a framework that retains experience about these decisions while keeping its vision-language backbone fixed. The key distinction is between evidence about a scene and experience about how to reason with that evidence. 3DFusionMemory fuses current-scene observations into queryable spatial relations. A Spatial Skill Library provides reusable tool procedures, and Spatial Cognition associates task conditions with experience about when and how to use memory and skills. Completed trajectories are abstracted into process records and consolidated between task blocks, allowing later decisions to draw on earlier execution without transferring scene coordinates or reference answers. Across five spatial-reasoning benchmarks, SpatialBrain improves on direct answers from the same backbone on four and ties on the fifth. Component comparisons, experience-coverage curves, and traced resource decisions characterize how the framework accumulates and uses these resources.",
+      "authors": [
+        "Yifan Zhou",
+        "Ziyang Gong",
+        "Xiaojun Ye",
+        "Yifei Liu",
+        "Donggang Li",
+        "Xiaolong Zhou",
+        "Zhihang Zhong",
+        "Xue Yang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-10-21T07:15:54+00:00",
+      "link": "https://arxiv.org/pdf/2610.29317v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "3DFusionMemory fuses scene observations into queryable spatial relations",
+      "llm_evidence_cn": "3DFusionMemory将场景观测融合为可查询的空间关系记忆",
+      "llm_evidence": "3DFusionMemory将场景观测融合为可查询的空间关系记忆",
+      "canonical_evidence": "3DFusionMemory将场景观测融合为可查询的空间关系记忆",
+      "llm_tldr_en": "Presents SpatialBrain, which keeps a VLM backbone fixed while adding a 3DFusionMemory of queryable spatial relations, a skill library, and experience about when to use memory for spatial reasoning.",
+      "llm_tldr_cn": "空间推理不仅需要几何工具，还需要判断何时直接观察、何时重建或切换参考系。作者提出SpatialBrain框架，在保持视觉语言骨干固定的前提下，用3DFusionMemory把当前场景观测融合为可查询的空间关系，并配合空间技能库与空间认知模块记录使用经验。完成的推理轨迹被抽象为过程记录并在任务间整合。该工作将场景证据与推理经验分离，为可复用的空间记忆与推理策略提供了新思路。",
+      "llm_tldr": "空间推理不仅需要几何工具，还需要判断何时直接观察、何时重建或切换参考系。作者提出SpatialBrain框架，在保持视觉语言骨干固定的前提下，用3DFusionMemory把当前场景观测融合为可查询的空间关系，并配合空间技能库与空间认知模块记录使用经验。完成的推理轨迹被抽象为过程记录并在任务间整合。该工作将场景证据与推理经验分离，为可复用的空间记忆与推理策略提供了新思路。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial memory",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2610.29866v1",
+      "source": "arxiv",
+      "title": "GeoMem-VLA: Internalizing 3D Scene Understanding into Temporal Memory for Vision-Language-Action Models",
+      "abstract": "Geometric structure is essential for robotic manipulation and understanding the 3D world. Most VLA models rely on 2D representations of current observations, while geometry-aware approaches often require additional 3D information. However, geometry inferred independently from individual observations is often discarded rather than accumulated into a persistent task representation. Our key insight is that action generation needs a compact, task-relevant geometric abstraction that can be continuously updated, rather than a complete, renderable 3D reconstruction at every step. We introduce GeoMem-VLA, a VLA framework that internalizes explicit 3D supervision into dedicated geometric tokens and maintains them as temporal memory for action generation, without directly aligning the VLM's native visual embeddings with the teacher feature space. During training, a frozen geometry foundation model supervises learnable GeoPlan tokens through a geometric flow-matching objective over the current scene point map and future end-effector tracks. These tokens are integrated with the memory of observation representations, where historical information is retrieved, adaptively fused with current observations, and consolidated to retain event frames as the task progresses. At inference, the policy retrieves historical representations and fuses them with the current working representation to predict actions, without invoking the 3D teacher or explicitly reconstructing the scene. After benchmark-specific downstream adaptation, GeoMem-VLA achieves 98.9% average success on LIBERO and 91.10% / 91.24% on RoboTwin's clean/randomized settings. Across five real-world tasks, GeoMem-VLA achieves 78.0% average success. These results suggest that internalizing and remembering 3D scene understanding is a promising approach to robot control.",
+      "authors": [
+        "Qinfan Zhang",
+        "Yifan Luo",
+        "Haoyuan Shi",
+        "Guanlin Liu",
+        "Han Dong",
+        "Haozhe Shan",
+        "Yong Dai",
+        "Xiangcong Ren",
+        "Xiaozhu Ju"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-21T15:23:18+00:00",
+      "link": "https://arxiv.org/pdf/2610.29866v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "maintains geometric tokens as persistent temporal spatial memory",
+      "llm_evidence_cn": "将几何词元维护为持久的时间空间记忆",
+      "llm_evidence": "将几何词元维护为持久的时间空间记忆",
+      "canonical_evidence": "将几何词元维护为持久的时间空间记忆",
+      "llm_tldr_en": "GeoMem-VLA internalizes explicit 3D supervision into dedicated geometric tokens and maintains them as temporal memory, giving vision-language-action models a compact, continuously updated geometric abstraction.",
+      "llm_tldr_cn": "多数视觉语言动作模型仅依赖当前观测的二维表示，而几何信息常被逐帧推断后丢弃，未累积为持久任务表示。论文提出 GeoMem-VLA，将显式三维监督内化为专用几何词元，并作为时间记忆持续更新，为动作生成提供紧凑且任务相关的几何抽象。该设计避免了每步重建完整三维场景的开销，同时保留了跨时刻的几何一致性。工作为具身场景下的空间记忆与几何表示融合提供了可行范式。",
+      "llm_tldr": "多数视觉语言动作模型仅依赖当前观测的二维表示，而几何信息常被逐帧推断后丢弃，未累积为持久任务表示。论文提出 GeoMem-VLA，将显式三维监督内化为专用几何词元，并作为时间记忆持续更新，为动作生成提供紧凑且任务相关的几何抽象。该设计避免了每步重建完整三维场景的开销，同时保留了跨时刻的几何一致性。工作为具身场景下的空间记忆与几何表示融合提供了可行范式。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial memory",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2610.31284v1",
+      "source": "arxiv",
+      "title": "Retrieval-Augmented Online Textual Memory for Episodic Memory Video Question Answering",
+      "abstract": "Long egocentric videos pose a central challenge for multimodal language models: the visual stream must be compressed into a memory representation that can be searched efficiently while still preserving the evidence needed for question answering. Building on an online textual-memory framework in which first-person videos are converted into temporally grounded captions, this work systematically studies the role of retrieval in episodic-memory video question answering. We evaluate how different retrieval units, query formulations, context budgets, and reranking strategies affect multiple-choice answering on QAEgo4D-Closed, isolating retrieval as the main variable while keeping the underlying generated memory fixed.   Our best configuration, Parent, matches fine-grained caption subchunks, then provides their full parent captions to the reasoner. It achieves 56.4 % accuracy, matching strong full-memory and retrieval baselines while exposing only a small fraction of the textual memory at question time. More importantly, our analysis shows that better temporal coverage does not necessarily translate into better answers: increasing the retrieval budget improves temporal Hit@K and Recall@K, but can reduce accuracy by introducing visually plausible distractors and uncertain caption evidence. These findings suggest that retrieval-augmented egocentric memory should not be optimized only for evidence recall, but also for the reliability, specificity, and answer-discriminative value of the retrieved context. The study motivates more structured episodic memories that move beyond raw caption retrieval toward evidence-aware representations for long-form egocentric reasoning.",
+      "authors": [
+        "Raffaele Cali",
+        "Giuseppe Lando",
+        "Rosario Forte",
+        "Antonino Furnari"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-22T13:49:30+00:00",
+      "link": "https://arxiv.org/pdf/2610.31284v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "online textual memory with retrieval units and budgets for egocentric video QA",
+      "llm_evidence_cn": "在线文本记忆与检索单元预算用于第一视角视频问答",
+      "llm_evidence": "在线文本记忆与检索单元预算用于第一视角视频问答",
+      "canonical_evidence": "在线文本记忆与检索单元预算用于第一视角视频问答",
+      "llm_tldr_en": "The paper studies retrieval design for online textual memory of long egocentric videos, varying retrieval units, query formulations, context budgets and reranking under a fixed generated memory.",
+      "llm_tldr_cn": "长时第一视角视频需压缩为可高效检索的记忆表示，同时保留问答所需证据。作者基于将视频转为时间锚定字幕的在线文本记忆框架，系统研究检索单元、查询表述、上下文预算与重排序策略对QAEgo4D-Closed选择题问答的影响。实验在保持生成记忆不变的条件下分离出检索的作用并给出最佳配置。该工作为流式长视频记忆的检索设计提供了实证指导。",
+      "llm_tldr": "长时第一视角视频需压缩为可高效检索的记忆表示，同时保留问答所需证据。作者基于将视频转为时间锚定字幕的在线文本记忆框架，系统研究检索单元、查询表述、上下文预算与重排序策略对QAEgo4D-Closed选择题问答的影响。实验在保持生成记忆不变的条件下分离出检索的作用并给出最佳配置。该工作为流式长视频记忆的检索设计提供了实证指导。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Build bounded causal memory for long and streaming videos through query agnostic online frame or token selection, compression, retention, eviction, and question conditioned retrieval, including memory policies learned from downstream question answering rewards.",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2610.31293v1",
+      "source": "arxiv",
+      "title": "RecallGS: Geometry-Grounded Recall for Online Semantic Gaussian Splatting",
+      "abstract": "Online semantic 3D Gaussian Splatting (3DGS) enables open-vocabulary scene understanding from streaming observations. However, existing methods recover geometric context missing from image-derived semantic features using an additionally learned 3D network, incurring extra training and runtime overhead. We observe that such geometric-semantic evidence may already exist in the agent's observation history and can be retrieved rather than learned. Based on this insight, we introduce RecallGS (Geometry-Grounded Recall for Online Semantic Gaussian Splatting), a lightweight, training-free mechanism that treats past observations as a non-parametric geometric-semantic prior. RecallGS follows a recall-ground-fuse pipeline: CLIP retrieves relevant observations, alpha-compositing weights identify geometrically supported views, and aggregate their semantic features over each Gaussian's rendered footprint. On ScanNet and ScanNet++, RecallGS achieves strong semantic segmentation performance at 2.48 FPS, demonstrating that geometric-semantic context can be effectively recovered from observation history without an additional learned 3D branch.",
+      "authors": [
+        "Thanh-Khoi Nguyen",
+        "Thien-Phuc Tran",
+        "Minh-Triet Tran"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-10-22T13:55:31+00:00",
+      "link": "https://arxiv.org/pdf/2610.31293v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "retrieves geometric-semantic evidence from observation history for streaming scene understanding",
+      "llm_evidence_cn": "从观测历史中检索几何-语义证据以支撑流式场景理解",
+      "llm_evidence": "从观测历史中检索几何-语义证据以支撑流式场景理解",
+      "canonical_evidence": "从观测历史中检索几何-语义证据以支撑流式场景理解",
+      "llm_tldr_en": "RecallGS treats past streaming observations as a non-parametric geometric-semantic prior, using CLIP recall and a recall-ground-fuse pipeline to restore geometric context in online semantic 3DGS without extra training.",
+      "llm_tldr_cn": "在线语义高斯泼溅要从流式观测中理解开放词汇场景，但图像语义特征缺失几何上下文，现有方法依赖额外训练的3D网络，带来训练与推理开销。作者发现几何-语义证据其实已存在于智能体的观测历史中，于是提出免训练的RecallGS，把历史观测作为非参数先验，按召回-锚定-融合流程用CLIP检索相关观测并融合。该设计避免了额外网络训练，为流式场景理解提供了一条可检索历史证据的轻量途径。",
+      "llm_tldr": "在线语义高斯泼溅要从流式观测中理解开放词汇场景，但图像语义特征缺失几何上下文，现有方法依赖额外训练的3D网络，带来训练与推理开销。作者发现几何-语义证据其实已存在于智能体的观测历史中，于是提出免训练的RecallGS，把历史观测作为非参数先验，按召回-锚定-融合流程用CLIP检索相关观测并融合。该设计避免了额外网络训练，为流式场景理解提供了一条可检索历史证据的轻量途径。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Maintain object identity, geometric consistency, and spatial relationships across viewpoints and temporal windows, and retrieve temporally grounded historical or out of view evidence for spatial question answering.",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2610.22795v1",
+      "source": "arxiv",
+      "title": "STRIDE: Evaluating Spatiotemporal Reasoning in Driving Edge Cases",
+      "abstract": "In autonomous driving, perceiving surrounding objects is not enough: failing to understand how they move and interact over time can lead to dangerous decisions. Evaluating vision-language models (VLMs) therefore requires testing whether they connect past spatial observations to future consequences. Yet existing benchmarks often assess edge cases through basic perception questions or test temporal understanding in simple scenarios, leaving complex spatiotemporal reasoning underexplored. We introduce STRIDE (SpatioTemporal Reasoning In Driving Edge Cases), an object-centric benchmark for long-tail, safety-critical driving scenarios. STRIDE covers six task families: spatial perception, spatial understanding, temporal memory, temporal extrapolation, trajectory prediction, and scene-context awareness. It pairs multiple-choice questions probing individual spatiotemporal judgments with related free-form visual question answering (VQA) requiring detailed scene explanations and justifications of driving decisions. We prioritize scenes with unusual object behaviors and complex traffic interactions, generate reference answers from structured dataset annotations through automated procedures, and use limited language-model assistance and human verification to ensure annotation quality. Across 12 proprietary, open-weight, and driving-specialized models, even the best performer, GPT-6-Astra, achieves only 43.4% average multiple-choice accuracy, versus an approximately 20% random-choice baseline. Further analysis reveals that strong performance in describing driving scenes does not necessarily translate to accurate safety-critical judgments, and that models struggle more with reconstructing object motion than recalling past positions. STRIDE thus exposes spatiotemporal driving limitations that aggregate VQA scores can conceal.",
+      "authors": [
+        "Lieqi Liu",
+        "Rui gao",
+        "Jia-Chen Gu",
+        "Wenbo Hu",
+        "Zhaobin Mo",
+        "Ahmadreza Moradipari",
+        "Nejib Ammar",
+        "Wei Wang",
+        "Nanyun Peng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-10-16T01:13:23+00:00",
+      "link": "https://arxiv.org/pdf/2610.22795v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "object-centric benchmark for temporal memory and spatial understanding in VLMs",
+      "llm_evidence_cn": "面向视觉语言模型的时序记忆与空间理解基准",
+      "llm_evidence": "面向视觉语言模型的时序记忆与空间理解基准",
+      "canonical_evidence": "面向视觉语言模型的时序记忆与空间理解基准",
+      "llm_tldr_en": "STRIDE is an object-centric benchmark of long-tail driving edge cases that tests whether VLMs connect past spatial observations to future consequences across spatial and temporal reasoning tasks.",
+      "llm_tldr_cn": "现有驾驶场景基准多以基础感知题评估边缘案例，难以检验模型将过去空间观测与未来后果关联的能力。作者提出STRIDE，一个面向长尾安全关键驾驶场景的对象中心基准，涵盖空间感知、空间理解、时序记忆、时序外推与轨迹等六类任务。评测揭示了视觉语言模型在复杂时空推理上的不足。该基准推动了驾驶场景中时空推理能力的系统评估。",
+      "llm_tldr": "现有驾驶场景基准多以基础感知题评估边缘案例，难以检验模型将过去空间观测与未来后果关联的能力。作者提出STRIDE，一个面向长尾安全关键驾驶场景的对象中心基准，涵盖空间感知、空间理解、时序记忆、时序外推与轨迹等六类任务。评测揭示了视觉语言模型在复杂时空推理上的不足。该基准推动了驾驶场景中时空推理能力的系统评估。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Maintain object identity, geometric consistency, and spatial relationships across viewpoints and temporal windows, and retrieve temporally grounded historical or out of view evidence for spatial question answering.",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.21207v1",
+      "source": "arxiv",
+      "title": "SpaceCache: Intermediate Feature Reuse for Efficient Semantic Segmentation on Point Cloud Streams",
+      "abstract": "Point-cloud streams are central to autonomous driving and robotics, yet existing segmentation networks process every frame from scratch, although consecutive frames largely overlap. We observe that the intermediate features of point-cloud transformers remain semantically consistent across frames for the same spatial region, especially in deep stages. Building on this, we present SpaceCache, a training-free feature cache that reuses these features across frames. Tokens of previously observed regions skip a sequence of transformer blocks and take their cached features, only the remaining tokens are computed, and the full token layout is restored for dense prediction. Lightweight cache management keeps reused features reliable by limiting each entry's age and evicting low-confidence entries. Unlike token merging, SpaceCache selects tokens at negligible cost and runs its cache operations once per encoder stage. On both outdoor and indoor benchmarks, such as nuScenes, Waymo, and ScanNet, with two transformer backbones of Utonia and LitePT-B, SpaceCache achieves up to 1.65x speedup with less than 1-point mIoU drop and consistently outperforms token-merging methods.",
+      "authors": [
+        "Dongheon Yang",
+        "Beomseok Kang",
+        "Jae-Joon Kim"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-15T04:02:47+00:00",
+      "link": "https://arxiv.org/pdf/2610.21207v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "training-free cross-frame feature cache reuses cached tokens for overlapping regions in streams",
+      "llm_evidence_cn": "免训练的跨帧特征缓存为重叠区域复用缓存token",
+      "llm_evidence": "免训练的跨帧特征缓存为重叠区域复用缓存token",
+      "canonical_evidence": "免训练的跨帧特征缓存为重叠区域复用缓存token",
+      "llm_tldr_en": "SpaceCache is a training-free feature cache that reuses intermediate point-cloud transformer features for overlapping regions across frames, skipping blocks for cached tokens to speed up streaming segmentation.",
+      "llm_tldr_cn": "点云流是自动驾驶与机器人的核心输入，相邻帧大量重叠，但现有分割网络仍逐帧从头计算，造成冗余开销。作者发现点云Transformer的中间特征对同一空间区域跨帧保持语义一致，于是提出免训练的SpaceCache：已观测区域的token跳过若干模块直接取用缓存特征，只计算其余token，并轻量管理缓存可靠性。该做法在恢复完整token布局用于密集预测的同时减少重复计算，为流式感知中的跨帧记忆复用提供可行路径。",
+      "llm_tldr": "点云流是自动驾驶与机器人的核心输入，相邻帧大量重叠，但现有分割网络仍逐帧从头计算，造成冗余开销。作者发现点云Transformer的中间特征对同一空间区域跨帧保持语义一致，于是提出免训练的SpaceCache：已观测区域的token跳过若干模块直接取用缓存特征，只计算其余token，并轻量管理缓存可靠性。该做法在恢复完整token布局用于密集预测的同时减少重复计算，为流式感知中的跨帧记忆复用提供可行路径。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Build bounded causal memory for long and streaming videos through query agnostic online frame or token selection, compression, retention, eviction, and question conditioned retrieval, including memory policies learned from downstream question answering rewards.",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2610.31476v1",
+      "source": "arxiv",
+      "title": "Point-Level Refinable Semantic Mapping for Spatial Understanding",
+      "abstract": "Open-vocabulary 3D semantic maps have emerged as a key spatial memory representation for long-horizon robot autonomy, enabling robots to reason about objects, their spatial relationships, and past observations across time. However, existing object-centric semantic maps are primarily designed for static environments and rely on an append-only point integration strategy, where newly observed points are accumulated but previously integrated points are rarely reevaluated. Consequently, perception errors accumulate over time, and outdated points persist after objects move or disappear. Although recent dynamic mapping methods update object-level representations in changing scenes, they do not explicitly revise noisy or obsolete points within each object. We propose an online refinable semantic mapping framework that continuously refines object representations through probabilistic point-level confidence updating. Each object point maintains a confidence score that is updated online using multi-view temporal evidence: consistent observations reinforce reliable points, while inconsistent segmentation masks, depth measurements, and visibility cues suppress spurious and outdated points. Combined with object tracking and re-identification to preserve instance identities under motion and relocation, our framework enables object-centric semantic maps to be continuously refined rather than monotonically accumulated. Experiments demonstrate improved mapping accuracy over the previous method by 3.46% on Replica and 2.55% on ScanNet, show robustness in dynamic environments and under perception noise, and provide an effective spatial memory for object navigation and embodied question-answering with success rates of 82.4% and 76.7%.",
+      "authors": [
+        "Taimeng Fu",
+        "Yi Du",
+        "Zitong Zhan",
+        "Qiwei Du",
+        "Shaoshu Su",
+        "Zhipeng Zhao",
+        "Chen Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-10-22T16:02:16+00:00",
+      "link": "https://arxiv.org/pdf/2610.31476v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "3D semantic map as revisable spatial memory over time",
+      "llm_evidence_cn": "可随时间修正的三维语义图空间记忆",
+      "llm_evidence": "可随时间修正的三维语义图空间记忆",
+      "canonical_evidence": "可随时间修正的三维语义图空间记忆",
+      "llm_tldr_en": "This paper proposes point-level refinable semantic mapping that revisits previously integrated points, correcting noisy and stale observations to keep open-vocabulary 3D semantic maps reliable as spatial memory.",
+      "llm_tldr_cn": "开放词汇三维语义地图是长期机器人自主的关键空间记忆，但现有以物体为中心的地图多面向静态环境，采用只增不改的点整合策略，导致感知误差累积、物体移动后旧点仍残留。论文提出点级可精化的语义建图方法，对已整合的点重新评估与修正，而不仅在物体层面更新。实验表明该方法能抑制噪声与过时点，提升动态场景下语义地图的空间理解质量。这为跨时间一致、可维护的空间记忆表示提供了新机制。",
+      "llm_tldr": "开放词汇三维语义地图是长期机器人自主的关键空间记忆，但现有以物体为中心的地图多面向静态环境，采用只增不改的点整合策略，导致感知误差累积、物体移动后旧点仍残留。论文提出点级可精化的语义建图方法，对已整合的点重新评估与修正，而不仅在物体层面更新。实验表明该方法能抑制噪声与过时点，提升动态场景下语义地图的空间理解质量。这为跨时间一致、可维护的空间记忆表示提供了新机制。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial memory",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2610.25470v1",
+      "source": "arxiv",
+      "title": "A failure of Imagination: VLMs fail to use visual representations for text, but self-distillation can help",
+      "abstract": "Vision-language (VL) models are typically built by fine-tuning a language model to attend to visual features in service of a Visual Question-Answering objective. We ask whether this alignment changes how language models represent text---especially on tasks where visualization would help, like geometry questions posed in words. We distinguish weak multimodality (the model can answer questions about an input image) from strong multimodality (the model's text representations themselves become vision-aligned, improving performance on text-only tasks with latent visual structure). To test for strong multimodality, we construct a task of shape-counting problems with paired equivalent text and image specifications. This task is trivial when the image is provided, but requires visualization when specified in text as line coordinates. We compare instruction-tuned Qwen-2.5 and Mistral models against their vision-aligned counterparts on the text variant of the task. We find that the multimodal models do no better in this setting, despite strong performance on the image version of the task. Probing experiments corroborate this: vision-aligned decoder embeddings carry no more visual structure than their text-only counterparts. Finally, we provide an optimization objective that distills in-context visual embeddings into text embeddings. This alignment induces gains on the text variant of the task without explicit task supervision, even on samples more complex than seen during alignment. This suggests that VQA-style alignment leaves available cross-modal transfer untapped.",
+      "authors": [
+        "Shashwat Singh",
+        "He He",
+        "Tal Linzen"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.CV"
+      ],
+      "published": "2026-10-18T18:53:18+00:00",
+      "link": "https://arxiv.org/pdf/2610.25470v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "tests whether vision alignment improves geometry questions posed in text, with paired text and image controls",
+      "llm_evidence_cn": "用配对文本与图像对照检验视觉对齐能否改善文字几何题",
+      "llm_evidence": "用配对文本与图像对照检验视觉对齐能否改善文字几何题",
+      "canonical_evidence": "用配对文本与图像对照检验视觉对齐能否改善文字几何题",
+      "llm_tldr_en": "The paper shows VLMs achieve only weak multimodality, failing to transfer visual structure to text-only geometry problems, and proposes self-distillation to make text representations vision-aligned.",
+      "llm_tldr_cn": "视觉语言模型通常以视觉问答目标微调语言模型来对齐视觉特征，但这种对齐是否改变文本表示本身尚不清楚。论文区分弱多模态与强多模态，构造文本与图像等价配对的图形计数任务，检验模型能否在纯文本的几何问题上利用潜在视觉结构。结果显示现有模型普遍无法把视觉表示迁移到文本推理，作者进一步提出自蒸馏方法加以改善。该工作为几何信息是否真正被视觉语言模型利用提供了受控证据。",
+      "llm_tldr": "视觉语言模型通常以视觉问答目标微调语言模型来对齐视觉特征，但这种对齐是否改变文本表示本身尚不清楚。论文区分弱多模态与强多模态，构造文本与图像等价配对的图形计数任务，检验模型能否在纯文本的几何问题上利用潜在视觉结构。结果显示现有模型普遍无法把视觉表示迁移到文本推理，作者进一步提出自蒸馏方法加以改善。该工作为几何信息是否真正被视觉语言模型利用提供了受控证据。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Train vision language models to interpret and use geometric information through geometry language alignment, spatial descriptions, pose or depth supervision, and spatial question answering, with controlled evidence that geometry improves the answers.",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.21910v1",
+      "source": "arxiv",
+      "title": "CoWorld Reasoner: Agentic Multimodal Reasoning with the Evolving Video World Model-Driven Harness",
+      "abstract": "As Vision-Language Models (VLMs) advance, they are increasingly expected to perform spatiotemporal reasoning over motion, actions, and view changes beyond what the input images show. Video World Models (VWMs) provide a natural unified engine for visual imagination by generating task-relevant visual content as additional evidence. However, existing approaches typically invoke a VWM through fixed pipelines centered on a predefined form of visual imagination, such as novel-view synthesis. To support flexible visual imagination for diverse reasoning tasks, we introduce CoWorld Reasoner, an agentic framework that uses a VWM as a unified visual reasoning engine. Its Video World Model-Driven Harness exposes multiple visual operations through tools and uses skills to guide the VLM in deciding whether to imagine, selecting an operation, constructing a generation request, and interpreting the resulting visual evidence. We further introduce VLM-VWM Harness Co-Evolution, which jointly revises tools, skills, and execution code based on execution feedback while keeping both model weights fixed. Across seven benchmarks spanning spatial intelligence, temporal and causal reasoning, and perceptual reasoning, CoWorld Reasoner outperforms direct reasoning with the same VLM. The strongest variant improves on all seven benchmarks, including relative accuracy gains of 11.8% on MMSI and 13.0% on ERQA, and outperforms all five evolving baselines using the same backbone across five benchmarks.",
+      "authors": [
+        "Dongjie Cheng",
+        "Ruifeng Yuan",
+        "Ran Wei",
+        "Ning Song",
+        "Yongqi Li",
+        "Wenjie Li"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-10-15T13:59:15+00:00",
+      "link": "https://arxiv.org/pdf/2610.21910v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "agentic spatiotemporal reasoning over view changes with a VLM",
+      "llm_evidence_cn": "基于视觉语言模型的跨视角时空推理智能体",
+      "llm_evidence": "基于视觉语言模型的跨视角时空推理智能体",
+      "canonical_evidence": "基于视觉语言模型的跨视角时空推理智能体",
+      "llm_tldr_en": "CoWorld Reasoner turns a video world model into a unified visual imagination engine inside an agentic harness, enabling flexible spatiotemporal reasoning over motion, actions and view changes.",
+      "llm_tldr_cn": "现有视觉语言模型需在输入图像之外推理运动、动作与视角变化，而世界模型多被固定流程限制为单一形式的视觉想象。作者提出CoWorld Reasoner智能体框架，以视频世界模型驱动工具链暴露多种视觉操作，按任务灵活生成视觉证据。实验表明该框架能提升多类时空推理任务的适应性。其意义在于把世界模型从固定管线转为可复用的通用视觉推理引擎。",
+      "llm_tldr": "现有视觉语言模型需在输入图像之外推理运动、动作与视角变化，而世界模型多被固定流程限制为单一形式的视觉想象。作者提出CoWorld Reasoner智能体框架，以视频世界模型驱动工具链暴露多种视觉操作，按任务灵活生成视觉证据。实验表明该框架能提升多类时空推理任务的适应性。其意义在于把世界模型从固定管线转为可复用的通用视觉推理引擎。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial reasoning",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2610.27696v1",
+      "source": "arxiv",
+      "title": "PanoGraphGS: Unifying Panoptic Segmentation and Hierarchical 3D Scene Graphs with Gaussian Splatting",
+      "abstract": "3D scene graphs support language-guided navigation by organizing physical entities and their containment and spatial relations into hierarchical maps. Building such structured maps requires a scene representation that consistently distinguishes semantic regions and object instances across viewpoints. To this end, we present PanoGraphGS, a unified framework that integrates panoptic 3D Gaussian representation learning with hierarchical 3D scene graph construction. The framework learns semantic and instance features on shared Gaussian geometry. Prototype-based semantic learning and association-based instance learning produce consistent panoptic predictions across viewpoints. The learned representation supports novel-view panoptic segmentation and direct Gaussian-level panoptic decoding. A semantic-aware scene graph module further recovers a floor-room-stuff-object hierarchy with containment and spatial relations. We further release NaviGS, a real-world dataset for panoramic scene understanding. The dataset provides 3DGS, mesh, RGB, semantic, and depth data. For 3D scene graph identification, PanoGraphGS outperforms the strongest evaluated baseline in object-node accuracy by more than 50\\% points on average across Replica and NaviGS. PanoGraphGS also achieves state-of-the-art performance among the evaluated methods in 2D panoptic segmentation. These results demonstrate the effectiveness of PanoGraphGS in both hierarchical 3D scene understanding and 2D panoptic segmentation. The project website is available at: https://github.com/gaojh0333/PanoGraphGS.",
+      "authors": [
+        "Jinghan Gao",
+        "Siyu Wang",
+        "Dongyu Feng",
+        "Yiyuan Pan",
+        "Rong Xiong"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-10-20T06:15:59+00:00",
+      "link": "https://arxiv.org/pdf/2610.27696v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "consistent panoptic semantics and instance association across viewpoints for 3D scene graphs",
+      "llm_evidence_cn": "跨视角一致的泛光语义与实例关联以构建三维场景图",
+      "llm_evidence": "跨视角一致的泛光语义与实例关联以构建三维场景图",
+      "canonical_evidence": "跨视角一致的泛光语义与实例关联以构建三维场景图",
+      "llm_tldr_en": "PanoGraphGS unifies panoptic 3D Gaussian representation learning with hierarchical 3D scene graph construction, producing viewpoint-consistent semantic and instance predictions and spatial relations.",
+      "llm_tldr_cn": "语言引导导航需要能跨视角一致区分语义区域与物体实例的场景表示，以支撑分层三维场景图的构建。论文提出 PanoGraphGS，在共享高斯几何上联合学习语义与实例特征，通过原型式语义学习与关联式实例学习产生跨视角一致的泛光预测，并据此构建分层三维场景图。该表示支持新视角泛光渲染与空间关系组织，为语言引导导航提供了结构化地图基础。工作体现了跨视角一致性与空间关系建模的重要性。",
+      "llm_tldr": "语言引导导航需要能跨视角一致区分语义区域与物体实例的场景表示，以支撑分层三维场景图的构建。论文提出 PanoGraphGS，在共享高斯几何上联合学习语义与实例特征，通过原型式语义学习与关联式实例学习产生跨视角一致的泛光预测，并据此构建分层三维场景图。该表示支持新视角泛光渲染与空间关系组织，为语言引导导航提供了结构化地图基础。工作体现了跨视角一致性与空间关系建模的重要性。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Maintain object identity, geometric consistency, and spatial relationships across viewpoints and temporal windows, and retrieve temporally grounded historical or out of view evidence for spatial question answering.",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.22276v1",
+      "source": "arxiv",
+      "title": "MJev-Spatial: System One Spatial Intelligence via Native Attention Matching",
+      "abstract": "Spatial intelligence lets an agent perceive and act in the physical world, and many of its judgments must be made at interaction rates: which spatial relation holds, how far an object is, or where to place it. Vision-language models (VLMs) produce these answers by free-form text generation, paying for autoregressive decoding and answer parsing even though the output space is compact: one of a few options, a scalar, or a 2D point. In light of this, we introduce MJev-Spatial, a System 1 multimodal decision model that tackles all three types of spatial understanding tasks within a unified classification framework. Specifically, MJev-Spatial treats each candidate as a class and scores it using the backbone's pretrained query and key projections, without adding parameters. The candidates are the given options for choice tasks, or value bins and image regions refined through coarse-to-fine classification for numerical and point prediction, respectively. At inference, each classification decision takes a single forward pass and generates no answer tokens. To train on heterogeneous spatial data efficiently, we supervise all coarse-to-fine stages jointly with teacher forcing in one forward pass, and combine this with length-aware global batching and cross-GPU load balancing, raising training throughput by 30.8% over the original batching strategy. Built on Qwen3.5-4B and trained on 12.3M question-answer pairs converted from existing spatial datasets, MJev-Spatial achieves the highest overall score (65.64%) among eight tested models, ranks first on seven of twelve benchmarks, and outperforms its unmodified autoregressive base model on all twelve, while running 2.5 times faster than the fastest autoregressive baseline and 5.6 times faster than the base model.",
+      "authors": [
+        "Luozheng Qin",
+        "Yuhan Zhu",
+        "Changhai Zhou",
+        "Qian Qiao",
+        "Jun Gao",
+        "Yuhua Zhou",
+        "Harry Zhang",
+        "Xiangyu Zeng",
+        "Yuxuan Liu",
+        "Kaijie Chen",
+        "Andrew Chen",
+        "Pony Ma"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-15T17:37:50+00:00",
+      "link": "https://arxiv.org/pdf/2610.22276v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "System-1 multimodal model for spatial relation, distance and placement judgments in VLMs",
+      "llm_evidence_cn": "面向空间关系、距离与放置判断的系统一多模态模型",
+      "llm_evidence": "面向空间关系、距离与放置判断的系统一多模态模型",
+      "canonical_evidence": "面向空间关系、距离与放置判断的系统一多模态模型",
+      "llm_tldr_en": "MJev-Spatial reframes spatial understanding as classification, scoring candidates with pretrained query-key projections instead of autoregressive text decoding for fast System-1 spatial decisions.",
+      "llm_tldr_cn": "智能体需要在交互速率下判断空间关系、距离与放置位置，而视觉语言模型以自由文本生成作答，即使输出空间很小也要付出自回归解码与答案解析的代价。作者提出MJev-Spatial系统一多模态决策模型，把每个候选视为类别，用主干预训练的查询与键投影直接打分，将三类空间理解任务统一到分类框架。该框架无需解码即可给出空间判断，为实时空间智能提供了轻量高效方案。",
+      "llm_tldr": "智能体需要在交互速率下判断空间关系、距离与放置位置，而视觉语言模型以自由文本生成作答，即使输出空间很小也要付出自回归解码与答案解析的代价。作者提出MJev-Spatial系统一多模态决策模型，把每个候选视为类别，用主干预训练的查询与键投影直接打分，将三类空间理解任务统一到分类框架。该框架无需解码即可给出空间判断，为实时空间智能提供了轻量高效方案。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial reasoning",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2610.28018v1",
+      "source": "arxiv",
+      "title": "P$^3$-VLM: A Point-based Alternative for Grounded 3D Vision-Language Models",
+      "abstract": "Examining existing benchmarks for grounding in 3D VLMs reveals a pervasive \"semantic leakage\" in the evaluation and prompting protocols: a heavy reliance on bounding boxes as spatial prompts or representation primitives. Because bounding boxes are highly informative of object categories, they introduce a shortcut for the models to neglect visual information during 3D VLM training. We demonstrate this with a \"blind\" LLM that, prompted only with the box coordinates, can perform surprisingly well. To further analyze this shortcut, we propose point-based grounding prompting - querying models with a single 3D point instead of a box. Under this protocol, the accuracy of the blind LLM drops from 36.4% to 18.0% on ScanNet's Nr3D, and similarly degrades for 3D VLMs (e.g. LL3DA).   Building on this insight, we introduce P$^3$-VLM, a novel tri-pathway 3D VLM that supports point-based prompts and achieves 52.1% state-of-the-art accuracy on location-grounded captioning under this setting. To achieve this, we redesign the architecture while keeping it detector-free, scene-centric, and suitable for 3D GS inputs. P$^3$-VLM utilizes three complementary pathways (location-, task-, and context-aware), enabling strong reasoning about scenes without any bounding box dependencies. The key benefit of point-based learning is a consistent improvement across settings: P$^3$-VLM achieves state-of-the-art performance under point-based grounding while also improving robustness, OOD generalization, and performance on ungrounded scene-centric 3D VQA benchmarks, reflecting its reduced reliance on bounding-box shortcuts and resulting stronger visual-spatial reasoning.",
+      "authors": [
+        "Anna-Maria Halacheva",
+        "Jan-Nico Zaech",
+        "Sombit Dey",
+        "Luc Van Gool",
+        "Danda Pani Paudel"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-20T11:08:07+00:00",
+      "link": "https://arxiv.org/pdf/2610.28018v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "point-based 3D geometric prompts instead of bounding boxes for 3D VLMs",
+      "llm_evidence_cn": "以3D点替代边界框作为几何表示提示",
+      "llm_evidence": "以3D点替代边界框作为几何表示提示",
+      "canonical_evidence": "以3D点替代边界框作为几何表示提示",
+      "llm_tldr_en": "Exposes semantic leakage from bounding-box prompts in 3D VLMs and proposes point-based grounding prompting, dropping blind-LLM accuracy from 36.4 to 18.0 on ScanNet Nr3D.",
+      "llm_tldr_cn": "现有3D视觉语言模型在定位评测中过度依赖边界框作为空间提示，而框坐标本身高度泄露物体类别，使模型可以忽略视觉内容走捷径。作者提出以单个3D点作为提示的点基定位协议，并据此重新审视评测与训练流程。实验表明仅凭框坐标的盲LLM在ScanNet Nr3D上可达36.4%准确率，改用点提示后骤降至18.0%。该工作揭示了3D VLM中的语义泄露问题，为更严谨的几何表示与定位评测提供了新方案。",
+      "llm_tldr": "现有3D视觉语言模型在定位评测中过度依赖边界框作为空间提示，而框坐标本身高度泄露物体类别，使模型可以忽略视觉内容走捷径。作者提出以单个3D点作为提示的点基定位协议，并据此重新审视评测与训练流程。实验表明仅凭框坐标的盲LLM在ScanNet Nr3D上可达36.4%准确率，改用点提示后骤降至18.0%。该工作揭示了3D VLM中的语义泄露问题，为更严谨的几何表示与定位评测提供了新方案。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "geometric representations",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.28280v1",
+      "source": "arxiv",
+      "title": "GALA: Geometry-Aware Language Model for Controllable Object Arrangement",
+      "abstract": "Reasoning about fine-grained placement constraints, such as support and containment, is essential for realistic 3D scene creation. It remains a significant challenge for existing methods that rely on simplified object representations like oriented bounding box (OBB), which are blind to the detailed geometry. To address this limitation, we introduce GALA, a geometry-aware language model with explicit point cloud perception for controllable object placement. Our model performs autoregressively by predicting the 6D pose of one target object at a time conditioned on the scene context and placement instruction. We utilize a two-stage training strategy: the first stage aligns geometric and textual modalities through pretraining tasks, and the second stage fine-tunes the model for placement. To facilitate this task, we also curate a multi-source scene dataset covering diverse room types and fine-grained furniture arrangements, which will be open-sourced for community benefit. Experiments on our benchmark show our model significantly outperforms baselines without explicit geometric reasoning. We further develop a multi-stage plan-place-verify agent pipeline that uses the model for text-driven scene generation. Project Page: https://xccelephant.github.io/paper/gala/",
+      "authors": [
+        "Chucheng Xiang",
+        "Runze Wang",
+        "Zhi Deng",
+        "Ruchao Bao",
+        "Yuanwei Zhang",
+        "Yuxuan Xie",
+        "Hanliu Wang",
+        "Liangzhen Fei",
+        "Wenzheng Wu",
+        "Cheng Wan",
+        "Peifeng Li",
+        "Zhongyuan Liu",
+        "Ligang Liu"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-10-20T14:32:52+00:00",
+      "link": "https://arxiv.org/pdf/2610.28280v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "aligns geometric point cloud perception with textual instructions for 3D placement",
+      "llm_evidence_cn": "将点云几何感知与文本指令对齐用于3D摆放",
+      "llm_evidence": "将点云几何感知与文本指令对齐用于3D摆放",
+      "canonical_evidence": "将点云几何感知与文本指令对齐用于3D摆放",
+      "llm_tldr_en": "Proposes GALA, a geometry-aware language model using explicit point cloud perception and two-stage geometry-text alignment to autoregressively predict 6D object poses for controllable 3D arrangement.",
+      "llm_tldr_cn": "现有3D场景生成方法依赖有向包围盒等简化表示，无法感知支撑与包含等细粒度几何约束。作者提出GALA几何感知语言模型，引入显式点云感知，并采用两阶段训练先对齐几何与文本模态，再自回归地逐个预测目标物体的6D位姿。模型以场景上下文与摆放指令为条件完成可控物体布置。该工作表明几何-语言对齐能有效提升3D空间约束下的可控生成能力。",
+      "llm_tldr": "现有3D场景生成方法依赖有向包围盒等简化表示，无法感知支撑与包含等细粒度几何约束。作者提出GALA几何感知语言模型，引入显式点云感知，并采用两阶段训练先对齐几何与文本模态，再自回归地逐个预测目标物体的6D位姿。模型以场景上下文与摆放指令为条件完成可控物体布置。该工作表明几何-语言对齐能有效提升3D空间约束下的可控生成能力。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Train vision language models to interpret and use geometric information through geometry language alignment, spatial descriptions, pose or depth supervision, and spatial question answering, with controlled evidence that geometry improves the answers.",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.30127v1",
+      "source": "arxiv",
+      "title": "VoxProg: 3D Spatial Reasoning through Voxel Programming",
+      "abstract": "Language models' abilities to interpret tasks and generate programs offer a promising basis for 3D spatial reasoning. Yet following spatial instructions in 3D scenes requires programs to construct geometric references that language leaves implicit. In this work, we introduce VoxProg, which formulates 3D object placement through voxel programming: a language model translates task interpretations into executable programs over local voxel views of scene surfaces. Because these views index surface geometry on regular grids with explicit coordinates and neighborhood relations, an evidence program can isolate task-relevant regions and boundaries directly from scene meshes, and a downstream pose program can measure the resulting geometry to compute a target $SE(3)$ pose. Visual and numerical feedback from execution lets the model inspect intermediate selections and candidate placements to iteratively revise its code. To evaluate open-ended placement across functional use, geometric fit, and contextual arrangements, we introduce the 71-task VoxProg-Bench benchmark along with an evaluation suite pairing perceptual Intent Alignment and 3D Physical Validity. Across VoxProg-Bench and external benchmarks, VoxProg consistently outperforms relation-based, keypoint-based, and mesh-based baselines.",
+      "authors": [
+        "Zhichao Zhai",
+        "Menglei Zhao",
+        "Guikun Chen",
+        "Zihao Yan",
+        "Kanzhi Wu",
+        "Wenguan Wang",
+        "Jun Xiao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-21T17:58:05+00:00",
+      "link": "https://arxiv.org/pdf/2610.30127v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "language model programs over voxel views for 3D spatial reasoning and object placement",
+      "llm_evidence_cn": "语言模型在体素视图上编程以实现三维空间推理与物体放置",
+      "llm_evidence": "语言模型在体素视图上编程以实现三维空间推理与物体放置",
+      "canonical_evidence": "语言模型在体素视图上编程以实现三维空间推理与物体放置",
+      "llm_tldr_en": "VoxProg formulates 3D object placement as voxel programming: a language model emits programs over local voxel views with explicit coordinates to isolate geometry and compute a target SE(3) pose.",
+      "llm_tldr_cn": "语言模型虽能理解任务并生成程序，但在三维场景中执行空间指令时仍需自行构造语言隐含的几何参照。论文提出 VoxProg，将三维物体放置表述为体素编程：语言模型把任务解释转化为作用于局部体素视图的可执行程序，借助规则网格上的显式坐标与邻域关系定位任务相关区域与边界，再由位姿程序测量几何并计算目标 SE(3) 位姿。该工作把几何推理外化为可检验的程序证据，为三维空间推理提供了新范式。",
+      "llm_tldr": "语言模型虽能理解任务并生成程序，但在三维场景中执行空间指令时仍需自行构造语言隐含的几何参照。论文提出 VoxProg，将三维物体放置表述为体素编程：语言模型把任务解释转化为作用于局部体素视图的可执行程序，借助规则网格上的显式坐标与邻域关系定位任务相关区域与边界，再由位姿程序测量几何并计算目标 SE(3) 位姿。该工作把几何推理外化为可检验的程序证据，为三维空间推理提供了新范式。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial reasoning",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

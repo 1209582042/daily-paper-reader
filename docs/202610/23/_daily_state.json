@@ -1,0 +1,281 @@
+{
+  "date": "20261023",
+  "date_label": "",
+  "generated_at": "2026-10-23 21:58:59 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2610.23302v1",
+      "route": "202610/23/2610.23302v1-look-reason-draw-a-region-recursive-refinement-for-spatial-context-prediction",
+      "title": "Look, Reason, Draw a Region: Recursive Refinement for Spatial Context Prediction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向空间上下文与空间关系预测的递归视觉语言推理",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.28354v1",
+      "route": "202610/23/2610.28354v1-s-agent-20-spatial-reasoning-with-a-general-coding-agent",
+      "title": "S-Agent 2.0: Spatial Reasoning with a General Coding Agent",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "使用三维感知工具闭合证据回路的空间推理智能体",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.29229v1",
+      "route": "202610/23/2610.29229v1-cache-locally-recompute-selectively-for-streaming-video-understanding",
+      "title": "Cache Locally, Recompute Selectively for Streaming Video Understanding",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "流式视频问答中的有界KV记忆与选择性重算",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.29317v1",
+      "route": "202610/23/2610.29317v1-spatialbrain-spatial-intelligence-growing-from-experience",
+      "title": "SpatialBrain: Spatial Intelligence Growing from Experience",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "3DFusionMemory将场景观测融合为可查询的空间关系记忆",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.29866v1",
+      "route": "202610/23/2610.29866v1-geomem-vla-internalizing-3d-scene-understanding-into-temporal-memory-for-vision-language-action-models",
+      "title": "GeoMem-VLA: Internalizing 3D Scene Understanding into Temporal Memory for Vision-Language-Action Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "将几何词元维护为持久的时间空间记忆",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.31284v1",
+      "route": "202610/23/2610.31284v1-retrieval-augmented-online-textual-memory-for-episodic-memory-video-question-answering",
+      "title": "Retrieval-Augmented Online Textual Memory for Episodic Memory Video Question Answering",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "在线文本记忆与检索单元预算用于第一视角视频问答",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.31293v1",
+      "route": "202610/23/2610.31293v1-recallgs-geometry-grounded-recall-for-online-semantic-gaussian-splatting",
+      "title": "RecallGS: Geometry-Grounded Recall for Online Semantic Gaussian Splatting",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "从观测历史中检索几何-语义证据以支撑流式场景理解",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.31476v1",
+      "route": "202610/23/2610.31476v1-point-level-refinable-semantic-mapping-for-spatial-understanding",
+      "title": "Point-Level Refinable Semantic Mapping for Spatial Understanding",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "可随时间修正的三维语义图空间记忆",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.22795v1",
+      "route": "202610/23/2610.22795v1-stride-evaluating-spatiotemporal-reasoning-in-driving-edge-cases",
+      "title": "STRIDE: Evaluating Spatiotemporal Reasoning in Driving Edge Cases",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向视觉语言模型的时序记忆与空间理解基准",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.25470v1",
+      "route": "202610/23/2610.25470v1-a-failure-of-imagination-vlms-fail-to-use-visual-representations-for-text-but-self-distillation-can-help",
+      "title": "A failure of Imagination: VLMs fail to use visual representations for text, but self-distillation can help",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "用配对文本与图像对照检验视觉对齐能否改善文字几何题",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.27696v1",
+      "route": "202610/23/2610.27696v1-panographgs-unifying-panoptic-segmentation-and-hierarchical-3d-scene-graphs-with-gaussian-splatting",
+      "title": "PanoGraphGS: Unifying Panoptic Segmentation and Hierarchical 3D Scene Graphs with Gaussian Splatting",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "跨视角一致的泛光语义与实例关联以构建三维场景图",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.28018v1",
+      "route": "202610/23/2610.28018v1-p3-vlm-a-point-based-alternative-for-grounded-3d-vision-language-models",
+      "title": "P$^3$-VLM: A Point-based Alternative for Grounded 3D Vision-Language Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "以3D点替代边界框作为几何表示提示",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.28280v1",
+      "route": "202610/23/2610.28280v1-gala-geometry-aware-language-model-for-controllable-object-arrangement",
+      "title": "GALA: Geometry-Aware Language Model for Controllable Object Arrangement",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "将点云几何感知与文本指令对齐用于3D摆放",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.30127v1",
+      "route": "202610/23/2610.30127v1-voxprog-3d-spatial-reasoning-through-voxel-programming",
+      "title": "VoxProg: 3D Spatial Reasoning through Voxel Programming",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "语言模型在体素视图上编程以实现三维空间推理与物体放置",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.21207v1",
+      "route": "202610/23/2610.21207v1-spacecache-intermediate-feature-reuse-for-efficient-semantic-segmentation-on-point-cloud-streams",
+      "title": "SpaceCache: Intermediate Feature Reuse for Efficient Semantic Segmentation on Point Cloud Streams",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "免训练的跨帧特征缓存为重叠区域复用缓存token",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.21910v1",
+      "route": "202610/23/2610.21910v1-coworld-reasoner-agentic-multimodal-reasoning-with-the-evolving-video-world-model-driven-harness",
+      "title": "CoWorld Reasoner: Agentic Multimodal Reasoning with the Evolving Video World Model-Driven Harness",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "基于视觉语言模型的跨视角时空推理智能体",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    },
+    {
+      "paper_id": "2610.22276v1",
+      "route": "202610/23/2610.22276v1-mjev-spatial-system-one-spatial-intelligence-via-native-attention-matching",
+      "title": "MJev-Spatial: System One Spatial Intelligence via Native Attention Matching",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向空间关系、距离与放置判断的系统一多模态模型",
+      "first_seen_at": "2026-10-23 21:58:59 UTC",
+      "updated_at": "2026-10-23 21:58:59 UTC"
+    }
+  ]
+}

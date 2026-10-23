@@ -48,7 +48,7 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-10-22</span>
+      <span class="dpr-home-dashboard-kicker">2026-10-23</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
     <strong class="dpr-home-dashboard-count">共 17 篇</strong>
@@ -58,7 +58,7 @@
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-10-22 22:40:15 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-10-23 21:58:59 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,9 +69,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今天共筛选 17 篇论文（精读 6 篇、速读 11 篇），重点聚焦视频理解与空间推理。</p>
-<p>最值得看的是两篇 9.0 分精读：DeltaStreamer 的类人流式视频理解，以及 Thinking from Above 的鸟瞰图视觉 token 高效空间推理。</p>
-<p>普通读者可先读这两篇精读，再按兴趣浏览速读中的自我中心视频、视觉-语言-动作对齐与具身记忆方向。</p>
+<p>今天共筛选 17 篇文献，精读 6 篇、速读 11 篇，聚焦空间推理与空间理解方向。最值得看的是空间上下文递归细化（Look, Reason, Draw a Region）和用通用编程智能体做空间推理（S-Agent 2.0），两篇均 8.0 分。建议普通读者先读这两篇精读文章，把握“先定位区域、再逐步细化”和“用代码智能体组织空间推理”两条主线。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -83,7 +81,7 @@
     <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="DeltaStreamer: Towards Human-Like Agentic Streaming Video Understanding">DeltaStreamer: Towards Human-Like Agentic Streaming Video Understanding</span></li><li><span class="dpr-home-dashboard-paper-title" title="Thinking from Above: Efficient Spatial Reasoning with Bird&#x27;s-Eye-View Visual Tokens">Thinking from Above: Efficient Spatial Reasoning with Bird&#x27;s-Eye-View Visual Tokens</span></li><li><span class="dpr-home-dashboard-paper-title" title="LVMem: Image-Augmented Memory for Long-Horizon Question Answering">LVMem: Image-Augmented Memory for Long-Horizon Question Answering</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Look, Reason, Draw a Region: Recursive Refinement for Spatial Context Prediction">Look, Reason, Draw a Region: Recursive Refinement for Spatial Context Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="S-Agent 2.0: Spatial Reasoning with a General Coding Agent">S-Agent 2.0: Spatial Reasoning with a General Coding Agent</span></li><li><span class="dpr-home-dashboard-paper-title" title="Cache Locally, Recompute Selectively for Streaming Video Understanding">Cache Locally, Recompute Selectively for Streaming Video Understanding</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>6</strong></span></div>
 </section>
@@ -96,7 +94,7 @@
     <strong class="dpr-home-dashboard-count">11 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="EgoP$^{2}$C: Internalizing Plan-Perceive-Compose for Spatial Reasoning in Egocentric Video">EgoP$^{2}$C: Internalizing Plan-Perceive-Compose for Spatial Reasoning in Egocentric Video</span></li><li><span class="dpr-home-dashboard-paper-title" title="Relational Spatial Alignment for Vision-Language-Action Models">Relational Spatial Alignment for Vision-Language-Action Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="DialogMem: Evaluating Dialogue-Grounded Embodied Memory in 3D Environments">DialogMem: Evaluating Dialogue-Grounded Embodied Memory in 3D Environments</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="RecallGS: Geometry-Grounded Recall for Online Semantic Gaussian Splatting">RecallGS: Geometry-Grounded Recall for Online Semantic Gaussian Splatting</span></li><li><span class="dpr-home-dashboard-paper-title" title="Point-Level Refinable Semantic Mapping for Spatial Understanding">Point-Level Refinable Semantic Mapping for Spatial Understanding</span></li><li><span class="dpr-home-dashboard-paper-title" title="STRIDE: Evaluating Spatiotemporal Reasoning in Driving Edge Cases">STRIDE: Evaluating Spatiotemporal Reasoning in Driving Edge Cases</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>11</strong></span></div>
 </section>
