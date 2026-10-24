@@ -1,0 +1,249 @@
+{
+  "date": "20261024",
+  "date_label": "",
+  "generated_at": "2026-10-24 21:35:50 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2610.25309v1",
+      "route": "202610/24/2610.25309v1-senri-understanding-the-space-event-nexus-in-real-life-videos",
+      "title": "SENRI: Understanding the Space-Event Nexus in Real-Life Videos",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "长视频中空间与事件的记忆及检索问答",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.28284v1",
+      "route": "202610/24/2610.28284v1-hrope-homography-relative-positional-encoding",
+      "title": "HRoPE: Homography Relative Positional Encoding",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "以表面感知位置编码将图像块令牌锚定到三维表面几何",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.28502v1",
+      "route": "202610/24/2610.28502v1-gazelens-for-efficient-egocentric-video-question-answering-with-simple-gaze-driven-adaptive-token-reduction",
+      "title": "GazeLens for Efficient Egocentric Video Question Answering with Simple Gaze-Driven Adaptive Token Reduction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "结合帧选择与注视及问题引导的令牌压缩以保留有限视频证据",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.29768v1",
+      "route": "202610/24/2610.29768v1-unirap-towards-unified-part-level-physical-affordance-reasoning-and-actionable-perception",
+      "title": "UniRAP: Towards Unified Part-level Physical Affordance Reasoning and Actionable Perception",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "统一视觉语言模型将指令映射为可操作几何表示",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.22957v1",
+      "route": "202610/24/2610.22957v1-query-adaptive-recurrent-tokenization",
+      "title": "Query-adaptive Recurrent Tokenization",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "可被查询引导且自适应预算的视觉令牌压缩与分配",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.23250v1",
+      "route": "202610/24/2610.23250v1-longaussian-tracking-foundation-priors-for-long-context-feedforward-gaussian-reconstruction",
+      "title": "LonGaussian: Tracking Foundation Priors for Long-Context Feedforward Gaussian Reconstruction",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向长图像序列的流式前馈高斯重建，控制显存与冗余",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.23795v1",
+      "route": "202610/24/2610.23795v1-persistent-planar-memory-for-video-world-models",
+      "title": "Persistent Planar Memory for Video World Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "持久化平面三维记忆条件化后续视频片段",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.25090v1",
+      "route": "202610/24/2610.25090v1-think-visually-across-space-and-time-grounded-reasoning-for-video-segmentation",
+      "title": "Think Visually Across Space and Time: Grounded Reasoning for Video Segmentation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "为实体引用绑定时间支撑与带时间戳的空间证据",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.25395v1",
+      "route": "202610/24/2610.25395v1-a-3d-driven-framework-for-moving-camera-perspective-to-360-video-generation",
+      "title": "A 3D-Driven Framework for Moving-Camera Perspective-to-360° Video Generation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "三维驱动模块化框架将透视视频与共享场景表示融合",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.27616v1",
+      "route": "202610/24/2610.27616v1-echonav-evidential-bev-completion-from-historical-observations-for-visual-navigation",
+      "title": "EchoNav: Evidential BEV Completion from Historical Observations for Visual Navigation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "通过时序聚合与历史BEV补全恢复曾观测结构",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.23324v1",
+      "route": "202610/24/2610.23324v1-catchup-depth-aware-re-admission-of-visual-tokens-for-efficient-large-vision-language-models",
+      "title": "CatchUp: Depth-Aware Re-Admission of Visual Tokens for Efficient Large Vision-Language Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "大视觉语言模型中深度感知的视觉token保留与再接纳",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.24102v1",
+      "route": "202610/24/2610.24102v1-hierarchical-and-query-aware-visual-token-pruning-for-high-resolution-lvlms",
+      "title": "Hierarchical and Query-Aware Visual Token Pruning for High-Resolution LVLMs",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "查询感知的分层令牌剪枝压缩高分辨率LVLM视觉令牌",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.25570v1",
+      "route": "202610/24/2610.25570v1-diffground-semantic-difference-guided-zero-shot-video-question-grounding",
+      "title": "DiffGround: Semantic Difference-Guided Zero-Shot Video Question Grounding",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "视觉-语言模型依据动作线索检索查询选取关键帧",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.26410v1",
+      "route": "202610/24/2610.26410v1-policy-adaptive-credit-assignment-for-spatial-reasoning-with-verifiable-rewards",
+      "title": "Policy-Adaptive Credit Assignment for Spatial Reasoning with Verifiable Rewards",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向图像空间推理各阶段的自适应过程奖励",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    },
+    {
+      "paper_id": "2610.28120v1",
+      "route": "202610/24/2610.28120v1-pointforward-v2-point-aligned-interaction-for-feedforward-driving-reconstruction",
+      "title": "PointForward V2: Point-Aligned Interaction for Feedforward Driving Reconstruction",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vsr"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "多视角时序融合为三维点表示",
+      "first_seen_at": "2026-10-24 21:35:50 UTC",
+      "updated_at": "2026-10-24 21:35:50 UTC"
+    }
+  ]
+}

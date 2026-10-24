@@ -1,0 +1,976 @@
+EchoNav: Evidential BEV Completion from Historical Observations for
+Visual Navigation
+Diwen Liu1, Yiyang Shao1, Borui Wang1, Chi Zhang2, and Yunhui Liu1,∗
+Observed free
+Inferred free
+Occupied
+Remaining path
+Latest pose
+Fig. 1.
+RGB-only navigation with visual memory under partial observability. Historical RGB observations (left) support successive BEV predictions and
+path planning (right). Maps distinguish observed and inferred free space; off-white denotes unknown space. Planned paths are computed on the predicted
+BEV maps and projected onto the corresponding RGB views.
+Abstract— Visual navigation in cluttered environments re-
+quires robots to recover previously observed structure and
+infer obstacles and free space that remain occluded. We
+present a framework that combines temporal aggregation and
+occupancy completion in an evidential bird’s-eye-view (BEV)
+representation predicted from short RGB sequences. A decoder
+adapts frozen VGGT-Omega features and combines historical
+residual proposals using cellwise weights and a learned no-
+update option. The BEV predictor produces a local map in
+the latest ego frame without depth or camera-pose inputs or
+explicit geometric warping. The evidential model treats observed
+free space separately and predicts occupancy with associated
+confidence across the remaining supported region. We train the
+predictor on simulated RGB sequences paired with complete
+and visibility-masked occupancy annotations. Our experiments
+evaluate navigation in simulation and on a wheeled robot, with
+additional demonstrations on quadruped and humanoid robots.
+In simulated sequential two-goal navigation, our system achieves
+89.6% success, outperforming the strongest evaluated baseline
+by 32.5 percentage points. Across 60 wheeled-robot trials in 20
+scenes, it achieves 73.3% success, compared with 33.3% for the
+strongest evaluated baseline.
+1Diwen Liu, Yiyang Shao, Borui Wang, and Yunhui Liu are with The
+Chinese University of Hong Kong, Hong Kong SAR, China.
+stevenliudw@link.cuhk.edu.hk,
+matthewshao@link.cuhk.edu.hk,
+1155267575@link.cuhk.edu.hk,
+yhliu@mae.cuhk.edu.hk.
+2Chi Zhang is with The University of Hong Kong, Hong Kong SAR,
+China. zc1q84@connect.hku.hk.
+∗Corresponding author: Yunhui Liu (yhliu@mae.cuhk.edu.hk).
+I. INTRODUCTION
+Mobile robots navigating cluttered environments must make
+spatial decisions from incomplete visual observations (Fig. 1).
+Each camera view reveals only part of the surrounding layout.
+Relying only on the latest view can cause a robot to revisit
+unproductive routes or become trapped in local minima and
+fail to reach its goal. Observations retained within the RGB
+window provide evidence about nearby regions that are no
+longer visible in the current image. The more complete map
+gives the planner additional local context to choose more
+efficient paths. Yet some obstacles and free space remain
+hidden behind furniture and walls throughout this process.
+Predicting these hidden regions can inform planning, but the
+robot must account for the uncertainty of those predictions.
+The challenge is therefore to build a local BEV map that
+retains useful information across time, distinguishes observed
+space from inferred structure, and indicates how reliable its
+predictions are.
+Learned occupancy anticipation has demonstrated that
+visual context can help predict unseen structure [1]. In
+autonomous driving, occupancy completion has shown strong
+results in scene understanding by predicting occupancy in
+both visible and occluded regions [2], [3]. For mobile
+robots, anticipating obstacles and free space beyond current
+observations can similarly provide a more complete map for
+planning, supporting exploration and navigation before those
+regions are directly observed [1], [4].
+arXiv:2610.27616v1  [cs.RO]  20 Oct 2026
+
+
+BEV occupancy maps place obstacles, free space, and
+candidate paths in a common top-down frame. This repre-
+sentation makes the basis of motion decisions transparent.
+The map describes the environment, while the planner and
+controller handle robot footprints, clearance margins, and
+motion constraints. This separation leaves the choice of
+planning algorithm open to the task and robot platform.
+To address these challenges, we propose an RGB-based
+framework for temporal BEV mapping and occupancy
+completion. It combines evidence from earlier observations
+with predictions of persistently hidden obstacles and free
+space, producing occupancy and reliability estimates for
+local planning. The BEV predictor requires neither depth nor
+camera-pose inputs and uses no explicit geometric warping.
+The main contributions are:
+1) Spatially selective temporal BEV fusion. We propose
+a framework that integrates RGB histories into an ego-
+centric occupancy BEV. Historical residual proposals
+from a shared decoder are weighted independently at
+each map location. The fusion includes a learned no-
+update option that allows the anchor representation to
+be retained.
+2) Observation-aware evidential occupancy completion.
+We develop an occupancy-learning formulation that dis-
+tinguishes observed free space from inferred occupancy
+and predicts spatial support and confidence for planning.
+Visibility-aware supervision supports completion of
+occluded obstacles and free space while regularizing
+evidence assigned to incorrect predictions.
+3) Navigation integration and physical validation. We
+integrate predicted occupancy and reliability with estab-
+lished local motion planners. Experiments show higher
+navigation success rates than the evaluated baselines
+in simulation and wheeled-robot trials. Additional
+quadruped and humanoid demonstrations illustrate
+deployment on other embodiments.
+II. RELATED WORK
+A. Visual Navigation and Map-Based Planning
+Goal-conditioned policies learn visual navigation through
+diverse robot experience and action diffusion [5], [6], while
+geometric supervision [7], [8] and multimodal goals [9] extend
+their capabilities. Despite demonstrated cross-embodiment
+transfer, their behavior can remain sensitive to robot size,
+motion capabilities, and camera configurations represented
+in training [5], [7].
+Explicit traversability methods connect visual predictions to
+local planning. GeNIE [10] projects single-frame traversability
+into a BEV cost map and identifies the absence of a
+maintained local map as a source of local-minimum failures.
+In autonomous driving, camera-based BEV methods pro-
+vide spatial representations for downstream perception and
+planning. Lift-Splat-Shoot [11] and BEVFormer [12] com-
+bine RGB features from multiple cameras in a common
+BEV representation. These maps provide a spatial basis for
+navigation. More recent methods such as ViGT [13] learn
+to combine surround-view RGB images without requiring
+camera calibration. The wider view helps planners identify
+obstacles and choose clear routes.
+These designs motivate our learned spatial queries. Our
+system supplies occupancy and reliability to motion planners.
+The robot footprint and traversal costs can be adjusted at
+planning time without changing the learned BEV predictor.
+B. Occupancy Prediction and Anticipation
+Occupancy anticipation addresses a further requirement for
+indoor navigation: inferring obstacles and free space hidden
+by furniture and walls. Map-based completion methods extend
+partially observed top-down layouts after map construction [4],
+[14], whereas geometry-guided semantic scene completion
+methods predict volumetric geometry and semantic categories
+from RGB using supplied camera geometry and, in some
+designs, internally predicted depth [15]–[17]. Navigation-
+oriented methods further couple hidden-space prediction with
+confidence for exploration and navigation, including RGB or
+RGB-D occupancy anticipation in OccAnt [1] and RGB-D
+semantic completion in SSCNav [18].
+We focus on local occupied/free completion in persistently
+unobserved regions, distinguishing observed free space from
+inferred occupancy and estimating confidence in the com-
+pleted map. This distinction allows the map to represent both
+the inferred spatial layout and the reliability of its predictions.
+C. Temporal Visual Geometry and Spatial Memory
+Temporal integration complements occupancy completion
+by retaining spatial evidence across successive observations.
+Dense mapping has long pursued this objective through
+active ranging, as in LiDAR-inertial systems such as FAST-
+LIO2 [19]. Cameras offer rich visual information without
+a dedicated range sensor, but recovering structure and
+motion from images depends on reliable correspondence and
+alignment. Weak texture, motion blur, and rapid viewpoint
+changes can challenge this estimation process [20], [21].
+Learned visual SLAM improves robustness by combining
+learned correspondence with geometric optimization, as in
+DROID-SLAM [21]; feed-forward models such as VGGT [22]
+and VGGT-Omega [23] further learn geometry across multiple
+images.
+However, accurate surface reconstruction alone does not
+establish the free-space coverage required for navigation.
+BEVFormer [12] aligns historical BEV features using ego-
+motion; SSCNav [18] registers observations using camera
+poses; GeoUP [24] conditions visual features on camera
+intrinsics and camera-to-reference poses. Errors in this
+information can misalign historical features or maps, creating
+false obstacles or distorting passage clearance. Such errors
+are especially consequential when motion degrades image
+quality or alignment.
+Our work adopts the idea of learning spatial relationships
+across views to selectively integrate RGB history into a local
+BEV anchored to the latest ego frame, retaining evidence of
+previously observed structure. The BEV predictor decodes
+this history without depth or camera-pose inputs or explicit
+geometric warping.
+
+
+III. METHODOLOGY
+A. System Overview
+Given an ordered RGB window It = (It−T +1, . . . , It)
+of T observations from a moving camera, we seek a local
+occupancy representation on a planar BEV grid Bt anchored
+to the latest ego frame. We learn the mapping
+fθ(It) = {(pj, gj, sj, cj)}j∈Bt,
+(1)
+where θ denotes the trainable parameters, and pj, gj, sj, and
+cj are the occupancy probability, observed-free probability,
+spatial-support probability, and prediction-confidence score
+at cell j, respectively. We use a 256 × 256 grid spanning
+10 × 10 m, with metric extent fixed by the training targets.
+Figure 2 summarizes the pipeline: a frozen VGGT-Omega
+encoder [23] extracts joint image features; a trainable decoder
+constructs a latest-frame BEV anchor and fuses historical
+residuals with cellwise weights (Sec. III-B); observation-
+aware heads produce occupancy, support, and confidence
+(Sec. III-C). Complete and visibility-masked targets supervise
+the predictor (Sec. III-D), whose outputs are supplied to a
+motion planner (Sec. III-E). The BEV predictor takes RGB
+images without depth or camera-pose inputs.
+B. Selective Temporal BEV Decoding
+1) Visual features and BEV anchor: To guide BEV
+queries in extracting image evidence across views, we use
+complementary spatial features and token context. The frozen
+VGGT-Omega encoder jointly processes the RGB window,
+with the latest image as the reference; we index this frame by
+i = 0 and historical frames by i > 0. Trainable adapters form
+multiscale image pyramids F ℓ
+i from patch features, providing
+spatially indexed content for sampling. Cross-frame attention
+over camera and register tokens produces frame-associated
+memories Mi, which condition the sampling queries with
+context from the window.
+A learned readout of the frozen tokens produces positive
+frame weights ρi, normalized to mean one. These weights
+modulate each frame’s influence when constructing the token
+memories: adding log ρi to attention logits for keys from
+frame i favors contributions from higher-weighted frames. The
+same weights provide a frame-level prior for the subsequent
+cellwise selection of historical residuals.
+For cellwise temporal selection, historical proposals should
+refine the same starting representation. We therefore construct
+a common BEV anchor in the latest ego frame. Let Q denote
+the learned BEV queries with positional encodings, and let
+Ri(X) = Attn(X, Mi) denote query attention to frame i’s
+token memory. The anchor is
+A = D0
+ Q + R0(Q), {F ℓ
+0}ℓ
+
+.
+(2)
+The anchor decoder samples the latest image pyramid
+using deformable cross-attention and learns image-to-BEV
+correspondence through BEV supervision without explicit
+camera projection. Subsequent historical branches propose
+residual refinements from this same anchor, allowing their
+contributions to be selected at each BEV location.
+2) Historical residual proposals: A shared decoder gener-
+ates historical residual proposals from the anchor A. Each
+proposal is conditioned on the corresponding frame’s image
+pyramid and token context. The resulting residual is given by
+Ci = Ri(A),
+∆i = Dh
+ A, {F ℓ
+i }ℓ, Ci
+
+−A.
+(3)
+The token context Ci conditions the queries used to sample
+the historical image pyramid, producing a feature residual
+∆i at each anchor cell. Residual-output projections are zero-
+initialized to preserve the anchor at initialization.
+3) Spatially selective fusion: Historical views provide
+different evidence at different map locations, motivating
+cellwise control over both their relative contributions and
+the strength of their updates. We include a zero-residual
+candidate so that fusion can also control the total strength of
+the historical update.
+For T > 1, a learned scorer combines the anchor Aj,
+residual ∆ij, and token context Cij at each cell. Adding
+log ρi and a learned frame-age bias gives the historical score
+eij. A no-update candidate has score e∅j = f∅(Aj)+log(T −
+1) + log[π0/(1 −π0)], where f∅is learned. The candidate
+weights are
+wij =
+exp(eij)
+P
+k∈J exp(ekj),
+J = {∅, 1, . . . , T −1}. (4)
+The learned frame weight ρi provides a spatially shared prior,
+while wij determines that frame’s contribution separately at
+each BEV cell.
+With uniform initial frame weights and zero learned scoring
+terms, the bias gives an initial no-update probability of π0 =
+0.9. The fused representation is
+Hj = Aj +
+T −1
+X
+i=1
+wij∆ij.
+(5)
+A higher no-update weight leaves less weight for historical
+residuals, reducing their combined correction to the anchor.
+The decoder maintains no recurrent BEV state and returns
+H = A when T = 1. This design allows historical evidence
+to refine individual BEV cells while retaining the anchor as
+the default representation.
+C. Observation-Aware Evidential Occupancy
+From the fused representation H, the routing branch
+predicts observed-free probability gj and spatial support sj.
+Support includes occluded cells within the input camera foot-
+prints, with targets defined in Sec. III-D. The evidence branch
+models visible occupied surfaces and hidden free or occupied
+cells. This separation distinguishes free space supported by
+observations from free space inferred through completion,
+even when both yield a low occupancy probability.
+Two logits parameterize a Beta distribution [25] over
+occupancy probability, with αj = 1 + softplus(zo
+j ), βj =
+1 + softplus(zf
+j ), and mean µj = αj/(αj + βj). Conditional
+on the observed-free component, occupancy is modeled as
+zero. Mixing this component with the Beta distribution using
+weights gj and 1 −gj gives
+pj = (1 −gj)µj.
+(6)
+
+
+GOAL
+Fig. 2.
+Overview of the proposed framework. Frozen VGGT-Omega features from an RGB window are adapted into feature pyramids and frame
+memories. Historical residual proposals refine a latest-frame BEV anchor through cellwise selective fusion with a learned no-update option. Observation-aware
+evidential heads produce occupancy, spatial support, and confidence. Right: predicted occupancy with paths to example goals, planned path projections into
+the latest RGB view, and uncertainty 1 −cj.
+With Beta variance vj = µj(1 −µj)/(αj + βj + 1), the
+mixture variance and composite confidence are
+Vj = (1 −gj)vj + gj(1 −gj)µ2
+j,
+(7)
+cj = sj |2pj −1| clip(1 −4Vj, 0, 1).
+(8)
+The mixture variance captures spread within the evidence
+distribution and disagreement between components. High con-
+fidence requires strong spatial support, a clear occupied/free
+preference, and low mixture variance. These factors reduce
+confidence outside the supported region and where occupancy
+predictions are ambiguous or variable. The resulting confi-
+dence is a constructed score rather than a calibrated collision
+probability.
+D. Supervision and Optimization
+Complete and visibility-masked occupancy targets are
+expressed in the latest ego frame. Support U covers the
+camera-footprint union wherever complete labels are valid,
+including occluded regions. For the fused prediction, O
+contains free cells visible in at least one input frame, with
+all annotations expressed in the latest ego frame. These
+cells supervise the routing gate, while the remaining domain
+G = U \ O supervises occupancy evidence. We partition G
+into hidden free cells F, visible occupied surfaces S, and
+hidden occupied cells Ho to balance supervision across these
+regions.
+For each cell j ∈G, we minimize the Bernoulli negative
+log-likelihood averaged under the predicted Beta distribution,
+with yj = 1 denoting an occupied cell:
+ℓE
+j = ψ(αj + βj) −yjψ(αj) −(1 −yj)ψ(βj),
+(9)
+where ψ is the digamma function. The occupancy objective
+is Locc = ⟨ℓE + λKℓK⟩w. The KL regularizer suppresses
+evidence for the incorrect class. It compares the predicted Beta
+distribution to the uniform Beta(1, 1) prior after resetting the
+correct-class parameter to one. To balance regions of unequal
+area, we first average the occupancy loss within hidden-free
+F, visible-occupied S, and hidden-occupied Ho regions in
+each sample. Their means are then combined using relative
+weights normalized over the regions present in each sample.
+Class-balanced BCE defines Lgate using positives in O
+and negatives in G, and Lsupport using positives in U and
+negatives outside U. The resulting map objective jointly
+supervises observed-free routing, occupancy evidence, and
+spatial coverage:
+LBEV = Lgate + Locc + λBLsupport.
+(10)
+We use λB = 0.5 and a maximum regularization weight
+λK
+= 0.005. Hidden-occupied supervision and wrong-
+class evidence regularization are introduced gradually during
+training.
+E. Inference and Planning
+The planner uses the predicted BEV and a metric point goal,
+both expressed in the latest ego frame. Supported occupied
+cells are inflated according to the robot footprint and safety
+margin to form hard collision constraints. Traversal costs
+combine occupancy pj, obstacle clearance, and distribution
+reliability κj = sj clip(1 −4Vj, 0, 1). Within supported
+traversable regions, lower reliability incurs a larger traver-
+sal penalty. Unsupported cells retain their unknown labels
+and incur finite traversal penalties, subject to the collision
+constraints.
+When the goal lies outside the map or the predicted
+reachable region, the planner selects a local subgoal within
+that region. Only a short path segment is executed, with an
+
+
+additional limit on travel through unknown space. The next
+RGB observation updates the BEV before replanning.
+IV. EXPERIMENTS
+In this section, we evaluate the proposed representation
+from map prediction to navigation. We present our model
+training procedure in Sec. IV-A and the comparison with
+baselines in Sec. IV-B. Sections IV-B and IV-C examine
+occupancy completion and simulation navigation, respectively.
+Section IV-D reports the physical-robot evaluation.
+A. Data Collection and Training
+1) Data collection: We collect RGB sequences along
+sampled navigable paths in Habitat environments from
+HM3D [26], HSSD [27], and Matterport3D [28], varying cam-
+era height, field of view, and motion speed. We select frames
+using visual similarity to reduce redundancy while preserving
+temporal order. The indoor corpus contains approximately
+535k training sessions from 1k scenes and 26k validation
+sessions from 54 disjoint scenes. Outdoor data comprise
+approximately 100k training sessions from nine CARLA
+towns. For each session, we generate complete and visibility-
+masked BEV targets in the latest ego frame, following the
+target definitions in Sec. III-D.
+2) Training configuration: We freeze the pretrained VGGT-
+Omega encoder and optimize the BEV adapters, temporal
+decoder, and prediction heads. The decoder accepts variable-
+length RGB sequences, with training sequences containing
+approximately ten frames. Predictions use a 256 × 256 BEV
+grid spanning 10 × 10 m. Hidden-occupied supervision and
+wrong-class evidence regularization are introduced gradually
+during training.
+Gibson [29] and ProcTHOR [30] are unseen datasets used
+only for evaluation and are entirely excluded from our BEV
+training data.
+B. Occupancy Prediction under Partial Observability
+1) Evaluation settings: We evaluate 1,200 matched routes
+from 101 scenes in HM3D, HSSD, and Gibson, with 400
+routes per dataset. Scenes used for our BEV training are
+excluded. Single-image prediction uses the final image of
+each ten-frame route on a forward-facing 3.25 × 3.25 m grid
+with 5 cm cells. History mapping uses all ten images on
+a 256 × 256 grid spanning 10 × 10 m. Both settings share
+the same final ego frame, and evaluation covers valid labels
+within the corresponding camera-footprint union.
+We compare against DiScene [15], SplatSSC [16], VGGT-
+Omega [23], OccAnt-RGB, and OccAnt-RGBD [1]. DiScene
+and SplatSSC receive camera calibration; their volumetric
+predictions are projected into BEV and accumulated across
+views using ground-truth poses. For OccAnt, we bypass
+learned pose estimation and use ground-truth poses for
+inter-frame accumulation, removing odometry errors from
+the comparison. OccAnt-RGBD additionally receives sensor
+depth. VGGT-Omega maps are projected from predicted
+geometry and cameras using camera-height calibration. Our
+predictor receives only RGB images, without camera intrinsics
+or inter-frame extrinsics.
+TABLE I
+OCCUPANCY PREDICTION RESULTS
+Method
+mIoUU IoUO mIoUG
+CovG
+Single image: 3.25 × 3.25 m
+DiScene
+43.21 97.28
+32.02 100.00
+SplatSSC
+40.58 94.97
+31.11 100.00
+VGGT-Omega
+42.62 53.12
+44.26
+13.06
+OccAnt-RGB
+32.40 44.88
+33.88
+39.14
+OccAnt-RGBD
+63.96 81.57
+55.16
+56.32
+Ours (unfiltered)
+57.32 97.54
+48.29 100.00
+Ours (δ = 0.4)
+64.72 96.98
+52.79
+50.84
+Ten-image history: 10 × 10 m
+DiScene
+39.74 80.36
+32.68
+64.76
+SplatSSC
+37.71 75.97
+32.12
+64.76
+VGGT-Omega
+40.61 55.25
+38.22
+11.86
+OccAnt-RGB
+31.10 47.15
+31.27
+22.26
+OccAnt-RGBD
+55.82 80.14
+46.72
+42.51
+Ours (unfiltered)
+55.27 95.67
+47.91 100.00
+Ours (δ = 0.4)
+68.32 89.58
+61.17
+35.03
+2) Metrics and filtering: Following Sec. III-D, O denotes
+observed free space and G = U \ O the remaining supported
+region. We report free-space IoU in O and occupied/free
+mIoU in G and U, pooling cell-level confusion counts across
+all routes. Unknown predictions count as errors in O and
+are excluded from G. Thus, mIoUG measures accuracy
+conditional on a known prediction, while mIoUU combines
+the regional counts under the same policy. We also report
+CovG, the fraction of G assigned an occupied or free label.
+For Ours, accepted cells are occupied when pj ≥0.5 and
+free otherwise. Unfiltered prediction labels every evaluated
+cell. Filtered prediction accepts cells when gj ≥0.5 or cj ≥
+0.4; otherwise, they remain unknown. OccAnt uses explored
+and obstacle probability thresholds of 0.6: cells with explored
+probability at most 0.6 remain unknown, while known cells
+are occupied when obstacle probability exceeds 0.6 and free
+otherwise.
+3) Overall occupancy accuracy: With confidence filtering,
+our RGB-only model achieves the highest reported mIoUU
+in both single-image and history settings (Table I), reaching
+64.72% and 68.32%, respectively. The advantage over the
+strongest baseline increases from 0.76 percentage points for
+single-image prediction to 12.50 points for history mapping.
+In the history evaluation, the baselines construct merged maps
+by registering and accumulating framewise predictions using
+ground-truth alignment, whereas our decoder directly predicts
+a unified BEV from RGB history. Figure 3 shows fragmented
+occupied regions and displaced or duplicated boundaries in
+several baseline maps, consistent with discrepancies among
+accumulated framewise predictions. Our method exhibits
+more coherent spatial layouts. Such map errors can degrade
+navigation performance by falsely blocking traversable pas-
+sages or omitting obstacles, leading to unnecessary detours
+or increased collision risk.
+Figure 3 compares predicted BEV maps in Gibson, HM3D,
+and HSSD scenes excluded from our BEV training. Several
+
+
+Scene + poses
+OccAnt-RGBD
+OccAnt-RGB
+DiScene
+SplatSSC
+VGGT-Omega
+Ours
+GT display
+(a) Gibson
+(b) HM3D
+(c) HSSD
+Occupied
+Free / display fill
+Unknown
+Fig. 3.
+Qualitative BEV comparison on a common 10 × 10 m grid. Rows (a)–(c) show Gibson, HM3D, and HSSD examples, respectively. We compare
+our method with VGGT-Omega, DiScene, SplatSSC, OccAnt-RGB, and OccAnt-RGBD. All methods use RGB observations; OccAnt-RGBD additionally
+receives depth. In the predicted maps, dark blue, blue-gray, and off-white denote occupied, free, and unknown cells, respectively.
+baseline maps contain fragmented occupied regions or missing
+structures. Such artifacts can introduce false obstacles, disrupt
+free-space connectivity, and distort passage clearance. OccAnt-
+RGBD recovers more of the layout than OccAnt-RGB in
+the HM3D and HSSD examples, while our predictions
+preserve the main spatial structures and broadly agree with
+the reference maps.
+4) Occupancy completion: For single-image prediction,
+our RGB-only model approaches the completion accuracy of
+depth-assisted OccAnt-RGBD: filtered Ours achieves 52.79%
+mIoUG at 50.84% coverage, compared with 55.16% at 56.32%
+coverage. At full coverage, unfiltered Ours reaches 48.29%
+mIoUG, exceeding DiScene and SplatSSC by 16.27 and 17.18
+percentage points, respectively. The advantage is stronger in
+history mapping, where even unfiltered Ours achieves the
+highest baseline-comparative mIoUG, reaching 47.91% at
+100% coverage versus OccAnt-RGBD’s 46.72% at 42.51%
+coverage. Confidence filtering further increases our score to
+61.17%, retaining 35.03% of G. These results demonstrate
+accurate dense prediction beyond observed free space and a
+selective alternative with higher conditional accuracy. As
+defined in Sec. III-D, G includes both visible occupied
+surfaces and occluded cells.
+5) Temporal mapping: Our model maintains comparable
+dense prediction accuracy as evaluation expands from the
+current-view region to the historical camera-footprint union.
+Unfiltered mIoUU changes from 57.32% to 55.27%, while
+mIoUG remains nearly unchanged at 48.29% and 47.91%,
+with 100% coverage in both settings. Filtered mIoUU in-
+creases from 64.72% to 68.32%, accompanied by reduced
+coverage. Relative to the baselines, the advantage widens in
+both overall and completion-region mIoU. Filtered history
+predictions also exceed every baseline in observed-free IoUO,
+reaching 89.58% compared with the strongest baseline’s
+80.36%. This performance is achieved without the ground-
+truth poses supplied to DiScene, SplatSSC, and OccAnt for
+map accumulation. Together with the more coherent layouts
+in Fig. 3, these findings support direct prediction of a unified
+occupancy map from RGB history over an expanded spatial
+footprint.
+C. Simulation Navigation
+1) Comparisons and metrics: We evaluate simulated
+wheeled-robot navigation against LiMo-AUG [7], LoGo-
+Nav [8], X-NavDP, and IMN-RPG [31], additionally including
+OccAnt-RGB and OccAnt-RGBD [1] in the sequential
+benchmark. Ours and OccAnt use Dijkstra with a shared
+path executor. X-NavDP, OccAnt-RGBD, and IMN-RPG
+receive sensor depth; the remaining methods use RGB only.
+OccAnt accumulates maps using command-derived dead
+reckoning under noiseless execution. Goal acceptance requires
+a collision-free connection from the robot to the goal.
+For N episodes, let ζn ∈{0, 1}, Pn, and Ln denote
+success, executed distance, and precomputed ground-truth
+reference path length, respectively. We report success rate
+(SR), SPL [32], and success-conditioned path ratio (SCPR):
+SR = 1
+N
+X
+n
+ζn,
+SCPR =
+P
+n ζnPn/Ln
+P
+n ζn
+,
+SPL = 1
+N
+X
+n
+ζn
+Ln
+max(Ln, Pn).
+(11)
+SR is reported as a percentage; SPL and SCPR are ratios.
+Failures contribute zero to SPL. SCPR averages each method’s
+successful episodes and is undefined without successes. Goal
+tolerance and discretized reference paths can yield SCPR
+below one.
+
+
+2) Sequential two-goal navigation: The sequential two-
+goal navigation benchmark comprises 1,000 shared routes
+across 308 scenes, with 250 routes each from Gibson,
+HSSD, HM3D, and ProcTHOR. The second destination is
+revealed only after reaching the first, with our RGB history
+retained. A ground-truth upper-level route supplies the current
+local waypoint, expressed in the robot frame using exact
+pose; local ground-truth occupancy and future waypoints
+are withheld. X-NavDP additionally receives simulator pose,
+OmniVLA receives a goal heading, and IMN-RPG uses visual
+odometry between waypoint updates. OccAnt accumulates
+maps using command-derived odometry under noiseless
+execution. Success requires reaching both destinations in
+order without collision.
+For the first goal, Ours achieves the highest reported SR and
+SPL, at 93.3% and 0.914, exceeding the strongest reported
+baseline, IMN-RPG, by 18.2 percentage points and 0.181,
+respectively. These results support the effectiveness of our
+predicted occupancy maps for collision-free local navigation.
+Ours and OccAnt explicitly incorporate robot-footprint and
+clearance constraints into planning, helping avoid collisions
+caused by insufficient clearance.
+After the goal changes, Ours maintains 89.6% SR and 0.885
+SPL. Its SR decreases by only 3.7 percentage points, smaller
+than the decreases of 5.7–44.3 points across all baselines.
+OccAnt-RGBD’s mixed-budget diagnostic shows the closest
+retention, decreasing from 59.8% to 54.1%. Conditional
+on each method reaching the first goal, Ours and OccAnt-
+RGBD subsequently reach the second in 96.0% and 90.5%
+of episodes, respectively.
+Our SCPR also remains close to one, at 1.017 for reaching
+the first goal and 1.005 for completing both goals, compared
+with 1.150 and 1.093 for OccAnt-RGBD. Thus, successful
+trajectories remain close to their reference lengths as navi-
+gation extends to the second destination. Sustained success
+0
+0.5
+1.0
+LoGoNav
+OmniVLA
+Ours
+IMN-RPG
+X-NavDP
+SR
+SPL ↑
+.9 1.0 1.1 1.2
+SCPR ↓
+0
+0.5
+1.0
+LoGoNav
+OmniVLA
+Ours
+IMN-RPG
+X-NavDP
+OccANT-RGBD
+SPL A
+SPL A+B ↑
+.9 1.0 1.1 1.2
+SCPR ↓
+(a) Hidden-goal navigation
+(b) Sequential navigation
+Methods below red dashed lines use depth sensors.
+Fig. 4.
+Simulation navigation on two 1,000-task benchmarks: (a) hidden-
+goal navigation and (b) sequential navigation. Panel (a) reports SR and SPL;
+panel (b) reports SPL for goal A and goals A+B. SCPR uses each method’s
+successful episodes. Methods below the red dashed lines use depth sensors.
+and near-reference path lengths are consistent with the value
+of retaining spatial information for navigation toward newly
+revealed goals.
+3) Navigation toward initially hidden destinations: To
+assess navigation beyond initially observed free space, we
+construct 1,000 tasks in 503 ProcTHOR houses. Each task
+places a reachable goal 1–3 m from the start, within a forward
+60◦sector and behind an object visible in the initial image.
+The relative goal is supplied once, followed by continuing
+observations without upper-level waypoints or simulator-based
+goal refresh.
+Ours achieves 76.8% SR and 0.750 SPL, compared with
+75.0% and 0.660 for X-NavDP and 73.8% and 0.687 for IMN-
+RPG (Fig. 4). Its SCPR is 0.938, compared with 1.173 and
+1.059, respectively. These results support the navigation utility
+of occupancy completion: inferred layout beyond visible free
+space provides a basis for planning efficient routes toward
+initially hidden goals.
+D. Physical-Robot Evaluation
+We evaluate navigation on a wheeled robot in 20 scenes,
+with three trials per scene and outcomes recorded for all
+three compared methods. On these 60 matched trials, Ours
+achieves 44/60 successes (73.3%), versus 20/60 (33.3%) for
+X-NavDP and 16/60 (26.7%) for OmniVLA. LiMo-AUG
+records no successes in 12 trials and is omitted from the
+matched comparison because of incomplete coverage.
+The scene difficulty labels help locate the remaining
+failures. Ours succeeds in 14 of 18 matched trials labeled
+Hard, compared with two for OmniVLA and one for X-NavDP.
+In the Extreme Hard group, Ours succeeds in eight of 18,
+versus none and one, respectively. The advantage therefore
+persists in difficult scenes, but success remains limited in the
+most challenging recorded group. Additional quadruped and
+humanoid demonstrations are qualitative and excluded from
+these statistics.
+V. CONCLUSION
+We presented an RGB-based local navigation framework
+combining selective temporal BEV fusion with observation-
+aware evidential occupancy completion. The predictor inte-
+grates RGB history into a unified local map without depth
+or camera-pose inputs, providing occupancy and reliability
+for Dijkstra planning. Experiments demonstrate strong com-
+pletion accuracy and the highest reported overall mIoU with
+confidence filtering, alongside an accuracy–coverage tradeoff.
+The integrated system achieves the highest reported success
+rate and SPL in both simulated navigation benchmarks and
+higher success in matched wheeled-robot trials. These results
+support completed BEV maps as a practical interface between
+RGB perception and local planning.
+REFERENCES
+[1] S. K. Ramakrishnan, Z. Al-Halah, and K. Grauman, “Occupancy
+Anticipation for Efficient Exploration and Navigation,” in European
+Conference on Computer Vision (ECCV), 2020. [Online]. Available:
+https://arxiv.org/abs/2008.09285
+
+
+[2] A.-Q. Cao and R. de Charette, “MonoScene: Monocular 3D Semantic
+Scene Completion,” in Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition (CVPR), 2022, pp.
+3991–4001. [Online]. Available: https://arxiv.org/abs/2112.00726
+[3] Y. Li, Z. Yu, C. Choy, C. Xiao, J. M. Alvarez, S. Fidler, C. Feng,
+and A. Anandkumar, “VoxFormer: Sparse Voxel Transformer for
+Camera-Based 3D Semantic Scene Completion,” in Proceedings
+of the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR), 2023, pp. 9087–9098. [Online]. Available:
+https://arxiv.org/abs/2302.12251
+[4] V. D. Sharma, J. Chen, and P. Tokekar, “ProxMaP: Proximal
+Occupancy Map Prediction for Efficient Indoor Robot Navigation,” in
+IEEE/RSJ International Conference on Intelligent Robots and Systems
+(IROS), 2023. [Online]. Available: https://arxiv.org/abs/2203.04177
+[5] D. Shah, A. Sridhar, N. Dashora, K. Stachowicz, K. Black, N. Hirose,
+and S. Levine, “ViNT: A Foundation Model for Visual Navigation,” in
+Proceedings of the 7th Conference on Robot Learning, ser. Proceedings
+of Machine Learning Research, vol. 229, 2023, pp. 711–733. [Online].
+Available: https://proceedings.mlr.press/v229/shah23a.html
+[6] A. Sridhar, D. Shah, C. Glossop, and S. Levine, “NoMaD: Goal
+Masked Diffusion Policies for Navigation and Exploration,” in IEEE
+International Conference on Robotics and Automation (ICRA), 2024.
+[Online]. Available: https://arxiv.org/abs/2310.07896
+[7] Y.
+Inglin,
+J.
+Frey,
+C.
+Chen,
+and
+M.
+Hutter,
+“Less
+Is
+More:
+Scalable
+Visual
+Navigation
+from
+Limited
+Data,”
+arXiv
+preprint
+arXiv:2601.17815,
+2026.
+[Online].
+Available:
+https://arxiv.org/abs/2601.17815
+[8] N. Hirose, L. Ignatova, K. Stachowicz, C. Glossop, S. Levine,
+and D. Shah, “Learning to Drive Anywhere with Model-Based
+Reannotation,” IEEE Robotics and Automation Letters, vol. 11, no. 2, pp.
+1242–1249, 2026. [Online]. Available: https://arxiv.org/abs/2505.05592
+[9] N. Hirose, C. Glossop, D. Shah, and S. Levine, “OmniVLA: An
+Omni-Modal Vision-Language-Action Model for Robot Navigation,”
+in IEEE International Conference on Robotics and Automation (ICRA),
+2026. [Online]. Available: https://arxiv.org/abs/2509.19480
+[10] J. Wang, D. Liu, J. Chen, J. Da, N. Qian, T. M. Man, and
+H. Soh, “GeNIE: A Generalizable Navigation System for In-the-Wild
+Environments,” arXiv preprint arXiv:2506.17960, 2025. [Online].
+Available: https://arxiv.org/abs/2506.17960
+[11] J. Philion and S. Fidler, “Lift, Splat, Shoot: Encoding Images from
+Arbitrary Camera Rigs by Implicitly Unprojecting to 3D,” in European
+Conference on Computer Vision (ECCV), 2020. [Online]. Available:
+https://arxiv.org/abs/2008.05711
+[12] Z. Li, W. Wang, H. Li, E. Xie, C. Sima, T. Lu, Y. Qiao, and
+J. Dai, “BEVFormer: Learning Bird’s-Eye-View Representation from
+Multi-Camera Images via Spatiotemporal Transformers,” in European
+Conference on Computer Vision (ECCV), 2022, pp. 1–18. [Online].
+Available: https://arxiv.org/abs/2203.17270
+[13] A.
+Shirokov,
+M.
+Kuznetsov,
+D.
+Stepochkin,
+E.
+Evdokimov,
+D.
+Glazkov,
+N.
+Patakin,
+A.
+Konushin,
+and
+D.
+Senushkin,
+“Visual Implicit Geometry Transformer for Autonomous Driving,”
+arXiv
+preprint
+arXiv:2602.05573,
+2026.
+[Online].
+Available:
+https://arxiv.org/abs/2602.05573
+[14] V. D. Sharma, A. Singh, and P. Tokekar, “Pre-Trained Masked
+Image Model for Mobile Robot Navigation,” in IEEE International
+Conference on Robotics and Automation (ICRA), 2024. [Online].
+Available: https://arxiv.org/abs/2310.07021
+[15] X. Li, Y. Zheng, P. Li, Y. Chen, Y.-Q. Zhang, and W. Ding,
+“Enhancing Indoor Occupancy Prediction via Sparse Query-Based
+Multi-Level Consistent Knowledge Distillation,” IEEE Robotics and
+Automation Letters, vol. 10, no. 11, pp. 11 690–11 697, 2025. [Online].
+Available: https://arxiv.org/abs/2602.02318
+[16] R. Qian, H. Cao, T. Deng, S. Yuan, and L. Xie, “SplatSSC: Decoupled
+Depth-Guided Gaussian Splatting for Semantic Scene Completion,” in
+Proceedings of the AAAI Conference on Artificial Intelligence, 2026.
+[Online]. Available: https://arxiv.org/abs/2508.02261
+[17] J. Liu, W. Gan, Z. Dai, G. Cao, Y. Li, K. Chen, D. Jiang, J. Zhang,
+and X. Lan, “OccAnyScene: Towards Unified Indoor-Outdoor 3D
+Occupancy Prediction,” arXiv preprint arXiv:2608.08696, 2026.
+[Online]. Available: https://arxiv.org/abs/2608.08696
+[18] Y. Liang, B. Chen, and S. Song, “SSCNav: Confidence-Aware
+Semantic Scene Completion for Visual Semantic Navigation,” in IEEE
+International Conference on Robotics and Automation (ICRA), 2021.
+[Online]. Available: https://arxiv.org/abs/2012.04512
+[19] W. Xu, Y. Cai, D. He, J. Lin, and F. Zhang, “FAST-LIO2:
+Fast Direct LiDAR-Inertial Odometry,” IEEE Transactions on
+Robotics, vol. 38, no. 4, pp. 2053–2073, 2022. [Online]. Available:
+https://arxiv.org/abs/2107.06829
+[20] R. A. Newcombe, S. J. Lovegrove, and A. J. Davison, “DTAM:
+Dense Tracking and Mapping in Real-Time,” in IEEE International
+Conference on Computer Vision (ICCV), 2011, pp. 2320–2327.
+[Online]. Available: https://doi.org/10.1109/ICCV.2011.6126513
+[21] Z. Teed and J. Deng, “DROID-SLAM: Deep Visual SLAM for
+Monocular, Stereo, and RGB-D Cameras,” in Advances in Neural
+Information Processing Systems, vol. 34, 2021. [Online]. Available:
+https://arxiv.org/abs/2108.10869
+[22] J. Wang, M. Chen, N. Karaev, A. Vedaldi, C. Rupprecht, and
+D. Novotny, “VGGT: Visual Geometry Grounded Transformer,” in
+Proceedings of the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition (CVPR), 2025, pp. 5294–5306. [Online]. Available:
+https://arxiv.org/abs/2503.11651
+[23] J. Wang, M. Chen, S. Zhang, N. Karaev, J. Sch¨onberger, P. Labatut,
+P. Bojanowski, D. Novotny, A. Vedaldi, and C. Rupprecht, “VGGT-
+Ω,” in Proceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition (CVPR), 2026. [Online]. Available:
+https://arxiv.org/abs/2605.15195
+[24] L. Xu, X. Wang, Z. Huang, H. Li, Y. Yang, N. Wang, and
+S. Liu, “Geometry-Grounded Unified 3D Perception for Autonomous
+Driving,” arXiv preprint arXiv:2608.13147, 2026. [Online]. Available:
+https://arxiv.org/abs/2608.13147
+[25] M. Sensoy, L. Kaplan, and M. Kandemir, “Evidential Deep Learning
+to Quantify Classification Uncertainty,” in Advances in Neural
+Information Processing Systems, vol. 31, 2018. [Online]. Available:
+https://arxiv.org/abs/1806.01768
+[26] S. K. Ramakrishnan, A. Gokaslan, E. Wijmans, O. Maksymets,
+A. Clegg, J. Turner, E. Undersander, W. Galuba, A. Westbury, A. X.
+Chang, M. Savva, Y. Zhao, and D. Batra, “Habitat-Matterport 3D
+dataset (HM3D): 1000 large-scale 3D environments for embodied
+AI,” in Proceedings of the Neural Information Processing Systems
+Track on Datasets and Benchmarks, vol. 1, 2021. [Online]. Available:
+https://arxiv.org/abs/2109.08238
+[27] M. Khanna, Y. Mao, H. Jiang, S. Haresh, B. Shacklett, D. Batra,
+A.
+Clegg,
+E.
+Undersander,
+A.
+X.
+Chang,
+and
+M.
+Savva,
+“Habitat synthetic scenes dataset (HSSD-200): An analysis of 3D
+scene scale and realism tradeoffs for ObjectGoal navigation,” in
+Proceedings of the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition, 2024, pp. 16 384–16 393. [Online]. Available:
+https://arxiv.org/abs/2306.11290
+[28] A. Chang, A. Dai, T. Funkhouser, M. Halber, M. Nießner, M. Savva,
+S. Song, A. Zeng, and Y. Zhang, “Matterport3D: Learning from RGB-D
+data in indoor environments,” in International Conference on 3D Vision
+(3DV), 2017. [Online]. Available: https://arxiv.org/abs/1709.06158
+[29] F. Xia, A. R. Zamir, Z. He, A. Sax, J. Malik, and S. Savarese, “Gibson
+Env: Real-world perception for embodied agents,” in Proceedings of the
+IEEE Conference on Computer Vision and Pattern Recognition, 2018,
+pp. 9068–9079. [Online]. Available: https://arxiv.org/abs/1808.10654
+[30] M. Deitke, E. VanderBilt, A. Herrasti, L. Weihs, J. Salvador, K. Ehsani,
+W. Han, E. Kolve, A. Farhadi, A. Kembhavi, and R. Mottaghi,
+“ProcTHOR: Large-scale embodied AI using procedural generation,”
+in Advances in Neural Information Processing Systems, vol. 35, 2022,
+pp. 5982–5994. [Online]. Available: https://arxiv.org/abs/2206.06994
+[31] R. Partsey, E. Wijmans, N. Yokoyama, O. Dobosevych, D. Batra,
+and O. Maksymets, “Is mapping necessary for realistic PointGoal
+navigation?” in Proceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition, 2022, pp. 17 232–17 241. [Online].
+Available: https://arxiv.org/abs/2206.00997
+[32] P. Anderson, A. Chang, D. S. Chaplot, A. Dosovitskiy, S. Gupta,
+V.
+Koltun,
+J.
+Kosecka,
+J.
+Malik,
+R.
+Mottaghi,
+M.
+Savva,
+and
+A.
+R.
+Zamir,
+“On
+evaluation
+of
+embodied
+navigation
+agents,” arXiv preprint arXiv:1807.06757, 2018. [Online]. Available:
+https://arxiv.org/abs/1807.06757

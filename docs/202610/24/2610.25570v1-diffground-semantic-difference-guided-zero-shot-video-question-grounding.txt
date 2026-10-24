@@ -1,0 +1,1049 @@
+DiffGround: Semantic Difference-Guided
+Zero-Shot Video Question Grounding
+Cheng-Han Lee1, Amir Salimi2, Hsiang-Wei Huang2, Che-Chun Su2, Min Sun2,
+and Cheng-Hao Kuo2
+1 The University of Texas at Austin, United States
+2 Amazon , United States
+Video Question Grounding (VideoQG) requires both accurate question an-
+swering and precise temporal localization. Existing supervised methods rely on
+costly temporal annotations, while existing zero-shot approaches are primarily
+designed for Video Question Answering (VQA) and are not optimized for tem-
+poral grounding. We propose DiffGround, an action-driven zero-shot framework
+built upon frozen Multimodal Large Language Models (MLLMs). Our framework
+first predicts an answer-relevant action cue that transforms the input question
+into an explicit semantic target for grounding. Action Cue converts a reasoning-
+oriented question into an action-centric retrieval query. Guided by the action
+cue, a Vision-Language Model (VLM) efficiently selects informative keyframes
+for reasoning. Finally, we introduce Semantic Diff Refinement, a training-free
+temporal refinement method that exploits semantic differences between neigh-
+boring SigLIP2 embeddings to recover complete action segments from sparse
+predictions. Extensive experiments on NExT-GQA [16] and STAR [15] show that
+DiffGround consistently outperforms existing zero-shot and supervised methods,
+establishing a new state of the art for Video Question Grounding. We plan to
+publicly release the source code at https://github.com/steven413d/DiffGround.
+1
+Introduction
+Video Question Grounding (VideoQG) is an emerging multimodal task that
+requires models to not only answer questions about video content but also accu-
+rately localize the temporal segments supporting their answers. Compared with
+conventional Video Question Answering (VQA), VideoQG requires both seman-
+tic reasoning and fine-grained temporal localization, making it a fundamental
+challenge for video understanding with applications in video retrieval, human-
+computer interaction, and embodied AI.
+Existing approaches can be broadly categorized into supervised and zero-shot
+methods, both of which suffer from important limitations. Supervised methods
+rely on expensive temporal annotations and often exhibit a trade-off between
+VQA accuracy and grounding precision. More recently, Multimodal Large Lan-
+guage Models (MLLMs) have enabled zero-shot VideoQG without additional
+training. However, existing methods are primarily designed for VQA rather than
+temporal grounding, limiting their ability to accurately localize actions.
+We identify two fundamental challenges underlying existing zero-shot ap-
+proaches. First, they directly use the input question as the retrieval query for
+arXiv:2610.25570v1  [cs.CV]  18 Oct 2026
+
+
+2
+Cheng-Han Lee et al.
+Fig. 1: Overview of the proposed DiffGround framework. Given a video and
+a question, DiffGround first performs offline, question-agnostic action segment prepro-
+cessing to partition the video into semantically coherent action segments. A frozen
+MLLM then predicts an action cue describing the target action with a single MLLM
+call. Guided by the question and predicted action cue, a Vision-Language Model (VLM)
+ranks video frames to select the most informative keyframes for Video Question Answer-
+ing (VQA). Finally, Semantic Diff Refinement expands the initial grounding prediction
+by leveraging SigLIP2 semantic differences to align temporal boundaries with the com-
+plete action segment, producing more accurate Video Question Grounding (VideoQG)
+results.
+frame selection. However, natural language questions are designed for reasoning
+rather than visual retrieval, containing interrogative expressions, temporal refer-
+ences, and contextual descriptions that provide limited guidance for identifying
+relevant visual evidence. As a result, current methods tend to retrieve frames
+containing the correct objects instead of the target action, leading to object-
+centric rather than action-centric frame selection [18]. Second, sparse keyframe
+predictions alone are insufficient for accurate temporal localization. Existing ap-
+proaches often compensate with dense frame sampling or multiple MLLM calls,
+resulting in substantial computational cost while still failing to recover complete
+action boundaries.
+To address these challenges, we propose DiffGround, an action-driven zero-
+shot Video Question Grounding framework, illustrated in Fig. 1. DiffGround
+first performs an offline action segmentation by measuring semantic differences
+between neighboring Vision-Language Model (VLM) embeddings, producing
+reusable action segments for each video. Given a question, a frozen MLLM per-
+forms an initial reasoning step to generate an Action Cue, a concise action-centric
+description that serves as an explicit retrieval target. Guided by both the ques-
+tion and the predicted action cue, the VLM efficiently identifies informative
+
+
+DiffGround
+3
+keyframes. Finally, Semantic Diff Refinement expands sparse grounding predic-
+tions using the precomputed semantic transitions to recover complete action
+boundaries.
+Our framework is built upon three key innovations. First, we introduce an
+Action Cue Prediction module that converts reasoning-oriented questions into
+concise action-centric representations, substantially improving frame retrieval
+quality with only a single MLLM inference. Second, we propose a VLM-guided
+keyframe selection strategy that jointly matches the question and predicted ac-
+tion cue, enabling efficient action-aware frame retrieval. Third, we introduce
+Semantic Diff Refinement, a training-free temporal refinement method that ex-
+ploits semantic differences between adjacent SigLIP2 embeddings to recover com-
+plete action segments. Compared with conventional motion-based segmentation
+methods, Semantic Diff directly captures semantic transitions, operates in the
+semantic embedding space rather than relying on low-level motion cues, and re-
+quires minimal hyperparameter tuning. Since visual embeddings are extracted
+once and reused across multiple questions associated with the same video, the
+preprocessing is performed entirely offline, significantly reducing online inference
+cost.
+Extensive experiments on NExT-GQA [16] and STAR [15] demonstrate that
+DiffGround consistently outperforms existing zero-shot and supervised approaches,
+establishing a new state of the art in both Video Question Grounding and Video
+Question Answering.
+2
+Related Works
+2.1
+Caption and Agent based Methods
+Recent zero-shot frameworks leverage textual intermediate representations to
+facilitate long-video understanding. LLoVi [21] and MoReVQA [7] first gener-
+ate dense video captions and index them into textual memories for retrieval-
+based reasoning. Meanwhile, agent-based frameworks, such as VideoAgent [13]
+and BOLT [6], formulate video understanding as an iterative planning process,
+where an MLLM repeatedly queries localized video segments through multiple
+reasoning steps.
+These approaches demonstrate strong zero-shot reasoning capability by ex-
+ploiting the language understanding ability of MLLMs. However, they generally
+require numerous MLLM calls during either offline indexing or online planning,
+leading to considerable computational overhead. Moreover, because temporal
+reasoning is performed primarily through textual representations, the resulting
+temporal localization is constrained by the granularity of generated captions,
+making precise boundary localization challenging. In contrast, our approach di-
+rectly operates on visual representations while requiring only a single MLLM
+inference for each query.
+
+
+4
+Cheng-Han Lee et al.
+2.2
+Training-based Methods
+Training-based Video Question Grounding methods can be broadly categorized
+into weakly supervised and temporally supervised approaches.
+Weakly supervised methods, such as CRA [2] and TOGA [3], are trained
+solely with video-level question-answer pairs. While avoiding dense temporal
+annotations, they typically rely on coarse visual-textual correlations and often
+struggle to precisely localize action boundaries.
+Temporally supervised approaches explicitly exploit temporal annotations to
+improve grounding performance. Representative methods include ActPrompt [14],
+which introduces action-centric prompts to guide temporal attention, and fully
+supervised frameworks such as Grounded-VideoLLM [12], VideoStreaming [8],
+and SeViLA [19], which fine-tune large video-language models using dense tem-
+poral annotations.
+Unlike these methods, DiffGround is a training-free framework that requires
+no parameter updates or temporal annotations. Instead, it performs action-aware
+grounding through Action Cue Prediction and Semantic Diff Refinement, en-
+abling strong generalization to reasoning-oriented VideoQG tasks.
+2.3
+Frame Sampling-based Methods
+To reduce the computational cost of long-video understanding, recent zero-shot
+methods perform sparse frame sampling before MLLM inference. Representa-
+tive approaches include TStar [18], Adaptive Key Frame Sampling [10], and
+Q-Frame [22], which select informative frames based on spatial saliency, cross-
+attention, or vision-language similarity. By avoiding dense video rendering and
+task-specific fine-tuning, these methods provide an efficient solution for zero-shot
+VideoQA.
+However, existing frame sampling strategies are primarily designed for ques-
+tion answering rather than temporal grounding. First, they retrieve discrete
+keyframes without explicitly recovering continuous temporal spans. Consequently,
+temporal boundaries must be inferred from sparse observations, often leading to
+inaccurate localization. Second, their retrieval strategies remain largely object-
+centric, emphasizing visual entities instead of action dynamics. As a result, they
+may successfully identify relevant objects while missing the temporal evolution
+of the target action. Our proposed DiffGround addresses both challenges through
+Action Cue Prediction for action-aware frame retrieval and Semantic Diff Re-
+finement for recovering complete action segments from sparse predictions.
+3
+Method
+3.1
+Overview
+Given a video V and a question q, DiffGround predicts both the answer and
+its supporting temporal segment through an offline preprocessing stage and an
+online grounding stage, as illustrated in Fig. 2.
+
+
+DiffGround
+5
+Fig. 2: Overview of the proposed DiffGround framework. DiffGround consists
+of three stages. First, a frozen MLLM predicts an Action Cue from the input question
+and uniformly sampled video frames, converting a reasoning-oriented question into
+an action-centric retrieval query. Second, a frozen VLM (SigLIP2) jointly matches the
+question and Action Cue to retrieve the Top-K most informative keyframes. Meanwhile,
+an offline Semantic Diff Segmentation module partitions the video into semantically
+coherent action segments. Finally, the retrieved keyframes are used for Video Question
+Answering, and the predicted timestamps are refined by the precomputed semantic
+segments to recover complete temporal boundaries for Video Question Grounding.
+During offline preprocessing, we partition the video into semantically co-
+herent action segments by measuring semantic differences between neighboring
+SigLIP2 [11] visual embeddings. These action segments are computed once for
+each video and reused for all subsequent questions.
+During online inference, a frozen MLLM first performs an initial reasoning
+step to generate an Action Cue, a concise action-centric description of the target
+event. The Action Cue is combined with the original question to retrieve informa-
+tive keyframes using a Vision-Language Model (VLM). The selected keyframes
+are then fed into the MLLM to predict the final answer. Finally, Semantic Diff
+Refinement aligns the retrieved keyframes with the precomputed action segments
+to recover accurate temporal boundaries.
+3.2
+Offline Semantic Diff Segmentation
+The Top-K keyframes selected by the VLM provide sparse observations of the
+target action but do not directly reveal its complete temporal extent. We there-
+fore seek to partition each video into semantically coherent action segments,
+allowing sparse frame predictions to be naturally expanded into complete tem-
+poral intervals during inference.
+
+
+6
+Cheng-Han Lee et al.
+Instead, we propose Semantic Diff Refinement, a training-free temporal
+refinement framework that leverages semantic transitions in a Vision-Language
+Model (VLM) embedding space. The key observation is that modern VLMs
+encode high-level semantic information, allowing changes between neighboring
+embeddings to naturally indicate scene transitions and action boundaries. Since
+the visual embeddings are computed once for each video, the entire refinement
+process is performed offline and reused for all subsequent questions.
+Semantic Diff Feature Extraction Given an input video V, we first partition
+it into N consecutive one-second clips,
+  \mat hca l { C }=\{c_1,c_2,\ldots ,c_N\}. 
+(1)
+For each clip ci, we uniformly sample k frames,
+  \ mathca l { F }_i=\{f_{i,1},\ldots ,f_{i,k}\}, 
+and extract their visual embeddings using the frozen SigLIP2 vision encoder,
+  v_ { i,j}=f_{\m a thrm {VLM}}(f_{i,j})\in \mathbb {R}^{d}. 
+(2)
+Instead of explicitly estimating motion, we characterize temporal changes
+directly in the VLM embedding space. For the i-th clip, we define its semantic
+displacement as
+  s _i = \fra
+c {
+v_{i,k}-v_{i,1}}{k-1}, 
+(3)
+where vi,1 and vi,k denote the embeddings of the first and last sampled frames,
+respectively. The resulting sequence
+  \mat hca l { S }=\{s_1,s_2,\ldots ,s_N\} 
+provides a compact representation of semantic changes across consecutive
+video clips.
+Adaptive Greedy Semantic Segmentation Given the sequence S, our ob-
+jective is to partition the video into semantically coherent action segments.
+Rather than specifying the number of segments manually, we first estimate
+the target number of segments using semantic change-point detection. For each
+pair of adjacent clip representations, we compute
+  d _i=\| s _{i+1}-s_i\|_2. 
+(4)
+Large values of di indicate significant semantic transitions. We therefore es-
+timate an adaptive threshold,
+  \t a u =\mu _D+\alpha \sigma _D, 
+(5)
+
+
+DiffGround
+7
+Algorithm 1 Adaptive Greedy Semantic Diff Segmentation
+Require: Semantic clip features S = {s1, . . . , sN}, threshold coefficient α
+Ensure: Semantic action segments A
+Stage I: Estimate Target Segment Number
+1: for i = 1 to N −1 do
+2:
+di ←∥si+1 −si∥2
+3: end for
+4: τ ←µD + ασD
+5: M ←|{di > τ}| + 1
+Stage II: Greedy Semantic Merging
+6: Initialize A = {(ci, si)}N
+i=1
+7: while |A| > M do
+8:
+i∗←arg maxi cos(A[i].f, A[i + 1].f)
+9:
+Merge A[i∗] and A[i∗+ 1]
+10:
+Update feature using duration-weighted average
+11:
+Remove A[i∗+ 1]
+12: end while
+13: return A
+where µD and σD denote the mean and standard deviation of {di}, respec-
+tively. The target number of action segments is then estimated as
+  M= | \ {d_ i >\tau \}|+1. 
+(6)
+Starting from N atomic clips, we greedily merge neighboring segments with
+the highest semantic similarity. Specifically, the adjacent pair
+  i ^*= \a
+r
+g \max _i \cos (s_i,s_{i+1}) 
+(7)
+is merged during each iteration. The feature of the merged segment is updated
+using a duration-weighted average to preserve semantic consistency. The merging
+process continues until the number of remaining segments equals the estimated
+target value M.
+Algorithm 1 summarizes the complete adaptive greedy segmentation proce-
+dure.
+3.3
+Action Cue Prediction
+Existing zero-shot methods directly use the input question as the retrieval query
+for frame selection. However, natural language questions are designed for reason-
+ing rather than visual retrieval, often containing interrogative phrases, temporal
+references, and contextual descriptions that dilute the retrieval signal. Conse-
+quently, the retrieved frames frequently correspond to relevant objects instead
+of the target action.
+To address this issue, we introduce an Action Cue Prediction module
+that performs an initial reasoning step before frame retrieval. Given the input
+
+
+8
+Cheng-Han Lee et al.
+question q and a small set of uniformly sampled frames Funiform, a frozen MLLM
+generates a concise action-centric description:
+  c=f_{\ma thrm {MLLM}}(q,\mathcal {F}_{\mathrm {uniform}}), 
+(8)
+where c denotes the predicted Action Cue.
+Unlike the original question, which is optimized for reasoning, the Action Cue
+explicitly describes the target action (e.g., “The boy in red touches the child”),
+providing a semantically focused retrieval target for subsequent frame selection.
+3.4
+VLM-guided Keyframe Selection
+Given a set of candidate frames F = {fi}T
+i=1, we encode each frame using the
+SigLIP2 vision encoder,
+  F=\mathrm {V L M} _{vision}(\mathcal {F})\in \mathbb {R}^{T\times d}. 
+(9)
+The question and Action Cue are independently encoded using the SigLIP2
+text encoder,
+  Q _q &= \mathrm {VLM}_{text}(q),\\ Q_c &= \mathrm {VLM}_{text}(c) ,
+(11)
+and combined into a unified representation,
+  Q= Q _q+Q_c. 
+(12)
+Frame relevance is computed using cosine similarity,
+  S= Q F^T, 
+(13)
+and the Top-K highest-scoring frames are selected for downstream VQA.
+The Action Cue complements the original question by emphasizing action se-
+mantics, while the question preserves contextual information. Their combination
+provides a stronger retrieval signal than either representation alone.
+3.5
+Online Semantic Diff Refinement
+The semantic segmentation described above is performed entirely offline and
+shared by all questions associated with the same video.
+During online inference, the VLM first retrieves the Top-K keyframes using
+the unified query representation described in Section 3.4. As illustrated in Fig. 2,
+the selected keyframes are then fed into a second MLLM call to jointly predict
+the answer and the supporting keyframe indices. Each predicted keyframe is sub-
+sequently mapped to its corresponding precomputed semantic action segment.
+Instead of returning isolated frame timestamps, DiffGround expands the sparse
+
+
+DiffGround
+9
+Fig. 3: Visualization of the proposed Semantic Diff segmentation. By measur-
+ing semantic transitions between neighboring clips, our offline preprocessing partitions
+the video into semantically coherent action segments. Besides separating distinct scenes
+(e.g., piano playing versus woman and child), it further identifies fine-grained action
+boundaries, isolating the brief “touch child” interaction (38.8–40.9 s) from surround-
+ing activities. During online inference, Semantic Diff Refinement aligns the retrieved
+keyframe with the corresponding action segment, producing accurate temporal ground-
+ing.
+keyframe predictions to the complete action segments, producing temporally
+coherent grounding results with negligible additional computation.
+Figure 3 illustrates a representative example. Besides separating two distinct
+scenes (“playing piano” and “woman with child”), Semantic Diff further identifies
+the brief “touch child” interaction as an independent action segment. Although
+the retrieved keyframe corresponds to only a single instant, Semantic Diff Re-
+finement successfully recovers the entire temporal interval (38.8–40.9 s), enabling
+accurate Video Question Grounding.
+To the best of our knowledge, DiffGround is the first zero-shot Video Ques-
+tion Grounding framework to leverage semantic differences in Vision-Language
+Model (VLM) embeddings for action segmentation. Since semantic features are
+precomputed offline, Semantic Diff efficiently captures both scene transitions and
+fine-grained action boundaries with negligible online overhead.
+4
+Experiments
+4.1
+Datasets
+We evaluate our method on two standard benchmarks: the NExT-GQA test
+set [16] and the STAR validation set [15], as its test set is not publicly released.
+Detailed statistics for both datasets are presented in Table 1.
+NExT-GQA [16]. NExT-GQA selects long videos with an average length of 40
+seconds. Each video has multiple questions, and the answers’ grounding can
+overlap. The videos include a sequence of atomic events, and the questions
+involve interaction between multiple actors and objects. Questions are of two
+
+
+10
+Cheng-Han Lee et al.
+Table 1: Statistic of the evaluation sets. Note: We utilize NExT-GQA [16]’s test
+set and STAR [15]’s validation set for evaluation. By employing a column-width resizing
+wrapper, this table maintains a consistent style and layout alignment with our main
+quantitative results.
+Dataset
+Vid.
+Que.
+Seg.
+Seg. Dur.(s)
+Vid. Dur.(s)
+Ratio (S./V.)
+NExT-GQA
+990
+5553
+6600
+6.7
+39.5
+0.2
+STAR
+914
+7098
+7098
+11.9
+30.0
+0.4
+types: causal why/how questions and temporal questions with when/before/after
+clauses. Causal questions, such as Why are there two men standing at the center
+island and holding their camera?, require localizing the evidence of the answer,
+which is Recording for this question. Temporal questions, such as What did the
+boy do after the green man walked past him?, require understanding the tempo-
+ral evolution of the events to generate an answer such as Look at man in green.
+The train set consists of 3,870 videos and 34,132 QA pairs without the grounding
+annotations. The test set consists of 990 videos with 5,553 QA pairs. Though
+the dataset provides multiple-choice answers, we generate open-ended responses
+without observing the options.
+STAR [15]. STAR consists of about 60K situated reasoning questions with pro-
+grams and answers, 240K candidate choices, and 22K trimmed situation video
+clips. Situation video clips in the benchmark are sourced from human activity
+videos, which record the dynamic interaction processes of human actions and sur-
+rounding environments in daily-life scenes. It also provides about 144K situation
+hypergraphs as structured situation abstraction. Designed questions cover four
+types of skills for situated reasoning. The dataset includes annotated questions
+with answers and options. Each question answering corresponds to a specific
+program for reasoning logic. To connect situation abstraction and reasoning di-
+agnosis for question-answering, STAR provides situation hypergraphs tied with
+executable programs. Then situations, questions, and options are aligned with
+the unified data type schema, including actions, objects, humans, and relations.
+The STAR includes 111 action predicates, 28 objects, and 24 relationships. The
+benchmark is split into training/validation/test sets with a ratio of about 6:1:1.
+4.2
+Evaluation Metrics
+We consider five metrics: intersection over union (IoU), intersection over predic-
+tion (IoP), IoU@0.5, IoP@0.5, and Acc@GQA proposed in NExT-GQA [16]. IoU
+measures the overlap between ground truth and predicted groundings. IoP mea-
+sures the portion of predicted grounding containing the ground truth, similar to
+precision. While these metrics focus on grounding, Acc@GQA focuses on both
+the correctness of the answers and correct grounding with IoP ⩽0.5. Apart from
+these metrics, we consider the Acc@QA metric for QA performance.
+
+
+DiffGround
+11
+Fig. 4: Prompt Template Design. The prompt for our final VQG prediction, which
+is adapted from TStar [18].
+4.3
+Implementation Details
+Experimental Setup. We evaluate DiffGround on the NExT-GQA test set
+(5,553 video-question pairs) and the STAR validation set (7,098 video-question
+pairs). Unless otherwise specified, GPT-4o [4] is used as the Multimodal Large
+Language Model (MLLM), while SigLIP2 serves as the Vision-Language Model
+(VLM). The temperature is set to 0.0 for Action Cue Prediction to ensure de-
+terministic outputs and 0.2 for the final Video Question Answering inference.
+Offline Semantic Segmentation. The only dataset-specific hyperparameter
+is the threshold coefficient α used in Algorithm 1. We set α = −0.25 for NExT-
+GQA and α = 0.25 for STAR according to the average ground-truth answer
+duration of each dataset. Smaller values produce finer-grained action segments,
+whereas larger values generate coarser temporal partitions.
+Implementation Details. All experiments are conducted on servers equipped
+with two NVIDIA RTX 4090 GPUs (24GB memory each). Additional implemen-
+tation details, prompt templates, comparisons with alternative VLMs (CLIP and
+SigLIP2) and MLLMs (e.g., Qwen2.5-VL and Qwen3-VL), additional ablation
+studies, and the proposed Acc@GQA (IoU) evaluation metric are provided in
+the supplementary material.
+4.4
+Frame Retrieval Variants
+To analyze the contribution of different retrieval queries, we compare four frame
+retrieval variants while keeping the VLM retrieval pipeline unchanged.
+Uniform Sampling. Frames are sampled uniformly across the video and di-
+rectly passed to the VQG prompt (Fig. 4(b)) without Action Cue Prediction.
+Question Only. Frame relevance is computed using only the question em-
+bedding, Qq. The selected frames are then processed using the VQG prompt
+(Fig. 4(b)).
+
+
+12
+Cheng-Han Lee et al.
+Table 2: Quantitative Results on NExT-GQA. Note: N means the number of
+sampled frames with 1 fps. * indicates that the methods do not require any post-
+training. By employing a column-width resizing wrapper, all model names are preserved
+in full within the single-column layout.
+Method
+Venue
+Model
+# of frames Acc@GQA (↑) mIoP (↑) mIoU (↑) # of calls
+IGV [5]
+CVPR’22
+-
+16
+10.2
+21.4
+14.0
+-
+SeViLA [19]
+NIPS’23
+BLIP2
+4
+16.6
+29.5
+21.7
+-
+*LLoVi [21]
+EMNLP’24
+GPT-4 + CogAgent
+-
+26.8
+39.4
+21.5
+≈N
+VideoStreaming [8]
+NIPS’24
+Phi-2 2.7B + Vicuna-7B
+16
+17.8
+32.2
+19.8
+1
+CRA [2]
+CVPR’25
+Temp[CLIP]
+32
+18.2
+28.6
+14.2
+-
+CRA [2]
+CVPR’25
+FrozenBiLM
+32
+18.8
+26.5
+13.5
+-
+Grounded-VideoLLM [12] EMNLP’25
+Phi3.5
+96
+26.7
+34.5
+21.1
+1
+TOGA [3]
+ICCV’25
+-
+16
+24.6
+40.5
+24.6
+-
+*Baseline (Uniform)
+-
+GPT-4o
+8
+30.5
+38.9
+25.5
+1
+*Our
+-
+GPT-4o + SigLIP2
+8
+35.0
+42.7
+25.5
+2
+Human
+-
+-
+-
+82.1
+72.1
+61.2
+-
+Table 3: Quantitative Results on STAR. Note: * indicates that the methods do
+not require any post-training.
+Method
+Venue
+Model
+# of frames Acc@GQA (↑) Acc@QA (↑) IoP@5 (↑) IoU@5 (↑) # of calls
+IGV [5]
+CVPR’22
+-
+16
+13.1
+31.7
+42.8
+1.7
+-
+SeViLA [19]
+NIPS’23
+BLIP2
+4
+17.0
+45.5
+37.6
+19.5
+-
+CRA [2]
+CVPR’25
+Temp[CLIP]
+32
+26.8
+58.6
+44.5
+5.5
+-
+CRA [2]
+CVPR’25
+FrozenBiLM
+32
+27.5
+60.5
+43.1
+5.1
+-
+*Baseline (Uniform)
+-
+GPT-4o
+4
+25.7
+59.3
+41.4
+18.9
+1
+*Our
+-
+GPT-4o + SigLIP2
+4
+33.3
+61.1
+51.9
+20.1
+2
+Action Cue Only. The Action Cue is first generated using the Action Cue
+Prediction prompt (Fig. 4(a)). Frame relevance is computed using only the Ac-
+tion Cue embedding, Qc, and the selected frames are fed into the VQG prompt
+(Fig. 4(b)).
+Object Cue Only. The Action Cue Prediction prompt (Fig. 4(a)) is modified
+to output a single object noun (e.g., “boy”) instead of an action description.
+Frame relevance is computed using the corresponding object embedding, and
+the selected frames are processed using the VQG prompt (Fig. 4(b)).
+Detailed prompt templates for all variants are provided in the supplementary
+material.
+4.5
+Comparing to State-of-the Arts
+NExT-GQA. Table 2 compares DiffGround with existing supervised and zero-
+shot approaches on NExT-GQA. Despite requiring only two MLLM calls and no
+additional training, DiffGround achieves the best overall performance across all
+evaluation metrics. Compared with the strongest zero-shot baseline, our method
+improves Acc@GQA by 4.5 percentage points while simultaneously achieving the
+highest mIoP and mIoU. These results demonstrate that Action Cue Prediction
+and Semantic Diff Refinement effectively improve both question answering and
+temporal localization without increasing computational complexity.
+STAR. Table 3 further validates the generalization of DiffGround on the
+STAR benchmark. Our framework consistently achieves the best performance in
+
+
+DiffGround
+13
+Table 4: Ablation Study of Our Approach on NExT-GQA. Note: Percent-
+age gains indicate relative improvements over the Baseline (Uniform) configuration.
+SD=Semantic Diff Refinement.
+Method
+# of frames Acc@GQA (↑) Acc@QA (↑)
+mIoP (↑)
+mIoU (↑)
+# of calls
+Baseline (Uniform)
+8
+30.5
+77.9
+38.9
+25.5
+1
+Question (Q)
+8
+37.3
+77.0
+45.0
+20.0
+1
+Object Cue (OC)
+8
+34.0
+77.3
+41.4
+18.7
+2
+Action Cue (AC)
+8
+38.1
+78.2
+46.1
+20.0
+2
+Our (Q + AC)
+8
+38.5 (+8%)
+78.7 (+0.8%) 46.1 (+7.2%) 19.9 (-5.6%)
+2
+Our (Q + AC + SD)
+8
+35.0 (+4.5%)
+78.7 (+0.8%) 42.7 (+3.8%)
+25.5 (+0%)
+2
+Table 5: Ablation Study of Our Approach on STAR. Percentage gains indicate
+relative improvements over the Baseline (Uniform) configuration. SD=Semantic Diff
+Refinement.
+Method
+# of frames Acc@GQA (↑) Acc@QA (↑)
+IoP@5 (↑)
+IoU@5 (↑)
+# of calls
+Baseline (Uniform)
+4
+25.7
+59.3
+41.4
+18.9
+1
+Question (Q)
+4
+31.0
+55.3
+53.1
+8.2
+1
+Object Cue (OC)
+4
+30.7
+60.7
+47.2
+7.4
+2
+Action Cue (AC)
+4
+33.1
+61.3
+49.8
+7.5
+2
+Our (Q + AC)
+4
+33.6 (+7.9%)
+61.1 (+1.8%) 52.2 (+11.8%)
+7.7 (-11.2%)
+2
+Our (Q + AC + SD)
+4
+33.3 (+7.6%)
+61.1 (+1.8%) 51.9 (+11.5%) 20.1 (+1.2%)
+2
+both question answering and grounding while using only two MLLM calls. Com-
+pared with uniform sampling, DiffGround significantly improves Acc@GQA and
+IoP@5 while also producing the highest IoU@5 among all compared methods.
+These results suggest that the proposed action-driven framework generalizes well
+across datasets with different video durations and reasoning styles.
+4.6
+Effectiveness of Action Cue Enhanced Key Frame Sampling
+Table 4 and Table 5 analyze different frame retrieval strategies. Using the ques-
+tion alone substantially improves Acc@GQA over uniform sampling, confirming
+that semantic retrieval is considerably more effective than fixed sampling. How-
+ever, this improvement comes at the expense of temporal grounding, as IoU
+consistently decreases on both datasets. This observation indicates that ques-
+tions are optimized for reasoning rather than visual retrieval, often identifying a
+few highly discriminative frames while overlooking the complete temporal extent
+of the target action.
+We further compare our Action Cue with a simplified Object Cue that con-
+tains only the primary object noun. Although both cues improve retrieval over
+the baseline, the Action Cue consistently achieves higher Acc@GQA and IoP.
+This demonstrates that explicitly modeling actions and object interactions pro-
+vides a more informative retrieval target than isolated object descriptions.
+Finally, combining the original question with the predicted Action Cue achieves
+the strongest retrieval performance across both datasets. Nevertheless, despite
+producing the highest Acc@GQA, the retrieved keyframes still exhibit relatively
+
+
+14
+Cheng-Han Lee et al.
+low IoU, suggesting that frame retrieval alone is insufficient for accurate tempo-
+ral localization. This motivates the Semantic Diff Refinement introduced in the
+next section.
+4.7
+Effectiveness of Semantic Diff Refinement
+Table 4 and Table 5 evaluate the effectiveness of the proposed Semantic Diff
+Refinement. Comparing “Our (Question + Action Cue)” with the complete Dif-
+fGround framework shows that Semantic Diff consistently improves temporal
+grounding performance on both NExT-GQA and STAR. In particular, mIoU in-
+creases from 19.9% to 25.5% on NExT-GQA and from 7.7% to 20.1% on STAR,
+demonstrating that the proposed refinement effectively recovers more complete
+action boundaries from sparse keyframe predictions.
+Interestingly, Semantic Diff Refinement slightly decreases Acc@GQA (IoP)
+and mIoP while substantially improving IoU. This behavior reflects the differ-
+ent optimization objectives of Video Question Answering and Video Question
+Grounding. Action Cue Prediction is designed to retrieve a small number of
+highly discriminative frames that maximize question answering accuracy. Such
+compact predictions often achieve high overlap precision but cover only part of
+the target action, leading to relatively low temporal IoU. In contrast, Semantic
+Diff Refinement expands these sparse predictions to semantically coherent ac-
+tion segments, producing predictions that more closely align with the complete
+temporal extent of the ground-truth action.
+Consequently, the refined segments may include additional contextual frames
+that contribute little to frame-level retrieval metrics, resulting in a slight reduc-
+tion in Acc@GQA (IoP) and mIoP. However, they provide substantially more
+accurate temporal localization, as reflected by the consistent improvements in
+mIoU. These results suggest that optimizing frame retrieval alone is insufficient
+for Video Question Grounding, and that explicit temporal refinement is neces-
+sary to recover complete action segments.
+A complementary analysis using an IoU-based variant of Acc@GQA is
+provided in the supplementary material, further illustrating the trade-off be-
+tween retrieval-oriented and localization-oriented evaluation.
+5
+Conclusions
+We introduced DiffGround, a training-free, action-driven framework for zero-
+shot Video Question Grounding. Our key insight is that transforming reasoning-
+oriented questions into action-centric representations and refining sparse predic-
+tions using semantic transitions enables accurate and efficient temporal ground-
+ing. Extensive experiments on NExT-GQA and STAR demonstrate that Dif-
+fGround establishes a new state of the art while remaining computationally
+efficient.
+
+
+DiffGround
+15
+References
+1. Bai, S., Chen, K., Liu, X., Wang, J., Ge, W., Song, S., Dang, K., Wang, P., Wang,
+S., Tang, J., et al.: Qwen2. 5-vl technical report. arXiv preprint arXiv:2502.13923
+(2025) 18
+2. Chen, W., Liu, Y., Chen, B., Su, J., Zheng, Y., Lin, L.: Cross-modal causal relation
+alignment for video question grounding. In: Proceedings of the Computer Vision
+and Pattern Recognition Conference. pp. 24087–24096 (2025) 4, 12
+3. Gupta, A., Roy, A., Chellappa, R., Bastian, N.D., Velasquez, A., Jha, S.: Toga:
+Temporally grounded open-ended video qa with weak supervision. arXiv preprint
+arXiv:2506.09445 (2025) 4, 12
+4. Hurst, A., Lerer, A., Goucher, A.P., Perelman, A., Ramesh, A., Clark, A., Os-
+trow, A., Welihinda, A., Hayes, A., Radford, A., et al.: Gpt-4o system card. arXiv
+preprint arXiv:2410.21276 (2024) 11, 18
+5. Li, Y., Wang, X., Xiao, J., Ji, W., Chua, T.S.: Invariant grounding for video ques-
+tion answering. In: Proceedings of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition. pp. 2928–2937 (2022) 12
+6. Liu, S., Zhao, C., Xu, T., Ghanem, B.: Bolt: Boost large vision-language model
+without training for long-form video understanding. In: Proceedings of the Com-
+puter Vision and Pattern Recognition Conference. pp. 3318–3327 (2025) 3
+7. Min, J., Buch, S., Nagrani, A., Cho, M., Schmid, C.: Morevqa: Exploring modular
+reasoning models for video question answering. In: Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition. pp. 13235–13245 (2024)
+3
+8. Qian, R., Dong, X., Zhang, P., Zang, Y., Ding, S., Lin, D., Wang, J.: Streaming long
+video understanding with large language models. Advances in Neural Information
+Processing Systems 37, 119336–119360 (2024) 4, 12
+9. Radford, A., Kim, J.W., Hallacy, C., Ramesh, A., Goh, G., Agarwal, S., Sastry, G.,
+Askell, A., Mishkin, P., Clark, J., et al.: Learning transferable visual models from
+natural language supervision. In: International conference on machine learning. pp.
+8748–8763. PmLR (2021) 17
+10. Tang, X., Qiu, J., Xie, L., Tian, Y., Jiao, J., Ye, Q.: Adaptive keyframe sampling
+for long video understanding. In: Proceedings of the Computer Vision and Pattern
+Recognition Conference. pp. 29118–29128 (2025) 4
+11. Tschannen, M., Gritsenko, A., Wang, X., Naeem, M.F., Alabdulmohsin, I.,
+Parthasarathy, N., Evans, T., Beyer, L., Xia, Y., Mustafa, B., et al.: Siglip 2:
+Multilingual vision-language encoders with improved semantic understanding, lo-
+calization, and dense features. arXiv preprint arXiv:2502.14786 (2025) 5, 17
+12. Wang, H., Xu, Z., Cheng, Y., Diao, S., Zhou, Y., Cao, Y., Wang, Q., Ge, W., Huang,
+L.: Grounded-videollm: Sharpening fine-grained temporal grounding in video large
+language models. arXiv preprint arXiv:2410.03290 (2024) 4, 12
+13. Wang, X., Zhang, Y., Zohar, O., Yeung-Levy, S.: Videoagent: Long-form video
+understanding with large language model as agent. In: European Conference on
+Computer Vision. pp. 58–76. Springer (2024) 3
+14. Wang, Y., Jiang, X., Cheng, D., Li, D., Zhao, C.: Actprompt: In-domain feature
+adaptation via action cues for video temporal grounding. IEEE Transactions on
+Image Processing (2026) 4
+15. Wu, B., Yu, S., Chen, Z., Tenenbaum, J.B., Gan, C.: Star: A benchmark for situated
+reasoning in real-world videos. arXiv preprint arXiv:2405.09711 (2024) 1, 3, 9, 10
+
+
+16
+Cheng-Han Lee et al.
+16. Xiao, J., Yao, A., Li, Y., Chua, T.S.: Can i trust your answer? visually grounded
+video question answering. In: Proceedings of the IEEE/CVF Conference on Com-
+puter Vision and Pattern Recognition. pp. 13204–13214 (2024) 1, 3, 9, 10, 17
+17. Yang, A., Li, A., Yang, B., Zhang, B., Hui, B., Zheng, B., Yu, B., Gao, C., Huang,
+C., Lv, C., et al.: Qwen3 technical report. arXiv preprint arXiv:2505.09388 (2025)
+18
+18. Ye, J., Wang, Z., Sun, H., Chandrasegaran, K., Durante, Z., Eyzaguirre, C., Bisk,
+Y., Niebles, J.C., Adeli, E., Fei-Fei, L., Wu, J., Li, M.: Re-thinking temporal search
+for long-form video understanding (2025), https://arxiv.org/abs/2504.02259
+2, 4, 11, 19
+19. Yu, S., Cho, J., Yadav, P., Bansal, M.: Self-chained image-language model for video
+localization and question answering. Advances in Neural Information Processing
+Systems 36, 76749–76771 (2023) 4, 12
+20. Zhai, X., Mustafa, B., Kolesnikov, A., Beyer, L.: Sigmoid loss for language im-
+age pre-training. In: Proceedings of the IEEE/CVF international conference on
+computer vision. pp. 11975–11986 (2023) 17
+21. Zhang, C., Lu, T., Islam, M.M., Wang, Z., Yu, S., Bansal, M., Bertasius, G.:
+A simple llm framework for long-range video question-answering. arXiv preprint
+arXiv:2312.17235 (2023) 3, 12
+22. Zhang,
+S.,
+Yang,
+J.,
+Yin,
+J.,
+Luo,
+Z.,
+Luan,
+J.:
+Q-frame:
+Query-aware
+frame selection and multi-resolution adaptation for video-llms. arXiv preprint
+arXiv:2506.22139 (2025) 4
+
+
+DiffGround
+17
+Table 6: Comparison of different VLMs on NExT-GQA. “Train Data” denotes
+the pre-training dataset, and “IN-1K” denotes ImageNet-1K top-1 accuracy.
+VLM
+Data
+IN-1K # of frames Acc@GQA Acc@QA mIoP mIoU
+CLIP [9]
+LAION-2B
+80.1
+8
+34.2
+78.1
+41.5
+25.7
+SigLIP [20]
+WebLI
+83.1
+8
+33.9
+77.8
+42.0
+25.4
+SigLIP2 [11]
+WebLI
+84.1
+8
+35.9
+78.7
+42.7
+25.5
+6
+Appendix: Ablation Study of Different VLMs
+In Table 6, we analyze the impact of different Vision-Language Model (VLM)
+backbones on our framework. We compare the strongest variants from three
+prominent model families: CLIP (ViT-bigG-14) [9], SigLIP (ViT-SO400M-14)
+[11], and SigLIP2 (ViT-SO400M-16) [11]. The results demonstrate that SigLIP2
+yields the most robust overall performance. Driven by its superior ImageNet
+accuracy (84.1%), it achieves the highest scores across the majority of tasks,
+securing 35.9% Acc@GQA and 42.7% mIoP. While CLIP remains competitive
+in mIoU, SigLIP2’s significant advantages in VQA accuracy and intersection-
+over-prediction make it the optimal choice for our unified query selection and
+semantic difference calculation.
+7
+Appendix: A New Evaluation Metric for Video
+Question Grounding: Acc@GQA (IoU)
+To provide a more rigorous evaluation of temporal precision, we introduce a
+complementary metric, Acc@GQA (IoU). The standard Acc@GQA metric [16]
+relies on Intersection over Prediction (IoP@5). While useful, this metric can be
+misleading: because it measures only precision (containment), an extremely short
+prediction—even a single timestamp—can achieve a perfect score as long as it
+falls within the ground truth. This fails to penalize models that capture only a
+fraction of the full event duration.
+To measure how accurately the predicted segment aligns with the ground
+truth, we define Acc@GQA (IoU) using an Intersection over Union (IoU) thresh-
+old of 0.3. As shown in Table 7, this metric reveals the true impact of our pipeline.
+While adding the Semantic Difference Refinement (SD) causes a slight drop in
+the containment-focused Acc@GQA (IoP) (from 38.5% to 35.0%), it drives a
+substantial improvement in the alignment-focused Acc@GQA (IoU), boosting it
+from 24.5% to 32.0%. This confirms that our refinement module effectively ex-
+pands the prediction to match the true action boundaries, trading "safe," partial
+containment for precise, full-event grounding.
+
+
+18
+Cheng-Han Lee et al.
+Table 7: Complementary evaluation using Acc@GQA (IoU). SD=Semantic
+Diff Refinement.
+Method
+# of frames Acc@GQA (IoP) Acc@GQA (IoU) Acc@QA mIoP mIoU
+Q+AC
+8
+38.5
+24.5
+78.7
+46.1
+19.9
+Q+AC+SD
+8
+35.0
+32.0
+78.7
+42.7
+25.5
+Table 8: Comparison of different MLLMs on NExT-GQA. All methods use
+the same retrieval pipeline; only the MLLM is changed.
+MLLM
+# of frames Acc@GQA Acc@QA mIoP mIoU
+Qwen2.5-VL [1]
+8
+23.7
+74.8
+31.7
+14.8
+Qwen3-VL [17]
+8
+19.9
+72.9
+28.0
+15.5
+GPT-4o
+8
+35.0
+78.7
+42.7
+25.5
+8
+Appendix: Performance of Utilizing Open-source
+MLLMs
+In Table 8, we evaluate the generalization capability of our framework by replac-
+ing GPT-4o with state-of-the-art open-source MLLMs: Qwen2.5-VL-Instruct-
+7B [1] and Qwen3VL-Instruct-8B [17]. While these models achieve reasonable
+VQA performance (e.g., 74.8% Acc@QA for Qwen2.5), they exhibit a signifi-
+cant drop in temporal grounding accuracy, with mIoU scores falling below 16%.
+Qualitative analysis reveals that unlike GPT-4o [4], these smaller open-source
+models struggle to follow the strict formatting constraints of our prompt. They
+frequently hallucinate repetitive or generic index ranges (e.g., consistently out-
+putting "1, 2" or "4, 5") regardless of the video content, likely due to a lack
+of exposure to this specific grounding-via-indexing task during their instruction
+tuning. This highlights that while open-source MLLMs are closing the gap in
+visual reasoning, they still lag behind proprietary models in complex instruction
+following and structured output generation.
+9
+Appendix: Prompt Template Design for Object Cue
+Predictor
+Figures 5 illustrate the prompt templates designed for our Object Cue Predictor.
+For a detailed quantitative analysis of these components, please refer to the
+ablation study in Sec. 4.6.
+10
+Appendix: Computational Cost
+Each MLLM call takes approximately 3 secs. DiffGround requires two online
+MLLM calls plus approximately 1 sec for retrieval/refinement, resulting in about
+7 secs/query online latency. Offline SigLIP2 features and Semantic Diff segments
+are computed once per video and reused across questions.
+
+
+DiffGround
+19
+Fig. 5: Prompt Template Design for Object Cue. The prompt for generating
+object cues, which is adapted from TStar [18].

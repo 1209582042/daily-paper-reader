@@ -48,17 +48,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-10-23</span>
+      <span class="dpr-home-dashboard-kicker">2026-10-24</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 17 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 15 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>4</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-10-23 21:58:59 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-10-24 21:35:50 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,7 +69,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今天共筛选 17 篇文献，精读 6 篇、速读 11 篇，聚焦空间推理与空间理解方向。最值得看的是空间上下文递归细化（Look, Reason, Draw a Region）和用通用编程智能体做空间推理（S-Agent 2.0），两篇均 8.0 分。建议普通读者先读这两篇精读文章，把握“先定位区域、再逐步细化”和“用代码智能体组织空间推理”两条主线。</p>
+<p>今天扫完 15 篇新论文，精读 4 篇、速读 11 篇，重点锁定视频时空事件理解与位置编码两条线。最值得看的是《SENRI》对真实视频“空间—事件”关系的建模，以及《HRoPE》用单应性做相对位置编码的思路，两篇均 8.0 分。普通读者可先读这两篇的引言与图示建立直觉，再按兴趣跟进速读中《Query-adaptive Recurrent Tokenization》等 7 分工作。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -78,12 +78,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">6 篇</strong>
+    <strong class="dpr-home-dashboard-count">4 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Look, Reason, Draw a Region: Recursive Refinement for Spatial Context Prediction">Look, Reason, Draw a Region: Recursive Refinement for Spatial Context Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="S-Agent 2.0: Spatial Reasoning with a General Coding Agent">S-Agent 2.0: Spatial Reasoning with a General Coding Agent</span></li><li><span class="dpr-home-dashboard-paper-title" title="Cache Locally, Recompute Selectively for Streaming Video Understanding">Cache Locally, Recompute Selectively for Streaming Video Understanding</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="SENRI: Understanding the Space-Event Nexus in Real-Life Videos">SENRI: Understanding the Space-Event Nexus in Real-Life Videos</span></li><li><span class="dpr-home-dashboard-paper-title" title="HRoPE: Homography Relative Positional Encoding">HRoPE: Homography Relative Positional Encoding</span></li><li><span class="dpr-home-dashboard-paper-title" title="GazeLens for Efficient Egocentric Video Question Answering with Simple Gaze-Driven Adaptive Token Reduction">GazeLens for Efficient Egocentric Video Question Answering with Simple Gaze-Driven Adaptive Token Reduction</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>6</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>4</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -94,7 +94,7 @@
     <strong class="dpr-home-dashboard-count">11 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="RecallGS: Geometry-Grounded Recall for Online Semantic Gaussian Splatting">RecallGS: Geometry-Grounded Recall for Online Semantic Gaussian Splatting</span></li><li><span class="dpr-home-dashboard-paper-title" title="Point-Level Refinable Semantic Mapping for Spatial Understanding">Point-Level Refinable Semantic Mapping for Spatial Understanding</span></li><li><span class="dpr-home-dashboard-paper-title" title="STRIDE: Evaluating Spatiotemporal Reasoning in Driving Edge Cases">STRIDE: Evaluating Spatiotemporal Reasoning in Driving Edge Cases</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Query-adaptive Recurrent Tokenization">Query-adaptive Recurrent Tokenization</span></li><li><span class="dpr-home-dashboard-paper-title" title="LonGaussian: Tracking Foundation Priors for Long-Context Feedforward Gaussian Reconstruction">LonGaussian: Tracking Foundation Priors for Long-Context Feedforward Gaussian Reconstruction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Persistent Planar Memory for Video World Models">Persistent Planar Memory for Video World Models</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>11</strong></span></div>
 </section>

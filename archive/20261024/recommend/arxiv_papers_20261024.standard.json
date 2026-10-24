@@ -1,0 +1,606 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-10-24T21:32:29.197894+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 4,
+    "deep_cap": 6,
+    "deep_selected": 4,
+    "quick_candidates": 14,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2610.25309v1",
+      "source": "arxiv",
+      "title": "SENRI: Understanding the Space-Event Nexus in Real-Life Videos",
+      "abstract": "Human memories are organized in a way that connects events with their corresponding spatial contexts. An AI assistant should also be able to memorize and recall the nexus of events and spaces. Thus we introduce SENRI, a task that studies this space--event connection in long, continuous real-life egocentric video. It contains six task types in two directions: Event$\\rightarrow$Space, which recovers spatial knowledge from event cues, and Space$\\rightarrow$Event, which retrieves events from regions and trajectories. To evaluate this, we build SENRI-Bench, containing 500 manually annotated multiple-choice questions over 10 uninterrupted self-recorded videos with around 25.3 hours of content. Also, we evaluate three typical long video understanding paradigms: direct perception, evidence seeking, and persistent memory. The task remains challenging across all three paradigms, highlighting substantial room for improvement. Then we show two representative failure modes of existing memory methods and address these evidence gaps with SENRI-Agent, a controller that uses Target-Guided Visual Check (TGVC) to propose local visual check tasks for parallel verifiers and integrate the reports into a working memory to help with reasoning. Built upon existing memory systems, SENRI-Agent improves the performance of existing baselines without modifying their stored memories. We hope SENRI will provide valuable insights into how real-life egocentric understanding should be evaluated, reveal the gaps in existing approaches, and offer a possible direction for improvement.",
+      "authors": [
+        "Kehan Lan",
+        "Kaining Ying",
+        "Henghui Ding",
+        "Kaipeng Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-18T14:41:41+00:00",
+      "link": "https://arxiv.org/pdf/2610.25309v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "spatial-event memory and retrieval across long egocentric video for spatial QA",
+      "llm_evidence_cn": "长视频中空间与事件的记忆及检索问答",
+      "llm_evidence": "长视频中空间与事件的记忆及检索问答",
+      "canonical_evidence": "长视频中空间与事件的记忆及检索问答",
+      "llm_tldr_en": "SENRI introduces a space-event nexus task and benchmark with 500 multiple-choice questions over 25.3 hours of egocentric video, testing event-to-space and space-to-event retrieval in long video understanding paradigms.",
+      "llm_tldr_cn": "人类记忆天然把事件与其发生的空间语境联系起来，但长视频理解缺少对这种空间—事件关联的系统评测。作者提出SENRI任务与SENRI-Bench基准，围绕事件到空间与空间到事件两个方向设计六类问题，覆盖约25.3小时不间断自录第一视角视频与500道人工标注选择题。研究还评测了直接输入等三类长视频理解范式。该基准为长视频中的空间记忆与历史证据问答提供了统一的测试平台。",
+      "llm_tldr": "人类记忆天然把事件与其发生的空间语境联系起来，但长视频理解缺少对这种空间—事件关联的系统评测。作者提出SENRI任务与SENRI-Bench基准，围绕事件到空间与空间到事件两个方向设计六类问题，覆盖约25.3小时不间断自录第一视角视频与500道人工标注选择题。研究还评测了直接输入等三类长视频理解范式。该基准为长视频中的空间记忆与历史证据问答提供了统一的测试平台。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Maintain object identity, geometric consistency, and spatial relationships across viewpoints and temporal windows, and retrieve temporally grounded historical or out of view evidence for spatial question answering.",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2610.28284v1",
+      "source": "arxiv",
+      "title": "HRoPE: Homography Relative Positional Encoding",
+      "abstract": "Geometric Relative Positional Encoding has become the primary mechanism for injecting spatial inductive biases into multi-view transformers. Existing designs condition attention on camera-level frustums or ray-marched depth, associating cross-view tokens through the sensor geometry. Such sensor-centric formulations, however, describe only where a token is observed from, leaving the rich surface geometry of the scene region depicted by the token. In this paper, we advocate a shift toward surface-aware positional encoding that explicitly grounds patch tokens in the geometry of physical surfaces. We introduce HRoPE, which represents the local geometry of each patch as a slanted 3D plane, following the slanted support-window assumption of classical multi-view stereo. We inject token-level, plane-induced homographies into attention as relative transformations. This equips the transformer with a geometric prior for rectifying perspective distortions and aligning patch features across viewpoints. Our encoding requires no ground-truth geometry: the plane parameters can be predicted end-to-end under a view-synthesis objective alone, or derived from foundation models. Extensive experiments on RealEstate10K, CO3Dv2, and DL3DV show that our best variant of HRoPE consistently outperforms the evaluated geometric positional encodings for novel view synthesis. Extensive ablations and analysis show the effectiveness of the proposed encoding. Please refer to our project page at: https://gaohchen.github.io/HRoPE",
+      "authors": [
+        "Huachen Gao",
+        "Yang Yang",
+        "Xiaoqian Liang",
+        "Xingyu Chen",
+        "Youjia Zhang",
+        "Qi Zhang",
+        "Baorui Ma",
+        "Anpei Chen",
+        "Wei Yang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-20T14:36:51+00:00",
+      "link": "https://arxiv.org/pdf/2610.28284v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Surface-aware positional encoding grounds patch tokens in 3D surface geometry for multi-view transformers",
+      "llm_evidence_cn": "以表面感知位置编码将图像块令牌锚定到三维表面几何",
+      "llm_evidence": "以表面感知位置编码将图像块令牌锚定到三维表面几何",
+      "canonical_evidence": "以表面感知位置编码将图像块令牌锚定到三维表面几何",
+      "llm_tldr_en": "HRoPE replaces sensor-centric positional encodings with surface-aware encoding that models each patch as a slanted 3D plane, injecting richer scene geometry into multi-view transformer attention.",
+      "llm_tldr_cn": "针对多视图Transformer中几何位置编码只描述相机观测关系、忽略图像块所对应物理表面几何的问题，本文提出HRoPE。该方法将每个图像块的局部几何表示为倾斜三维平面，并把表面感知的相对位置信息注入注意力计算。这样跨视图令牌关联不再仅依赖相机视锥，而能利用场景表面几何，为多视图三维感知提供更强的空间归纳偏置。其设计借鉴多视图立体中的倾斜支撑窗假设，使几何编码更贴近真实场景结构。",
+      "llm_tldr": "针对多视图Transformer中几何位置编码只描述相机观测关系、忽略图像块所对应物理表面几何的问题，本文提出HRoPE。该方法将每个图像块的局部几何表示为倾斜三维平面，并把表面感知的相对位置信息注入注意力计算。这样跨视图令牌关联不再仅依赖相机视锥，而能利用场景表面几何，为多视图三维感知提供更强的空间归纳偏置。其设计借鉴多视图立体中的倾斜支撑窗假设，使几何编码更贴近真实场景结构。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "geometric representations",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2610.28502v1",
+      "source": "arxiv",
+      "title": "GazeLens for Efficient Egocentric Video Question Answering with Simple Gaze-Driven Adaptive Token Reduction",
+      "abstract": "Smart glasses can help users understand their activities and surroundings, but small vision-language models must preserve useful evidence within limited computation. This is difficult because redundant frames consume the visual budget, while aggressive spatial compression can discard relevant details. Although gaze identifies the wearer's focus, the question may require evidence from the surrounding scene. To address these constraints, we propose GazeLens, which combines frame selection with gaze- and question-guided token reduction. First, HOG transitions and image sharpness select frames before visual encoding. For each selected frame, Gaussian pooling then forms gaze-focused and complementary summaries. Because their relevance depends on the question, a lightweight gate blends them into a primary token. Together with a global scene token, this retains both focused and contextual summaries within two tokens per frame. On StreamGaze, GazeLens achieves higher macro and micro accuracy than the evaluated full-grid and token-reduction baselines, with lower input-forward FLOPs than the shared-backbone token-reduction baselines.",
+      "authors": [
+        "Trong-Thang Pham",
+        "Anh Nguyen",
+        "Hien Van Nguyen",
+        "Ngan Le"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-20T16:43:06+00:00",
+      "link": "https://arxiv.org/pdf/2610.28502v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "frame selection plus gaze and question guided token reduction for bounded video evidence",
+      "llm_evidence_cn": "结合帧选择与注视及问题引导的令牌压缩以保留有限视频证据",
+      "llm_evidence": "结合帧选择与注视及问题引导的令牌压缩以保留有限视频证据",
+      "canonical_evidence": "结合帧选择与注视及问题引导的令牌压缩以保留有限视频证据",
+      "llm_tldr_en": "GazeLens combines frame selection with gaze- and question-guided token reduction so small VLMs keep useful evidence under tight computation in egocentric video QA.",
+      "llm_tldr_cn": "智能眼镜上的小型视觉语言模型计算有限，冗余帧占用视觉预算而激进压缩又会丢失细节。作者提出GazeLens，先用HOG变化与图像清晰度选帧，再对每帧以高斯池化生成注视聚焦与互补摘要，并结合问题引导令牌削减。该在线帧与令牌选择策略在有限预算下保留有用证据，提升了自我中心视频问答的效率与准确性，契合有界视频记忆的构建思路。",
+      "llm_tldr": "智能眼镜上的小型视觉语言模型计算有限，冗余帧占用视觉预算而激进压缩又会丢失细节。作者提出GazeLens，先用HOG变化与图像清晰度选帧，再对每帧以高斯池化生成注视聚焦与互补摘要，并结合问题引导令牌削减。该在线帧与令牌选择策略在有限预算下保留有用证据，提升了自我中心视频问答的效率与准确性，契合有界视频记忆的构建思路。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Build bounded causal memory for long and streaming videos through query agnostic online frame or token selection, compression, retention, eviction, and question conditioned retrieval, including memory policies learned from downstream question answering rewards.",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2610.29768v1",
+      "source": "arxiv",
+      "title": "UniRAP: Towards Unified Part-level Physical Affordance Reasoning and Actionable Perception",
+      "abstract": "Vision-language perception has achieved impressive progress in aligning natural language with visual observations, yet grounding high-level semantics into part-level physical interaction remains challenging. To address this gap, we propose UniRAP, a unified model for inferring part-level physical affordances and mapping language instructions to actionable geometric representations. UniRAP formulates this problem as a conditional multimodal generation task, integrating visual inputs, textual instructions, and optional prompts into a shared spatiotemporal representation space through a unified interface token mechanism. To predict executable contact geometry, we introduce a Unified Affordance Decoder (UAD), which jointly performs object detection, part-level affordance segmentation, and 4-DoF interaction pose estimation by leveraging intermediate segmentation features. In addition, we propose a curriculum-based transfer training strategy that progressively adapts the model from general visual parsing to interaction-aware perception, improving data efficiency under limited textual annotations. Experiments show that UniRAP achieves state-of-the-art performance on referring expression segmentation, affordance grounding, and interaction pose estimation, while maintaining strong spatiotemporal consistency in dynamic video scenarios. These results demonstrate the effectiveness of UniRAP as a unified perception framework for language-guided physical manipulation.",
+      "authors": [
+        "Linfei Li",
+        "Ruining Hu",
+        "Lin Zhang",
+        "Zhong Wang",
+        "Fengyi Zhang",
+        "Ying Shen",
+        "Binqiang Wang",
+        "Xin Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-21T14:02:25+00:00",
+      "link": "https://arxiv.org/pdf/2610.29768v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Unified vision-language model maps instructions to actionable geometric representations",
+      "llm_evidence_cn": "统一视觉语言模型将指令映射为可操作几何表示",
+      "llm_evidence": "统一视觉语言模型将指令映射为可操作几何表示",
+      "canonical_evidence": "统一视觉语言模型将指令映射为可操作几何表示",
+      "llm_tldr_en": "UniRAP addresses part-level physical affordance reasoning by unifying visual inputs, language instructions, and prompts in a shared spatiotemporal space, decoding executable contact geometry through a unified affordance decoder.",
+      "llm_tldr_cn": "针对视觉语言感知虽能对齐语义却难以落地到部件级物理交互的问题，本文提出统一模型UniRAP，将视觉输入、文本指令和可选提示映射到共享时空表示。模型通过统一接口令牌与统一可供性解码器联合预测部件级可供性和可执行接触几何。该工作把高层语言语义与可操作几何表示连接起来，为具身感知和动作生成提供统一框架。",
+      "llm_tldr": "针对视觉语言感知虽能对齐语义却难以落地到部件级物理交互的问题，本文提出统一模型UniRAP，将视觉输入、文本指令和可选提示映射到共享时空表示。模型通过统一接口令牌与统一可供性解码器联合预测部件级可供性和可执行接触几何。该工作把高层语言语义与可操作几何表示连接起来，为具身感知和动作生成提供统一框架。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "vision-language models",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2610.22957v1",
+      "source": "arxiv",
+      "title": "Query-adaptive Recurrent Tokenization",
+      "abstract": "Visual information worth extracting from an image and the token budget it warrants depend on the text query. Yet modern vision and vision-language models largely encode images independently of the query and allocate a fixed visual token budget to every input. We introduce the Query-Adaptive Recurrent Tokenizer (QART), a backbone-agnostic module that makes visual representations both query-steerable and budget-adaptive. QART steers the visual representation toward query-relevant evidence while adapting its token budget to the amount of information required. Its key principle is simple. Additional tokens are allocated until the visual features relevant to the query are represented with sufficient fidelity. Starting from frozen encoder features, QART recurrently constructs a compact representation and uses reconstruction quality over the query-relevant visual support to control token allocation. On Visual7W and VQAv2, QART achieves 81.96% and 76.37% accuracy using only about 29 visual tokens, reducing token counts by 20-25x relative to dense VLM inputs. It further reaches 92.0% P@1 on CORE and 36.3% PR-AUC on PODS, outperforming SteerViT on PODS by 8.4%. Together, these results show that visual representations need not be fixed in either content or capacity and can instead adapt to what each query requires.",
+      "authors": [
+        "Bavesh Balaji",
+        "Pranav Gopinath",
+        "Pouya Sadeghi",
+        "Sirisha Rambhatla"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-16T05:28:20+00:00",
+      "link": "https://arxiv.org/pdf/2610.22957v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "query-steerable budget-adaptive visual token compression and allocation",
+      "llm_evidence_cn": "可被查询引导且自适应预算的视觉令牌压缩与分配",
+      "llm_evidence": "可被查询引导且自适应预算的视觉令牌压缩与分配",
+      "canonical_evidence": "可被查询引导且自适应预算的视觉令牌压缩与分配",
+      "llm_tldr_en": "QART is a backbone-agnostic module that makes visual tokens query-steerable and budget-adaptive, allocating tokens until query-relevant evidence is faithfully represented.",
+      "llm_tldr_cn": "现有视觉与视觉语言模型大多与查询无关地编码图像并固定令牌预算，导致表征与需求不匹配。作者提出查询自适应递归分词器QART，从冻结编码器特征出发递归构建紧凑表征，按查询相关证据所需的保真度动态分配令牌预算。该模块可插拔于不同骨干，在压缩视觉冗余的同时保留问题相关证据，为问题条件化的令牌选择与压缩提供了通用方法。",
+      "llm_tldr": "现有视觉与视觉语言模型大多与查询无关地编码图像并固定令牌预算，导致表征与需求不匹配。作者提出查询自适应递归分词器QART，从冻结编码器特征出发递归构建紧凑表征，按查询相关证据所需的保真度动态分配令牌预算。该模块可插拔于不同骨干，在压缩视觉冗余的同时保留问题相关证据，为问题条件化的令牌选择与压缩提供了通用方法。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Build bounded causal memory for long and streaming videos through query agnostic online frame or token selection, compression, retention, eviction, and question conditioned retrieval, including memory policies learned from downstream question answering rewards.",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.23324v1",
+      "source": "arxiv",
+      "title": "CatchUp: Depth-Aware Re-Admission of Visual Tokens for Efficient Large Vision-Language Models",
+      "abstract": "Large Vision-Language Models (LVLMs) repeatedly process hundreds of visual tokens across decoder layers, incurring substantial computation and memory costs. Existing inference-time visual token pruning methods often irreversibly remove low-ranked tokens, although the set of visual tokens receiving high query-conditioned attention can change across decoder depth. Recoverable routing preserves skipped tokens for later reconsideration, but re-admits them with stale representations after bypassing intermediate transformations. We further find that replacing stale re-admitted states with their current-depth oracle states from a full-token reference trajectory substantially improves grounding performance. We therefore propose CatchUp, a training-free framework for depth-aware visual-token re-admission. CatchUp repeatedly re-evaluates query-conditioned visual relevance, processes only selected visual tokens through each decoder interval, and preserves deferred tokens for later re-admission. Upon re-admission, CatchUp approximates missed representation evolution using reference-to-current transition signals from semantically and spatially related visual tokens. Across three referring-expression grounding datasets and six multimodal benchmarks, CatchUp achieves the highest average relative retention in both benchmark groups at 64-, 128-, and 192-token budgets. At a 64-token budget with 88.9% fewer active visual tokens, CatchUp retains 92.17% of the full model's performance on average across six multimodal benchmarks while reducing end-to-end latency by 8.0%. Code is available at https://github.com/pej0918/CatchUp",
+      "authors": [
+        "Eunju Park",
+        "Uiwon Hwang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-16T11:28:46+00:00",
+      "link": "https://arxiv.org/pdf/2610.23324v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "depth-aware visual token retention and re-admission in large vision-language models",
+      "llm_evidence_cn": "大视觉语言模型中深度感知的视觉token保留与再接纳",
+      "llm_evidence": "大视觉语言模型中深度感知的视觉token保留与再接纳",
+      "canonical_evidence": "大视觉语言模型中深度感知的视觉token保留与再接纳",
+      "llm_tldr_en": "CatchUp re-admits pruned visual tokens in large vision-language models with depth-aware current-depth states instead of stale ones, improving grounding while cutting computation.",
+      "llm_tldr_cn": "大视觉语言模型在每一层重复处理数百个视觉token，计算与显存开销很大，而现有推理期剪枝往往不可逆地丢弃低秩token。作者发现受查询关注的高分token集合会随解码深度变化，且可恢复路由在再接纳时使用的是陈旧表示。为此提出CatchUp，以深度感知方式用当前深度状态重新接纳被跳过的视觉token。实验表明该策略在降低计算的同时显著提升视觉定位与理解性能，为高效的视觉token保留与再接纳提供了新思路。",
+      "llm_tldr": "大视觉语言模型在每一层重复处理数百个视觉token，计算与显存开销很大，而现有推理期剪枝往往不可逆地丢弃低秩token。作者发现受查询关注的高分token集合会随解码深度变化，且可恢复路由在再接纳时使用的是陈旧表示。为此提出CatchUp，以深度感知方式用当前深度状态重新接纳被跳过的视觉token。实验表明该策略在降低计算的同时显著提升视觉定位与理解性能，为高效的视觉token保留与再接纳提供了新思路。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Build bounded causal memory for long and streaming videos through query agnostic online frame or token selection, compression, retention, eviction, and question conditioned retrieval, including memory policies learned from downstream question answering rewards.",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2610.23250v1",
+      "source": "arxiv",
+      "title": "LonGaussian: Tracking Foundation Priors for Long-Context Feedforward Gaussian Reconstruction",
+      "abstract": "Reconstructing high-quality, renderable 3D scenes from long videos is essential for robotic perception and embodied intelligence. Many feed-forward Gaussian reconstruction methods rapidly predict 3D scenes from a small set of images, but extending them to longer sequences presents two bottlenecks: jointly processing all views increases GPU memory requirements, while accumulating pixel-aligned predictions redundantly represents the same surfaces and increases storage and rendering costs. We present LonGaussian, a streaming feed-forward framework that reconstructs compact, globally renderable Gaussian scenes from long image sequences with known intrinsics and unknown camera poses. Built on a pretrained streaming 3D reconstruction backbone, LonGaussian decodes long-context geometric features into dense Gaussians. Within each chunk, multi-frame point tracks link repeated observations of the same surface and guide a learned merger to consolidate the corresponding Gaussian predictions. Rendered-depth consistency filtering further suppresses Gaussians from other chunks that incorrectly occlude locally reconstructed surfaces. On DL3DV and RealEstate10K benchmarks, LonGaussian improves novel-view rendering quality while using substantially fewer Gaussians than the evaluated feed-forward baselines.",
+      "authors": [
+        "Zhoufeng Xie",
+        "Guanjun Wu",
+        "Shuai Zhang",
+        "Xinggang Wang",
+        "Wenyu Liu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-16T10:24:17+00:00",
+      "link": "https://arxiv.org/pdf/2610.23250v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "streaming feed-forward Gaussian reconstruction from long image sequences with bounded memory",
+      "llm_evidence_cn": "面向长图像序列的流式前馈高斯重建，控制显存与冗余",
+      "llm_evidence": "面向长图像序列的流式前馈高斯重建，控制显存与冗余",
+      "canonical_evidence": "面向长图像序列的流式前馈高斯重建，控制显存与冗余",
+      "llm_tldr_en": "LonGaussian is a streaming feed-forward framework that reconstructs compact, globally renderable Gaussian scenes from long videos, avoiding full-view joint processing and redundant accumulation.",
+      "llm_tldr_cn": "从长视频重建高质量可渲染的三维场景对机器人感知至关重要，但把前馈高斯方法扩展到长序列面临显存开销与重复表示两大瓶颈。作者提出LonGaussian，一个流式前馈框架，在已知内参、未知位姿条件下从长图像序列重建紧凑且可全局渲染的高斯场景，并借助跟踪基础先验抑制冗余累积。实验表明该方法在长序列上保持紧凑表示与全局一致渲染，显著降低存储与渲染成本。这为长时程流式三维重建提供了可扩展方案。",
+      "llm_tldr": "从长视频重建高质量可渲染的三维场景对机器人感知至关重要，但把前馈高斯方法扩展到长序列面临显存开销与重复表示两大瓶颈。作者提出LonGaussian，一个流式前馈框架，在已知内参、未知位姿条件下从长图像序列重建紧凑且可全局渲染的高斯场景，并借助跟踪基础先验抑制冗余累积。实验表明该方法在长序列上保持紧凑表示与全局一致渲染，显著降低存储与渲染成本。这为长时程流式三维重建提供了可扩展方案。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "streaming video",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.24102v1",
+      "source": "arxiv",
+      "title": "Hierarchical and Query-Aware Visual Token Pruning for High-Resolution LVLMs",
+      "abstract": "High-resolution Large Vision-Language Models (LVLMs) preserve critical, fine-grained visual details by encoding a global thumbnail alongside multiple local crops. However, the resulting thousands of vision tokens introduce severe computational bottlenecks during Large Language Model (LLM) inference. Existing token pruning methods rely primarily on query-agnostic visual saliency, while current query-aware approaches either operate at a coarse crop-level resolution or compute token relevance too late, after vision tokens have already entered the heavy LLM layers. To address this, we propose a training-free, hierarchical token pruning framework that utilizes query guidance prior to executing any LLM blocks. Our top-down hierarchy first operates at the instance-level, dynamically scaling the vision token retention ratio of each sample based on its visual complexity. Next, at the crop-level, we distribute this sample budget across local crops using sentence-level cross-modal similarity. Finally, at the token-level, we exploit projected vision tokens alongside textual query token embeddings in the shared space to measure fine-grained alignment, applying a text-debiasing normalization to produce high-fidelity query scores. These query-guided budgets and scores are fused with local and global visual saliency metrics to select the most critical vision tokens. Extensive experiments on LLaVA-NeXT-7B demonstrate that our plug-and-play framework retains 98.0% and 94.8% of unpruned performance at 25% and 10% vision token retention, respectively. Notably, at 25% retention, our method delivers a 2.0x inference throughput speedup and even surpasses the unpruned baseline on POPE by 0.7 points.",
+      "authors": [
+        "Luther Wei",
+        "Ling Zou",
+        "Kang-Yang Huang",
+        "Yu-Syuan Xu",
+        "Wen-Huang Cheng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-16T18:32:18+00:00",
+      "link": "https://arxiv.org/pdf/2610.24102v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Query-aware hierarchical token pruning compresses high-resolution LVLM visual tokens",
+      "llm_evidence_cn": "查询感知的分层令牌剪枝压缩高分辨率LVLM视觉令牌",
+      "llm_evidence": "查询感知的分层令牌剪枝压缩高分辨率LVLM视觉令牌",
+      "canonical_evidence": "查询感知的分层令牌剪枝压缩高分辨率LVLM视觉令牌",
+      "llm_tldr_en": "Proposes a training-free hierarchical token pruning framework that uses query guidance before LLM layers to remove redundant high-resolution vision tokens while preserving question-relevant details.",
+      "llm_tldr_cn": "针对高分辨率大视觉语言模型因全局缩略图与局部裁剪产生数千视觉令牌、导致推理瓶颈的问题，本文提出免训练的分层令牌剪枝框架。该方法在进入大语言模型层之前引入查询引导，自上而下先做粗粒度裁剪再细化令牌相关性，从而保留与问题相关的细节并压缩冗余视觉令牌。该工作将查询感知的令牌选择前移，为高效视觉语言推理提供可迁移的压缩策略。",
+      "llm_tldr": "针对高分辨率大视觉语言模型因全局缩略图与局部裁剪产生数千视觉令牌、导致推理瓶颈的问题，本文提出免训练的分层令牌剪枝框架。该方法在进入大语言模型层之前引入查询引导，自上而下先做粗粒度裁剪再细化令牌相关性，从而保留与问题相关的细节并压缩冗余视觉令牌。该工作将查询感知的令牌选择前移，为高效视觉语言推理提供可迁移的压缩策略。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Build bounded causal memory for long and streaming videos through query agnostic online frame or token selection, compression, retention, eviction, and question conditioned retrieval, including memory policies learned from downstream question answering rewards.",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2610.23795v1",
+      "source": "arxiv",
+      "title": "Persistent Planar Memory for Video World Models",
+      "abstract": "Video world models that generate and explore environments at scale need a persistent 3D memory of what they have produced. Plane primitives offer a natural candidate: a compact set of oriented planes captures the dominant structural elements (e.g., walls, floors, facades) of indoor and outdoor scenes, while requiring only 7 parameters per primitive. We present PPMem, a video world model that adopts plane primitives as its persistent 3D memory. PPMem augments a video diffusion transformer with a planar prediction head and a Depth Token Fusion (DTF) module: each autoregressive chunk jointly produces RGB video and planar geometry, which merges into a persistent plane memory that conditions subsequent chunks via rendered depth. The resulting memory is three orders of magnitude more compact than per-pixel point clouds (~100K primitives, 5MB for a full scene), geometrically explicit (metric depth, normals, exportable surfaces), cross-view consistent (jointly predicted by the shared backbone), and adaptive (refined by the merging procedure as generation proceeds). On DL3DV and RealEstate10K, PPMem outperforms prior 3D-grounded world models in video quality while jointly producing metric-scale depth, surface normals, and exportable planar geometry, sustaining coherence across hundreds of frames under large viewpoint changes. Project page: https://hyzcluster.github.io/ppmem.",
+      "authors": [
+        "Yuze He",
+        "Bin Tan",
+        "Zelin Gao",
+        "Yujun Shen",
+        "Yong-Jin Liu",
+        "Nan Xue",
+        "Yinghao Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-16T17:21:54+00:00",
+      "link": "https://arxiv.org/pdf/2610.23795v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "persistent 3D planar memory conditioning future video chunks",
+      "llm_evidence_cn": "持久化平面三维记忆条件化后续视频片段",
+      "llm_evidence": "持久化平面三维记忆条件化后续视频片段",
+      "canonical_evidence": "持久化平面三维记忆条件化后续视频片段",
+      "llm_tldr_en": "PPMem equips a video diffusion world model with a persistent 3D plane-primitive memory and a depth token fusion module so generated chunks stay geometrically consistent with what was produced before.",
+      "llm_tldr_cn": "视频世界模型在生成与探索大规模环境时需要持久的三维记忆，但现有方法缺乏紧凑而几何一致的表征。作者提出PPMem，以每图元仅七个参数的定向平面作为持久三维记忆，并为视频扩散Transformer增加平面预测头与深度标记融合模块，使每个自回归片段同时生成RGB视频与平面几何。实验表明该记忆比稠密表征小三个数量级，同时保持跨片段的空间与几何一致性。",
+      "llm_tldr": "视频世界模型在生成与探索大规模环境时需要持久的三维记忆，但现有方法缺乏紧凑而几何一致的表征。作者提出PPMem，以每图元仅七个参数的定向平面作为持久三维记忆，并为视频扩散Transformer增加平面预测头与深度标记融合模块，使每个自回归片段同时生成RGB视频与平面几何。实验表明该记忆比稠密表征小三个数量级，同时保持跨片段的空间与几何一致性。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial memory",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.25570v1",
+      "source": "arxiv",
+      "title": "DiffGround: Semantic Difference-Guided Zero-Shot Video Question Grounding",
+      "abstract": "Video Question Grounding (VideoQG) requires both accurate question answering and precise temporal localization. Existing supervised methods rely on costly temporal annotations, while existing zero-shot approaches are primarily designed for Video Question Answering (VQA) and are not optimized for temporal grounding. We propose DiffGround, an action-driven zero-shot framework built upon frozen Multimodal Large Language Models (MLLMs). Our framework first predicts an answer-relevant action cue that transforms the input question into an explicit semantic target for grounding. Action Cue converts a reasoningoriented question into an action-centric retrieval query. Guided by the action cue, a Vision-Language Model (VLM) efficiently selects informative keyframes for reasoning. Finally, we introduce Semantic Diff Refinement, a training-free temporal refinement method that exploits semantic differences between neighboring SigLIP2 embeddings to recover complete action segments from sparse predictions. Extensive experiments on NExT-GQA and STAR show that DiffGround consistently outperforms existing zero-shot and supervised methods, establishing a new state of the art for Video Question Grounding.",
+      "authors": [
+        "Cheng-Han Lee",
+        "Amir Salimi",
+        "Hsiang-Wei Huang",
+        "Che-Chun Su",
+        "Min Sun",
+        "Cheng-Hao Kuo"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-18T22:17:03+00:00",
+      "link": "https://arxiv.org/pdf/2610.25570v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "VLM selects informative keyframes guided by an action-cue retrieval query",
+      "llm_evidence_cn": "视觉-语言模型依据动作线索检索查询选取关键帧",
+      "llm_evidence": "视觉-语言模型依据动作线索检索查询选取关键帧",
+      "canonical_evidence": "视觉-语言模型依据动作线索检索查询选取关键帧",
+      "llm_tldr_en": "DiffGround is a zero-shot, action-driven framework on frozen MLLMs that converts a reasoning question into an action-centric retrieval query to select informative keyframes and temporally ground answers without temporal annotations.",
+      "llm_tldr_cn": "该文针对视频问题定位需精确时序定位却依赖昂贵标注、现有零样本方法偏重问答而弱于定位的问题，提出DiffGround框架，在冻结多模态大模型上将推理式问题转为以动作为中心的检索查询，引导视觉-语言模型选取关键帧完成定位。实验表明其在无时序标注下兼顾问答准确性与时序定位精度。",
+      "llm_tldr": "该文针对视频问题定位需精确时序定位却依赖昂贵标注、现有零样本方法偏重问答而弱于定位的问题，提出DiffGround框架，在冻结多模态大模型上将推理式问题转为以动作为中心的检索查询，引导视觉-语言模型选取关键帧完成定位。实验表明其在无时序标注下兼顾问答准确性与时序定位精度。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Build bounded causal memory for long and streaming videos through query agnostic online frame or token selection, compression, retention, eviction, and question conditioned retrieval, including memory policies learned from downstream question answering rewards.",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2610.25090v1",
+      "source": "arxiv",
+      "title": "Think Visually Across Space and Time: Grounded Reasoning for Video Segmentation",
+      "abstract": "Video Reasoning Segmentation (VRS) requires a model to identify an implicitly described target and predict its pixel-level mask trajectory, while resolving the spatial relations and temporal events that determine the answer. Text-only Chain-of-Thought (CoT) can explain a target choice without making the underlying visual references explicit, leaving a \\emph{video reference gap} between linguistic inference and the evidence distributed across frames. We introduce \\textbf{Temporal Chain of Video Primitives (TCoVP)}, a spatiotemporally grounded form of Video CoT that organizes query-relevant observations into a chronological reasoning chain. Each primitive associates an entity reference with temporal support and timestamped spatial evidence, and the chain interleaves these references with language to guide reasoning about which entity is relevant, when the queried event holds, and where its evidence appears. The selected target primitives then provide box prompts and temporal support for video mask prediction. We construct TCoVP-SFT-15k and TCoVP-RL-13k to learn this representation through supervised fine-tuning and chain-aligned reinforcement learning. Extensive experiments across five VRS benchmarks and three model backbones demonstrate the strong performance of TCoVP, highlighting the effectiveness of organizing spatial and temporal evidence within the reasoning process. All models and code will be publicly released. Project page: \\url{https://victor-wjw.github.io/TCoVP/}",
+      "authors": [
+        "Junwei Wen",
+        "Deshui Miao",
+        "Guangming Lu",
+        "Ming-Hsuan Yang",
+        "Xin Li",
+        "Wenjie Pei"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-18T07:54:07+00:00",
+      "link": "https://arxiv.org/pdf/2610.25090v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "entity references bound to temporal support and timestamped spatial evidence across frames",
+      "llm_evidence_cn": "为实体引用绑定时间支撑与带时间戳的空间证据",
+      "llm_evidence": "为实体引用绑定时间支撑与带时间戳的空间证据",
+      "canonical_evidence": "为实体引用绑定时间支撑与带时间戳的空间证据",
+      "llm_tldr_en": "TCoVP introduces a spatiotemporally grounded video chain-of-thought that organizes query-relevant observations into a chronological chain of primitives, each linking an entity reference to temporal support and timestamped spatial evidence.",
+      "llm_tldr_cn": "该文指出文本链式思维无法显式呈现视觉参照，导致语言推理与跨帧证据之间存在视频参照鸿沟，提出时间化视频基元链TCoVP，将查询相关观测组织为按时间排序的推理链，每个基元为实体引用绑定时间支撑与带时间戳的空间证据。该表示弥合了推理与帧间证据的差距，提升了视频推理分割中空间关系与时序事件的解析能力。",
+      "llm_tldr": "该文指出文本链式思维无法显式呈现视觉参照，导致语言推理与跨帧证据之间存在视频参照鸿沟，提出时间化视频基元链TCoVP，将查询相关观测组织为按时间排序的推理链，每个基元为实体引用绑定时间支撑与带时间戳的空间证据。该表示弥合了推理与帧间证据的差距，提升了视频推理分割中空间关系与时序事件的解析能力。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Maintain object identity, geometric consistency, and spatial relationships across viewpoints and temporal windows, and retrieve temporally grounded historical or out of view evidence for spatial question answering.",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.26410v1",
+      "source": "arxiv",
+      "title": "Policy-Adaptive Credit Assignment for Spatial Reasoning with Verifiable Rewards",
+      "abstract": "Image-based spatial reasoning requires perception, decomposition, and inference, but the stage that limits accuracy can change during training. Answer-level rewards neither localize failures to individual stages nor provide discriminative group-relative feedback when all rollouts receive the same reward. Process supervision provides intermediate feedback, but fixed weights cannot adapt reward allocation to these changing bottlenecks. To address this gap, we propose CALIPER, an adaptive process-reward framework supported by SpatialTrace, a corpus of stage-decomposed spatial reasoning traces. CALIPER jointly estimates the associations between stage-wise reference coverage and answer correctness through within-group ridge regression, using these associations as utility proxies to gradually update reward weights. The resulting process reward supervises all rollout groups, including uniformly failing ones. Because utility estimates can become unreliable when answer-discriminative groups are scarce, a closed-loop harness monitors estimator reliability and validation performance to guide checkpoint rollback, rollout diversification, and early stopping. Extensive experiments across eight benchmarks and three backbones show that CALIPER achieves the highest mean under both one-shot and harness training, with consistent gains over fixed allocation across RL optimizers. Further analyses confirm the benefits of adaptive reward allocation and harness control, with favorable scaling in model/data size.",
+      "authors": [
+        "Hailiang Yang",
+        "Shengchao Chen"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-19T13:45:42+00:00",
+      "link": "https://arxiv.org/pdf/2610.26410v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "adaptive process rewards for image-based spatial reasoning stages",
+      "llm_evidence_cn": "面向图像空间推理各阶段的自适应过程奖励",
+      "llm_evidence": "面向图像空间推理各阶段的自适应过程奖励",
+      "canonical_evidence": "面向图像空间推理各阶段的自适应过程奖励",
+      "llm_tldr_en": "CALIPER assigns adaptive process rewards across spatial reasoning stages using within-group ridge regression over stage-wise reference coverage, outperforming fixed-weight process supervision.",
+      "llm_tldr_cn": "图像空间推理包含感知、分解与推断多个阶段，但限制准确率的瓶颈阶段会随训练变化，答案级奖励无法定位失败阶段，固定权重的过程监督也难以自适应。作者提出CALIPER自适应过程奖励框架，并构建阶段分解的SpatialTrace语料，用组内岭回归估计各阶段参考覆盖与答案正确性的关联以动态分配奖励。实验显示该策略比固定权重过程监督更有效地提升空间推理准确率。这为多阶段空间推理的强化训练提供了更精细的信用分配方式。",
+      "llm_tldr": "图像空间推理包含感知、分解与推断多个阶段，但限制准确率的瓶颈阶段会随训练变化，答案级奖励无法定位失败阶段，固定权重的过程监督也难以自适应。作者提出CALIPER自适应过程奖励框架，并构建阶段分解的SpatialTrace语料，用组内岭回归估计各阶段参考覆盖与答案正确性的关联以动态分配奖励。实验显示该策略比固定权重过程监督更有效地提升空间推理准确率。这为多阶段空间推理的强化训练提供了更精细的信用分配方式。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "spatial reasoning",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2610.25395v1",
+      "source": "arxiv",
+      "title": "A 3D-Driven Framework for Moving-Camera Perspective-to-360° Video Generation",
+      "abstract": "Turning a moving-camera perspective video into a 360° video requires more than just generating content outside the input frame: observations revealed over time must be preserved, unseen regions completed, and the resulting scene kept consistent as the camera viewpoint changes. Existing methods assign these different requirements to a single conditional video model, requiring them to be jointly learned from panoramic video data. We instead present a modular, 3D-driven framework that distributes these three responsibilities across specialized components, all connected through a shared scene representation. Input observations are reconstructed explicitly in 3D, while a pretrained panoramic image model completes unobserved content from a selected panoramic render. This generated content is lifted into the shared 3D scene, where it remains spatially anchored across camera viewpoints. Without requiring any additional panoramic-video training, our framework achieves state-of-the-art input-view fidelity, perceptual quality, and geometric consistency on a static-scene subset of the Argus evaluation set. These results support our decomposed, 3D-driven formulation as a promising alternative to direct video generation in this setting.",
+      "authors": [
+        "Michael Wakeham",
+        "Mrinmoy Kumar Das",
+        "Wenqi Wang",
+        "Ayush Tewari",
+        "Boqing Gong",
+        "Deepti Ghadiyaram"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-18T16:47:27+00:00",
+      "link": "https://arxiv.org/pdf/2610.25395v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "3D-driven modular framework fuses perspective video with a shared scene representation",
+      "llm_evidence_cn": "三维驱动模块化框架将透视视频与共享场景表示融合",
+      "llm_evidence": "三维驱动模块化框架将透视视频与共享场景表示融合",
+      "canonical_evidence": "三维驱动模块化框架将透视视频与共享场景表示融合",
+      "llm_tldr_en": "Presents a modular 3D-driven framework for converting moving-camera perspective video into 360° video by explicitly reconstructing observations and sharing a scene representation across completion and consistency modules.",
+      "llm_tldr_cn": "针对移动相机透视视频转360度视频时需保留已观测内容、补全未见区域并保持视角变化下场景一致的问题，本文提出模块化三维驱动框架。该方法将输入观测显式重建到共享三维场景表示中，再由全景图像模型补全未观测内容，并由专门组件维持跨视角一致性。该框架把生成任务分解为可解释的几何与图像子问题，为视频外推和视角一致生成提供新思路。",
+      "llm_tldr": "针对移动相机透视视频转360度视频时需保留已观测内容、补全未见区域并保持视角变化下场景一致的问题，本文提出模块化三维驱动框架。该方法将输入观测显式重建到共享三维场景表示中，再由全景图像模型补全未观测内容，并由专门组件维持跨视角一致性。该框架把生成任务分解为可解释的几何与图像子问题，为视频外推和视角一致生成提供新思路。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "2D-3D fusion",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2610.28120v1",
+      "source": "arxiv",
+      "title": "PointForward V2: Point-Aligned Interaction for Feedforward Driving Reconstruction",
+      "abstract": "Feedforward reconstruction of dynamic driving scenes requires integrating observations across multiple views and time steps into a coherent 3D representation. PointForward established state-of-the-art feedforward driving reconstruction by lifting image observations into sparse 3D queries, demonstrating the effectiveness of point-aligned scene representations. However, these queries are largely processed independently, limiting information exchange across space and time, while direct global attention among tens of thousands of point queries is computationally prohibitive. In this work, we present \\textbf{PointForward V2}, which advances point-aligned representation to point-aligned interaction. Our key idea is to mediate query interaction through compact, scene-structured registers. For the static background, frame-wise Static Scene Registers compress point information, communicate across frames, and propagate the aggregated context back to the queries. For each dynamic instance, queries from different frames are aligned in an object-centric canonical space and interact through instance-specific Dynamic Instance Registers. We further employ 4D positional encoding that combines aligned spatial coordinates with original timestamps, enabling spatially aligned yet temporally distinguishable interactions. In this way, PointForward V2 enables scalable spatio-temporal reasoning directly among lifted 3D queries without dense global attention. Experiments on Waymo, nuScenes, and Argoverse 2 demonstrate state-of-the-art performance across large-scale driving benchmarks.",
+      "authors": [
+        "Xianqi Wang",
+        "Cheng Chi",
+        "Yuechuan Pu",
+        "Hongcheng Luo",
+        "Junda Cheng",
+        "Guang Chen",
+        "Hangjun Ye",
+        "Bing Wang",
+        "Xin Yang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-10-20T12:30:21+00:00",
+      "link": "https://arxiv.org/pdf/2610.28120v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "multi-view temporal fusion into 3D point representation",
+      "llm_evidence_cn": "多视角时序融合为三维点表示",
+      "llm_evidence": "多视角时序融合为三维点表示",
+      "canonical_evidence": "多视角时序融合为三维点表示",
+      "llm_tldr_en": "PointForward V2 turns sparse 3D point queries into interacting representations for feedforward driving reconstruction, enabling efficient spatial-temporal information exchange across views and time steps.",
+      "llm_tldr_cn": "动态驾驶场景的前馈重建需要把多视角、多时间步观测整合成连贯三维表示，但现有点查询大多独立处理，难以充分交换时空信息。作者提出PointForward V2，将点对齐表示扩展为点对齐交互，通过中介机制在大量稀疏三维查询间高效传递空间与时间信息。实验表明该方法在驾驶重建中提升了跨视角跨时间的信息融合与表示连贯性。这为基于点表示的多视角时序三维重建提供了可扩展的交互范式。",
+      "llm_tldr": "动态驾驶场景的前馈重建需要把多视角、多时间步观测整合成连贯三维表示，但现有点查询大多独立处理，难以充分交换时空信息。作者提出PointForward V2，将点对齐表示扩展为点对齐交互，通过中介机制在大量稀疏三维查询间高效传递空间与时间信息。实验表明该方法在驾驶重建中提升了跨视角跨时间的信息融合与表示连贯性。这为基于点表示的多视角时序三维重建提供了可扩展的交互范式。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "2D-3D fusion",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2610.27616v1",
+      "source": "arxiv",
+      "title": "EchoNav: Evidential BEV Completion from Historical Observations for Visual Navigation",
+      "abstract": "Visual navigation in cluttered environments requires robots to recover previously observed structure and infer obstacles and free space that remain occluded. We present a framework that combines temporal aggregation and occupancy completion in an evidential bird's-eye-view (BEV) representation predicted from short RGB sequences. A decoder adapts frozen VGGT-Omega features and combines historical residual proposals using cellwise weights and a learned no-update option. The BEV predictor produces a local map in the latest ego frame without depth or camera-pose inputs or explicit geometric warping. The evidential model treats observed free space separately and predicts occupancy with associated confidence across the remaining supported region. We train the predictor on simulated RGB sequences paired with complete and visibility-masked occupancy annotations. Our experiments evaluate navigation in simulation and on a wheeled robot, with additional demonstrations on quadruped and humanoid robots. In simulated sequential two-goal navigation, our system achieves 89.6% success, outperforming the strongest evaluated baseline by 32.5 percentage points. Across 60 wheeled-robot trials in 20 scenes, it achieves 73.3% success, compared with 33.3% for the strongest evaluated baseline.",
+      "authors": [
+        "Diwen Liu",
+        "Yiyang Shao",
+        "Borui Wang",
+        "Chi Zhang",
+        "Yunhui Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-10-20T04:31:18+00:00",
+      "link": "https://arxiv.org/pdf/2610.27616v1",
+      "tags": [
+        "keyword:vsr",
+        "query:vsr"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "recovers previously observed structure via temporal aggregation and historical BEV completion",
+      "llm_evidence_cn": "通过时序聚合与历史BEV补全恢复曾观测结构",
+      "llm_evidence": "通过时序聚合与历史BEV补全恢复曾观测结构",
+      "canonical_evidence": "通过时序聚合与历史BEV补全恢复曾观测结构",
+      "llm_tldr_en": "EchoNav predicts an evidential bird's-eye-view map from short RGB sequences, aggregating historical residual proposals with cellwise weights and a learned no-update option to recover occluded structure without depth or pose inputs.",
+      "llm_tldr_cn": "该文针对杂乱环境中导航需恢复曾观测结构并推断被遮挡区域的问题，提出EchoNav框架，从短RGB序列预测证据式鸟瞰图表示，用逐格权重与可学习的无更新选项聚合历史残差提案，无需深度或相机位姿输入。该方法在最新自车坐标系下输出带置信度的占据与自由空间图，为视觉导航中的历史证据复用提供了新思路。",
+      "llm_tldr": "该文针对杂乱环境中导航需恢复曾观测结构并推断被遮挡区域的问题，提出EchoNav框架，从短RGB序列预测证据式鸟瞰图表示，用逐格权重与可学习的无更新选项聚合历史残差提案，无需深度或相机位姿输入。该方法在最新自车坐标系下输出带置信度的占据与自由空间图，为视觉导航中的历史证据复用提供了新思路。",
+      "llm_tags": [
+        "query:vsr"
+      ],
+      "matched_query_tag": "query:vsr",
+      "matched_query_text": "Maintain object identity, geometric consistency, and spatial relationships across viewpoints and temporal windows, and retrieve temporally grounded historical or out of view evidence for spatial question answering.",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
