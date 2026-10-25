@@ -1,0 +1,502 @@
+Title: ATLAS: Learning to Adapt LVLM Attention for Reasoning Video Segmentation
+
+URL Source: https://arxiv.org/pdf/2610.24783v1
+
+Published Time: Tue, 20 Oct 2026 01:02:45 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# ATLAS: Learning to Adapt LVLM Attention for Reasoning Video Segmentation 
+
+## Hamidreza Dastmalchi 1 Ali Cheraghian 2 Aijun An 1 Abdelwahed Khamis 3 Lars Petersson 31York University 2Macquarie University 3CSIRO Data61 
+
+{hrd, aan }@yorku.ca, ali.cheraghian@mq.edu.au, 
+
+{abdelwahed.khamis, lars.petersson }@data61.csiro.au 
+
+## Abstract 
+
+Reasoning Video Object Segmentation (RVOS) aims to lo-calize and segment objects referred to by natural-language expressions throughout a video. Although large vision-language models (LVLMs) implicitly encode localization cues in their attention maps, these attentions are often noisy, diffuse, and scattered across layers, heads, and modali-ties, limiting their direct use for segmentation. Existing methods typically rely on handcrafted attention-selection heuristics or computationally expensive attention refine-ment. We propose ATLAS, an attention adaptation frame-work that learns to transform raw LVLM attentions into object-centric localization cues. ATLAS treats attentions from all layers, heads, and modalities as structured fea-tures, combining high-resolution frame-level attentions that capture spatial information with low-resolution video-level attentions that encode temporal context. A lightweight U-Net equipped with temporal attention and FiLM-based modulation fuses these complementary representations to generate coarse segmentation heatmaps, which are propa-gated across the video using SAM2. Extensive experiments on challenging referring and reasoning video segmentation benchmarks show that ATLAS outperforms existing frozen-backbone methods. Code and models are available at 
+
+https://hamidreza-136.github.io/atlas/ .
+
+## 1. Introduction 
+
+Reasoning Video Object Segmentation (RVOS) aims to lo-calize and segment objects referred to by natural-language expressions throughout a video [4, 32, 37, 38]. Unlike con-ventional video object segmentation, RVOS requires joint reasoning over language, visual content, and temporal con-text, making Large Vision-Language Models (LVLMs) a natural fit for the task. Recent advances in LVLMs [2, 3, 6, 23–25, 34, 39] have significantly improved multimodal reasoning and reliability [7, 9, 33], enabling robust under-standing of complex expressions and establishing them as a Unreliable and Scattered  
+
+> Direct LVLM Localization Averages Attention Maps
+> Unreliable and Noisy
+> ATLAS Adapted Attention
+> Reliable and Object-Centric
+> Adaptation Network
+> Efficient Adaptation
+> “A man wearing a white shirt on a wooden car without a helmet”
+
+Figure 1. Motivation of ATLAS. Directly querying an LVLM for object coordinates produces inconsistent localization, while naively averaging attention maps across layers and heads yields diffuse and noisy activations. ATLAS instead learns to adapt the complete stack of attention maps into object-centric localization cues using a lightweight adaptation network. 
+
+promising backbone for RVOS. Recent methods have addressed RVOS by jointly adapt-ing LVLMs with segmentation foundation models, such as SAM [16, 29], through end-to-end fine-tuning [4, 12, 21, 38]. While effective, these approaches require jointly op-timizing multiple large foundation models, leading to sub-stantial computational cost and dependence on large-scale annotated training data. Moreover, the learned adaptations are often model-specific, limiting their ability to generalize across different LVLMs and segmentation models. As an efficient alternative, one can directly query a frozen LVLM to predict the (x, y ) image coordinates of the referred object. However, LVLMs are trained for general text generation rather than precise coordinate prediction. As illustrated in the top-left panel of Figure 1, repeatedly querying Qwen2.5-VL [3] 200 times with a sampling tem-1arXiv:2610.24783v1 [cs.CV] 17 Oct 2026 perature of 0.7 produces highly inconsistent coordinate es-timates that are widely scattered across the image, making direct localization unreliable. Nevertheless, recent studies have shown that the visual-token attentions of frozen LVLMs implicitly encode object localization information, enabling visual grounding [8, 13, 14, 19, 22]. However, effectively extracting these localiza-tion cues remains challenging. As illustrated in the top-right panel of Figure 1, averaging attentions across layers and heads produces diffuse, noisy activation maps poorly aligned with object boundaries. Existing training-free ap-proaches either manually select a small subset of attention heads believed to encode localization cues [14] or refine at-tention maps through repeated LVLM inference with con-trastive prompting [13], leaving much of the localization information distributed across layers and heads underuti-lized. Recent work has shown that a learned decoder over the full attention stack can recover this information for im-age grounding [36]. Reasoning video segmentation, how-ever, introduces a fundamentally different challenge: the model must jointly infer where the referred object is and when it becomes relevant over time. We therefore investi-gate how the full multimodal attention stack can be adapted to capture both spatial grounding and temporal relevance. To address these limitations, we propose ATLAS 
+
+(Attention Transformation for Localization through 
+
+Adaptive Segmentation), which leverages the complete visual attention representation from the middle-to-last layers across all attention heads as a stack of spatial feature maps, rather than treating attention maps as localization outputs to be manually selected or refined. As illustrated at the bottom of Figure 1, a lightweight attention adaptation network transforms these rich attention features into object-centric localization cues. The resulting adapted attention maps are then used to guide a frozen SAM2 [29] model, producing accurate and temporally consistent video object segmentation. Given a video-expression pair, ATLAS first samples a set of representative keyframes and extracts visual attention maps from a frozen LVLM. Specifically, it obtains high-resolution frame-level attentions that capture where the re-ferred object is located and low-resolution video-level atten-tions that encode when the object becomes relevant. The stacked attention features are processed by a lightweight encoder-decoder U-Net, while a temporal attention module aggregates complementary information across the sampled keyframes. The resulting temporal representation mod-ulates the U-Net bottleneck through Feature-wise Lin-ear Modulation (FiLM) , enabling the decoder to produce temporally-aware, object-centric localization maps. These adapted attention maps are subsequently used to prompt a frozen SAM2 model, yielding accurate and temporally con-sistent segmentation masks throughout the video. Overall, our contributions are summarized as follows: • We propose ATLAS , an attention adaptation framework for reasoning video segmentation that transforms com-plete LVLM attention representations into object-centric localization cues, eliminating the need for handcrafted at-tention selection or costly refinement. • We introduce a lightweight attention adaptation network that jointly exploits frame-level attentions and video-level attentions, integrating temporal cues into spatial localiza-tion to model both where the target object is located and 
+
+when it becomes relevant. • We achieve state-of-the-art performance on reasoning video segmentation among methods with frozen back-bones, using a lightweight supervised adapter while keep-ing the LVLM and segmentation model fully frozen. 
+
+## 2. Related Work 
+
+Reasoning Video Object Segmentation. Reasoning video object segmentation (RVOS) extends referring video object segmentation [5, 20, 26, 35] by requiring semantic reason-ing over complex language expressions and visual-temporal context [4, 12, 30, 37, 38]. Early approaches primarily re-lied on multimodal fusion architectures that jointly encoded visual and linguistic representations to predict segmentation masks [5, 26, 31, 35]. More recent methods leverage large-scale pretrained LVLMs together with segmentation foun-dation models to improve semantic grounding and gener-alization [4, 17, 37, 38]. Despite this progress, RVOS re-mains challenging because accurate segmentation requires not only semantic understanding but also precise spatial lo-calization and reasoning over temporal dynamics. 
+
+Large Vision-Language Models for Visual Ground-ing. Large Vision-Language Models (LVLMs), such as LLaVA [23, 24], Qwen2-VL [34], and Qwen2.5-VL [3], have demonstrated strong capabilities in multimodal rea-soning and visual grounding. Recent studies have shown that LVLMs implicitly encode object localization cues in their internal representations, particularly in the attention maps of visual tokens. This observation has motivated a growing body of work that repurposes frozen LVLMs for visual grounding and segmentation by extracting atten-tion maps or other internal representations as localization cues [13, 14]. However, these representations are often coarse and poorly aligned with object boundaries, motivat-ing better approaches for exploiting LVLM attention. 
+
+Attention-Based Localization from LVLMs. Recent stud-ies exploit LVLM attention maps as localization cues for visual grounding and segmentation [13, 14, 19, 22, 36]. TAM [19] utilizes attention rollout [1] to obtain object localization cues from LVLM attentions, whereas VL-SAM [22] enhances these cues using SAM [16]. Both meth-ods require enumerating object categories during LVLM de-2. . .       
+
+> . . .
+> . . .
+> . . .
+> . . .
+> Conv + Pooling
+> Conv + Pooling
+> GAP
+> Transformer
+> . . .
+> Linear Layer
+> FiLM Modulation
+> 𝒁 𝑡 ⨀ 1 + 𝜸 𝑡  + 𝜷 𝑡
+> . . .
+> 𝐙 1
+> 𝐙 𝑻 𝒔
+> 𝐀 1
+> 𝐀 𝑇 𝑠
+> 𝐳 1
+> 𝐳 𝑇 𝑠
+> ෤𝐳 1
+> ෤𝐳 𝑇 𝑠
+> (𝜸 1, 𝜷 1)
+> (𝜸 𝑇 𝑠 , 𝜷 𝑇 𝑠 )
+> 𝐙 1′
+> 𝐙 𝑇 𝑠
+> ′
+> . . .
+> Upsample + Conv
+> Upsample + Conv
+> . . .
+> 𝐏 1
+> 𝐏 𝑇 𝑠
+> Expression: “A zebra on the right,
+> turning and running away ”.
+> “What is the main object mentioned in the given expression? ”Respond with a single word.
+> Layer  L0Layer  L
+> . . .
+
+LVLM 
+
+> . . .
+
+𝐀 1
+
+𝐀 𝑇 𝑠   
+
+> . . .
+> SAM
+> . . .
+> Tracklet 1
+> Tracklet Selection
+> Tracklet M
+> . . .
+> (1) Attention Extraction (2) Attention Adaptation (3) Segmentation and Propagation
+
+𝑷 1
+
+𝑷 𝑇 𝑠 
+
+U-Net 
+
+U-Net Figure 2. Overview of ATLAS. A frozen LVLM extracts visual attentions from sampled keyframes, which are transformed into object-centric localization maps by a lightweight attention adaptation network. The adapted localization maps guide a frozen SAM2 model to generate and propagate candidate segmentation tracklets, from which the most reliable tracklet is selected as the final segmentation result. 
+
+coding to detect all objects in an image. Loc-Head [14] identifies a small set of localization heads that consistently focus on referred objects and aggregates their attentions to estimate object locations. Others, such as DecAF [13], im-prove localization by refining attention maps through con-trastive foreground-background prompting and multi-stage attention processing. These training-free approaches either discard informative attentions or require repeated inference. F-LMM [36] instead learns to decode the attention rep-resentation, training a small CNN over the stacked layer-head attention of a frozen LMM to predict grounding masks for images, which a trainable SAM-based refiner then op-timizes. ATLAS shares this per-frame primitive but tar-gets reasoning video segmentation, where localization must model when the referred object becomes relevant in addi-tion to where it is located. 
+
+## 3. Method 
+
+3.1. Method Overview 
+
+Given a video V = {It}Tt=1 and a reasoning expression E,the goal is to predict a sequence of binary masks M =
+
+{Mt}Tt=1 , where It ∈ RR×W ×3 is the RGB frame at time step t, with spatial resolution R × W (height × width), and 
+
+Mt ∈ { 0, 1}R×W denotes the segmentation mask of the referred object. Our framework consists of three stages (de-picted in Figure 2). 
+
+(1) Attention Extraction: Given a video-expression pair, a frozen LVLM extracts frame-level and video-level visual attention maps from a set of sparsely sampled keyframes. 
+
+(2) Attention Adaptation: ATLAS transforms the com-plete stack of attention maps from the middle-to-last lay-ers across all attention heads into object-centric localization maps using a lightweight attention adaptation network. 
+
+(3) Segmentation and Propagation: The adapted attention maps are converted into point prompts that guide a frozen SAM2 model to segment the sampled keyframes and prop-agate the masks to the remaining frames. 
+
+3.2. Attention Extraction 
+
+Given a video-expression pair (V, E), we first uniformly sample a fixed set of Ts frames from the input video, de-noted by Vs = {Iti }Ts
+
+> i=1
+
+, where ti is the index of the i-th sampled frame. We augment the expression with a fixed ob-ject extraction prompt (provided in Appendix A) and query a frozen LVLM to generate a single response token. We 3then extract the attention of this token to all visual tokens across transformer layers and attention heads. For frame-level attention, the LVLM is queried inde-pendently for each sampled frame, resulting in Ts sepa-rate forward passes with a high visual-token budget (e.g., 1024 visual tokens). In contrast, video-level attention is ob-tained from a single forward pass in which the entire sam-pled frame sequence Vs is processed jointly using a smaller visual-token budget (e.g., 64 visual tokens), providing com-plementary temporal cues across frames. For each keyframe Itk , let A(f ) 
+
+> k,ℓ,h
+
+∈ RRf ×Wf denote the layer-ℓ, head-h attention from the generated response token to the visual tokens, reshaped to the LVLM’s spatial token grid. We collect and channel-stack attention maps from all heads across layers ℓ = L0, . . . , L , where L0 is the first selected layer. Following prior observations that middle-to-late layers provide stronger semantic localization cues than early layers [13], we set L0 to the middle transformer layer. 
+
+A(f ) 
+
+> k
+
+= Stack ℓ,h 
+
+
+
+A(f )
+
+> k,ℓ,h
+
+
+
+∈ RC×Rf ×Wf , (1) where C = ( L − L0 + 1) × H denotes the total number of stacked attention maps. Similarly, let A(v) 
+
+> k,ℓ,h
+
+∈ RRv ×Wv denote the correspond-ing attention map extracted from the video branch, where 
+
+Rv and Wv denote the height and width of the video-attention maps, respectively. Stacking attentions from the same set of layers and heads yields: 
+
+A(v) 
+
+> k
+
+= Stack ℓ,h 
+
+
+
+A(v)
+
+> k,ℓ,h
+
+
+
+∈ RC×Rv ×Wv , (2) The video attentions are then aligned to the frame-attention resolution using bilinear interpolation and con-catenated channel-wise: 
+
+Ak =
+
+h
+
+A(f ) 
+
+> k
+
+; Resize( A(v) 
+
+> k
+
+)
+
+i
+
+∈ R2C×Rf ×Wf . (3) The resulting attention tensor Ak, corresponding to the 
+
+k-th sampled keyframe, serves as the input to the proposed attention adaptation network. 
+
+3.3. Attention Adaptation 
+
+The second stage transforms the extracted attention repre-sentations into object-centric localization maps using a two-stage lightweight U-Net. Each stage consists of two convo-lutional layers, and the corresponding encoder and decoder stages are connected through standard skip connections. Given a stacked attention tensor Ak ∈ R2C×Rf ×Wf for 
+
+k-th keyframe, the encoder progressively aggregates spatial information through convolution and pooling operations to produce a latent feature tensor 
+
+Zk = Encoder( Ak) ∈ Rd×r×w, k = 1 , . . . , T s. (4) where r and w denote the spatial dimensions of the bottle-neck feature map, and d denotes its channel dimension. The bottleneck feature maps are then globally pooled into latent vectors using global average pooling (GAP): 
+
+zk = GAP( Zk) ∈ Rd, k = 1 , . . . , T s. (5) These latent vectors are subsequently processed by a lightweight two-layer Transformer encoder to model tem-poral dependencies across the sampled keyframes: 
+
+˜z1, . . . , ˜zTs = Transformer( z1, . . . , zTs ). (6) Temporal context is injected into the spatial bottle-neck features through Feature-wise Linear Modulation (FiLM) [28], which provides a lightweight mechanism for conditioning the decoder on temporally contextualized rep-resentations while preserving the spatial feature structure. Specifically, the contextualized tokens are projected into FiLM parameters through two learnable linear transforma-tions: γk = Wγ ˜zk + bγ , k = 1 , . . . , T s.
+
+βk = Wβ ˜zk + bβ , k = 1 , . . . , T s. (7) where Wγ , Wβ ∈ Rd×d and bγ , bβ ∈ Rd are learnable projection parameters, and γk, βk ∈ Rd denote the feature-wise scaling and shifting coefficients, respectively. These coefficients are broadcast across the spatial dimensions and used to modulate the bottleneck features via FiLM: 
+
+Z′ 
+
+> k
+
+= Zk ⊙ (1 + γk) + βk, k = 1 , . . . , T s. (8) By conditioning the bottleneck features on temporally contextualized representations, the decoder exploits tempo-ral context to produce more consistent object localization across keyframes. The modulated features are decoded into a localization probability map, 
+
+Pk = Decoder( Z′
+
+> k
+
+) ∈ [0 , 1] Rf ×Wf , k = 1 , . . . , T s. (9) where Pk denotes the predicted localization probability map for keyframe k.The attention adaptation network is trained using a com-bination of Binary Cross-Entropy (BCE) and Soft Dice losses [27]: 
+
+L = LBCE + LDice , (10) where LBCE is the pixel-wise binary cross-entropy between the predicted probability map Pk and the ground-truth mask 
+
+Mtk , and LDice is the corresponding Soft Dice loss. Notably, only the attention adaptation network is op-timized, while the LVLM and SAM2 remain frozen. It learns to transform the complete attention representation into object-centric localization maps, eliminating the need for handcrafted head selection or attention refinement. 43.4. Segmentation and Propagation 
+
+The third stage converts the predicted localization maps into temporally consistent object masks using a frozen SAM2 model. For each keyframe, a positive point prompt is se-lected as the maximum-response location of the predicted localization map, 
+
+pk = arg max  
+
+> (u,v )
+
+Pk(u, v ) k = 1 , . . . , T s. (11) The resulting point prompts are provided to SAM2 to gen-erate object masks on the sampled keyframes. Several keyframes may be seeded on the same object, so redun-dant seeds are removed before propagation. Spatial non-maximum suppression across keyframes, as used in De-cAF [13], is insufficient here: it compares masks at dif-ferent time steps, so if the object moves, its masks at two keyframes do not overlap and both seeds survive even though they refer to the same object. Instead, we test whether two seeds correspond to the same object by prop-agating one to the other’s keyframe. Starting from the seed at the earliest keyframe, we propagate its mask through the video; at every later keyframe k, we compare the propa-gated mask with the seed mask at k and discard the latter if their IoU exceeds a threshold τ (we use τ = 0 .8), since the object it identifies is already tracked. We then repeat the procedure from the earliest remaining seed until none are left. This yields M tracklets corresponding to distinct object hypotheses, and each duplicate removed also saves a full propagation pass. Each tracklet T m is downsampled to the attention reso-lution and sampled at the Ts keyframes, yielding a tracklet volume Vm ∈ [0 , 1] Ts×Rf ×Wf for m = 1 , . . . , M . The final tracklet is selected as the one whose spatial activation pattern best matches the predicted localization maps, aver-aged over the sampled keyframes: 
+
+m∗ = arg max 
+
+> m
+
+1
+
+TsTsX
+
+> k=1
+
+ρ(Vm,k , Pk) , (12) where Vm,k ∈ [0 , 1] Rf ×Wf denotes the k-th keyframe slice of Vm, and ρ(·, ·) is the Pearson correlation over the spatial locations of a single keyframe. Pearson corre-lation measures similarity between spatial activation pat-terns while being invariant to linear scaling and shifts in magnitude, making it robust to confidence differences between predicted localization maps and binary tracklet masks. Computing it per keyframe and averaging normal-izes each keyframe’s contribution, so frames where the ob-ject is small or briefly visible are weighted equally to those where it is large and confidently localized. If the maximum correlation is below 0.1, we return an empty mask, indicat-ing that no reliable tracklet was found. Otherwise, the final segmentation is given by T m∗ , providing temporally con-sistent object masks for the full video. 
+
+## 4. Experiments 
+
+Datasets. We evaluate ATLAS on five referring video ob-ject segmentation benchmarks, including three conventional datasets: Ref-DAVIS [15], Ref-YouTube-VOS [31], and MeViS [10], together with two reasoning-oriented bench-marks: ReasonVOS [4] and ReVOS [37]. While the con-ventional benchmarks primarily evaluate referring object segmentation, ReasonVOS and ReVOS contain more chal-lenging expressions that require multi-step reasoning, com-positional understanding, and temporal reasoning. 
+
+Evaluation Metrics. Following [13], we report the stan-dard video object segmentation metrics: region similar-ity ( J ), contour accuracy ( F), and their average ( J &F). Specifically, J measures the intersection-over-union (IoU) between the predicted and ground-truth masks, while F
+
+evaluates boundary accuracy by comparing the predicted and ground-truth object contours. The combined J &F
+
+score provides an overall measure of segmentation quality by jointly assessing region overlap and boundary precision. 
+
+Models. We use publicly available pretrained LVLM checkpoints, including LLaVA-OV-7B [18], InternVL3-8B [39], Qwen2-VL-7B [34], and Qwen2.5-VL-7B [3]. For mask propagation, we adopt the pretrained SAM2-Hiera-Large [29] segmentation model. 
+
+Implementation Details. The attention adaptation network is a lightweight U-Net with two encoder and two decoder stages, where each stage consists of two convolutional lay-ers. The bottleneck feature has dimension d = 512 and is conditioned via FiLM [28] using a two-layer temporal Transformer with four attention heads. For attention ex-traction, we use a maximum visual token budget of 1024 for the frame branch to obtain high-resolution spatial atten-tions and 64 for the video branch to capture complementary temporal cues. We train the network exclusively on the Ref-Youtube-VOS [31] training split, demonstrating strong gen-eralization to unseen reasoning video segmentation bench-marks. The network is optimized using AdamW with a batch size of 8, an initial learning rate of 1 × 10 −4 decayed linearly to 1 × 10 −5, and is trained for 20 epochs. Training requires approximately 6 GPU hours on a single NVIDIA RTX Pro 6000 GPU. Additional architectural details and training hyperparameters are provided in Appendix B. 
+
+4.1. Results 
+
+Comparison with Existing Methods. Table 1 compares ATLAS with both fully fine-tuned and frozen-backbone LVLM-based video object segmentation methods across five benchmark settings. ATLAS achieves state-of-the-art performance among frozen-backbone approaches. Compared with previous frozen-backbone methods, namely Loc-Head [14] and DecAF [13], ATLAS consis-tently delivers large improvements across different LVLM 5Table 1. Comparison of LVLM-based VOS methods on Ref-DAVIS [15], ReasonVOS [4], and ReVOS [37]. † Loc-Head and DecAF are training-free; ATLAS trains a lightweight adapter with mask supervision. All three keep the LVLM and segmentation model frozen.                                                                                                                                                                                                                                                                                                                                  
+
+> Method LVLM Ref-DAVIS ReasonVOS ReVOS (Overall) ReVOS (Referring) ReVOS (Reasoning)
+> J&FJFJ&FJFJ&FJFJ&FJFJ&FJF
+> Approaches with tuned foundation models
+> LISA [17] LLaVA-7B 64.8 62.2 67.3 31.1 29.1 33.1 40.9 39.1 42.7 45.7 44.3 47.1 36.1 33.8 38.4 VISA [37] ChatUniVi-7B 69.4 66.3 72.5 –––46.9 44.9 49.0 50.9 49.2 52.6 43.0 40.6 45.4 GLUS [21] LLaVA-7B –––49.9 47.5 52.4 54.9 52.4 57.3 58.3 56.0 60.7 51.4 48.8 53.9 VideoLISA [4] LLaVA-Phi-3-V 68.8 64.9 72.7 47.5 45.1 49.9 –––––––––VRS-HQ [12] ChatUniVi-7B 76.0 72.6 79.4 –––59.1 56.6 61.6 62.1 59.8 64.5 56.1 53.5 58.7 Veason-R1 [11] Qwen2.5VL-7B –––59.9 56.0 63.8 61.3 58.2 64.4 63.6 60.7 66.5 59.0 55.8 62.2
+> Approaches with frozen foundation models
+> Loc-Head [14] †LLaVA-7B 56.3 52.1 60.5 33.6 29.3 38.0 32.5 28.2 36.9 36.9 32.5 41.3 28.1 23.8 32.5 DecAF [13] †LLaVA-OV-7B 59.4 54.8 64.0 52.8 49.3 56.3 40.0 35.8 44.1 43.4 39.1 47.6 36.6 32.6 40.7
+> ATLAS LLaVA-OV-7B 68.6 65.9 71.3 53.0 49.8 56.2 48.0 44.8 51.3 53.4 50.4 56.4 43.0 39.5 46.6
+> Loc-Head [14] †InternVL3-8B 66.3 62.4 70.2 44.3 41.0 47.5 43.7 39.9 47.5 46.7 42.9 50.6 40.7 36.9 44.5 DecAF [13] †InternVL3-8B 62.8 56.9 68.6 58.9 55.1 62.7 47.4 43.7 51.2 51.7 47.9 55.5 43.2 39.5 46.8
+> ATLAS InternVL3-8B 74.4 71.5 77.4 57.2 54.2 60.2 53.5 50.8 56.2 60.0 57.4 62.6 47.4 44.5 50.3
+> Loc-Head [14] †Qwen2VL-7B 61.9 58.0 65.8 34.0 31.8 36.2 44.0 40.8 47.2 52.7 49.1 56.2 35.4 32.6 38.2 DecAF [13] †Qwen2VL-7B 64.1 59.4 68.9 52.5 49.0 56.0 45.3 41.6 49.0 52.7 48.9 56.4 37.9 34.3 41.5
+> ATLAS Qwen2VL-7B 75.5 72.1 78.9 64.4 61.8 67.0 53.8 50.8 56.9 59.8 56.9 62.6 48.3 44.9 51.7
+> Loc-Head [14] †Qwen2.5VL-7B 64.6 60.2 68.9 41.1 37.9 44.3 47.0 43.3 50.7 53.1 49.3 56.9 40.8 37.2 44.4 DecAF [13] †Qwen2.5VL-7B 75.2 70.9 79.5 63.9 60.5 67.2 54.2 50.1 58.2 58.7 54.8 62.6 49.7 45.4 53.9
+> ATLAS Qwen2.5VL-7B 80.1 76.8 83.4 67.4 64.7 70.2 56.2 53.5 59.0 61.5 58.9 64.1 51.0 48.1 53.9
+
+backbones. The most significant gains are observed with Qwen2-VL-7B, where ATLAS improves the J &F score on ReasonVOS from 52.5 to 64.4 (+11.9) and on ReVOS from 45.3 to 53.8 (+8.5) over DecAF. Similarly, with InternVL3-8B, ATLAS boosts Ref-DAVIS from 62.8 to 74.4 (+11.6) and ReVOS-Referring from 51.7 to 60.0 (+8.3). These consistent gains across diverse LVLMs demonstrate that the proposed attention adaptation module effectively trans-forms noisy LVLM attentions into accurate object localiza-tion cues, leading to substantially improved segmentation performance. Notably, ATLAS achieves performance comparable to end-to-end fine-tuned approaches despite lightweight train-ing. With Qwen2.5-VL-7B, it achieves the highest J &F
+
+on Ref-DAVIS and ReasonVOS, reaching 80.1 and 67.4. Across frozen-backbone settings, ATLAS is superior in nearly all cases; the only exception is ReasonVOS with InternVL3-8B (57.2 vs. 58.9), likely due to dynamic tiling weakening correspondence with our fixed spatial grid. AT-LAS trains only a lightweight attention adapter while keep-ing both the LVLM and SAM2 frozen, using only the Ref-YouTube-VOS [31] training split for about six GPU hours, yet generalizes effectively to unseen reasoning video seg-mentation benchmarks. 
+
+4.2. Evaluation on Additional Datasets 
+
+To further evaluate the generalization of ATLAS, we re-port results on the MeViS [10] and Ref-YouTube-VOS [31] benchmarks in Table 2. ATLAS consistently achieves com-petitive performance across both datasets. On MeViS, ATLAS with Qwen2.5VL-7B attains a J &F
+
+score of 54.5, outperforming both DecAF (48.1) and the best fully fine-tuned method, Veason-R1 (52.2). Similar im-provements are observed with the other LVLM backbones, demonstrating that the learned attention adaptation general-izes well across different visual-language models. On Ref-YouTube-VOS, ATLAS achieves competitive performance. In particular, using Qwen2VL-7B, it obtains a J &F score of 71.0, substantially outperforming previ-ous frozen-backbone methods and approaching the perfor-mance of the best fully fine-tuned approaches. These re-sults further demonstrate that adapting intermediate LVLM attention representations provides an effective and compu-tationally efficient alternative to end-to-end fine-tuning. 
+
+4.3. Attention Localization Quality 
+
+We evaluate the attention adapter independently of SAM2 by thresholding its sigmoid output at 0.5 on sampled keyframes and comparing the resulting masks with ground truth. As a baseline, we apply the same threshold to nor-malized, averaged raw LVLM frame-level attentions. No propagation or post-processing is used. As shown in Table 3, adaptation substantially improves localization, raising J &F from 10.1 to 60.6 on Ref-DAVIS and from 15.8 to 48.9 on ReasonVOS. Figure 3 shows that the adapted map provides accurate coarse localization for guiding SAM2, confirming that ATLAS transforms diffuse LVLM attentions into reliable cues for mask propagation. 6Table 2. Results on MeViS [10] and Ref-YouTube-VOS [31]. †ATLAS is trained on Ref-YouTube-VOS train set and evaluated on val set; all others are zero-shot.                                                                                        
+
+> Method LVLM MeViS Ref-YouTube-VOS †J&FJFJ&FJF
+> VISA [37] Chat-UniVi-7B 44.5 41.8 47.1 61.5 59.8 63.2 VideoLISA [4] LLaVA-Phi-3-V 44.4 41.3 47.6 63.7 61.7 65.7 GLUS [21] LLaVA-7B 51.3 48.5 54.2 67.3 65.5 69.0 VRS-HQ [12] Chat-UniVi-7B 50.6 47.6 53.7 70.4 68.3 72.5
+> Veason-R1 [11] Qwen2.5VL-7B 52.2 48.4 56.0 –––Loc-Head [14] Qwen2.5VL-7B 39.4 35.5 43.6 51.0 46.8 55.2 DecAF [13] Qwen2.5VL-7B 48.1 44.0 52.1 59.9 56.2 63.5 ATLAS Qwen2.5VL-7B 54.5 51.0 58.0 69.5 67.7 71.3 ATLAS Qwen2VL-7B 52.1 48.4 55.8 71.0 69.2 72.8
+> ATLAS LLaVA-OV-7B 46.0 42.2 49.9 59.9 58.1 61.7 ATLAS InternVL3-8B 51.4 47.9 54.8 66.0 64.2 67.8
+
+Table 3. Localization quality of adapted attention maps on sampled keyframes.                       
+
+> Dataset Method JFJ&F
+> Ref-DAVIS ATLAS 47.2 74.0 60.6
+> Raw Attn. 2.0 18.2 10.1 ReasonVOS ATLAS 40.3 57.4 48.9
+> Raw Attn. 4.3 27.3 15.8 Keyframe Coarse Mask Refined Mask
+
+Figure 3. Examples of thresholded localization maps predicted by ATLAS. Expression: “Considering our plans for a self-driving trip with the family this weekend, which vehicle would be the most appropriate? ”
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 4. Attention adaptation for reasoning video segmentation. From top to bottom: sampled keyframes, averaged LVLM attention maps, U-Net-adapted coarse attention maps, and ground-truth masks. Table 4. Temporal and video ablation with Qwen2.5-VL-7B. 
+
+Ref-DAVIS ReasonVOS Method J F J &F J F J &F
+
+Frame only 75.0 80.1 77.5 57.8 63.0 60.4 Frame + Video 76.3 82.0 79.1 62.2 67.7 64.9 Frame + FiLM 75.5 81.3 78.4 58.8 64.1 61.5 Frame + Video + FiLM 76.8 83.4 80.1 64.7 70.2 67.4 
+
+4.4. Qualitative Analysis 
+
+Figure 4 compares raw averaged attentions, ATLAS-adapted maps, and ground-truth masks. While raw atten-tions are often diffuse and affected by attention sinks, AT-LAS produces object-centric localization maps that sup-press irrelevant regions and reliably guide SAM2 toward temporally consistent masks. Additional examples, training dynamics, and intermediate localization maps are provided in Appendix D and Appendix C, illustrating how adaptation progressively converts noisy LVLM attentions into accurate object localization cues. 
+
+## 5. Ablation Study 
+
+5.1. Effect of Video Attention and Temporal Mod-ulation 
+
+We jointly ablate ATLAS’s two video-specific components: the video-attention branch and temporal FiLM modula-tion. Removing both yields a per-frame baseline using only frame-level attention, approximating the image-domain F-LMM design [36] with frozen-SAM2 propagation. Table 4 shows that the components are complementary. On Rea-sonVOS, video attention alone improves J &F by +4 .5
+
+points (60.4 →64.9), temporal FiLM by +1 .1 (60.4 →61.5), and their combination by +7 .0 (60.4 →67.4). On Ref-DAVIS, the corresponding gains are +1 .6, +0 .9, and +2 .6
+
+points. The video branch provides cross-frame context that FiLM injects into each keyframe’s spatial decoding. The larger gain on ReasonVOS than Ref-DAVIS ( +7 .0 vs. +2 .6
+
+in J &F) suggests that reasoning expressions rely more strongly on temporal cues, requiring the model to capture both when the object is relevant and where it is located. 7Table 5. Tracklet selection criterion using Qwen2.5-VL-7B. All variants share identical localization maps and SAM2 propagation.                                                                      
+
+> Ref-DAVIS ReasonVOS Criterion JFJ&FJFJ&F
+> Random 37.1 45.8 41.4 27.4 34.2 30.8 SAM2 score 51.5 59.8 55.6 37.8 44.3 41.1 Mean prob. 52.8 59.2 56.0 48.0 53.9 50.9 Captured mass 70.2 77.0 73.6 48.4 54.8 51.6 Hard IoU 75.0 81.2 78.1 63.4 68.8 66.1 Soft IoU 75.6 81.1 78.3 59.7 65.4 62.6 Cosine Similarity 75.2 81.1 78.1 60.7 66.4 63.6 Volumetric Pearson 76.7 83.1 79.9 61.5 66.9 64.2
+> Per-frame Pearson 76.8 83.4 80.1 64.7 70.2 67.4
+> Oracle 83.1 89.7 86.4 79.6 85.6 82.6
+
+Table 6. Effect of the number of keyframes on ReasonVOS.                          
+
+> # Keyframes 4812 16 20 24
+> J59.4 61.6 63.0 64.7 63.5 64.2
+> F64.5 66.8 68.9 70.2 70.1 70.4
+> J&F62.0 64.2 65.9 67.4 66.8 67.3
+
+5.2. Effect of the Tracklet Selection Criterion 
+
+We study the similarity criterion ρ(·, ·) used for candidate selection in Eq. 12, comparing per-frame and volumetric Pearson correlation with SAM2 confidence, mean proba-bility, captured mass, hard IoU, soft IoU, cosine similar-ity, random selection, and a ground-truth oracle. Table 5 shows that per-frame Pearson performs best among practi-cal criteria on both benchmarks, outperforming volumetric Pearson and confidence-, mass-, and overlap-based alterna-tives. Its scale- and offset-invariance suits diffuse, uncali-brated LVLM attentions, while frame-wise comparison pre-serves temporal variation. The oracle reaches 86.4 and 82.6 
+
+J &F, indicating room for improved selection. We there-fore use per-frame Pearson correlation as ρ throughout. 
+
+5.3. Effect of Keyframe Number 
+
+Table 6 studies the effect of the number of sampled keyframes on ReasonVOS. Performance generally im-proves as more keyframes are used, with J &F increasing from 62.0 at 4 keyframes to a peak of 67.4 at 16. Beyond 16 keyframes, the gains saturate and slightly fluctuate, sug-gesting that additional frames provide limited new temporal information while increasing computation. 
+
+5.4. Effect of the Adapter Architecture 
+
+We compare the U-Net with simpler supervised heads us-ing the same frame+video attention input, training schedule, frozen SAM2, and tracklet selection: a linear probe, a two-layer MLP, and a single-scale convolutional head. Table 7 shows that the linear probe performs poorly in J &F (57 .5
+
+on Ref-DAVIS and 48 .3 on ReasonVOS), while the MLP and convolutional head improve substantially but remain 4–
+
+5 points below the U-Net. Their similar performance ( 73 .2
+
+vs. 74 .3 on Ref-DAVIS and 61 .9 vs. 61 .3 on ReasonVOS) 
+
+Table 7. Adapter architecture ablation with Qwen2.5-VL-7B.                                        
+
+> Ref-DAVIS ReasonVOS Adapter JFJ&FJFJ&F
+> Linear 53.6 61.5 57.5 45.3 51.3 48.3 MLP 70.1 76.2 73.2 59.4 64.5 61.9 Conv3 71.2 77.3 74.3 58.6 63.9 61.3 U-Net 76.3 82.0 79.1 62.2 67.7 64.9 U-Net + FiLM 76.8 83.4 80.1 64.7 70.2 67.4
+
+Table 8. Runtime and accuracy on an NVIDIA RTX PRO 6000. Method vid/frm Attn. Adapt. Seed SAM2 E2E J &F                     
+
+> ATLAS (ours) 64 / 1024 2.06 0.003 0.001 13.2 15.3 67.4
+> ATLAS 256 / 1024 2.46 0.003 0.001 13.1 15.6 67.5
+> DecAF [13] 256 / 1024 8.08 –0.030 33.2 41.3 63.9
+
+suggests that local spatial context alone is insufficient, and that the U-Net gains mainly come from multi-scale aggrega-tion. Temporal modulation (FiLM) further improves J &F
+
+by 0.8 points on Ref-DAVIS and 2.5 points on ReasonVOS. 
+
+5.5. Runtime Analysis 
+
+Since DecAF [13] couples its budgets (frame = 4 ×
+
+video), we compare at the matched 256-video-token set-ting and also report ATLAS at 64 /1024 , used elsewhere, with Qwen2.5-VL-7B. Table 8 shows that ATLAS achieves a 2.7× end-to-end speedup ( 15 .6s vs. 41 .3s) while improv-ing J &F (67 .5 vs. 63 .9). The speedup comes from faster extraction ( 2.46 s vs. 8.08 s), using a single generated token instead of repeated decoding and contrastive passes, and faster propagation ( 13 .1s vs. 33 .2s) via single-point seeding and duplicate-track suppression. Reducing the video branch from 256 to 64 tokens costs only 0.1 J &F, suggesting it mainly provides complementary temporal cues. 
+
+## 6. Conclusion and Limitations 
+
+We presented ATLAS, an attention adaptation framework for reasoning video object segmentation that transforms diffuse LVLM attentions across layers, heads, modalities, and time into object-centric localization maps that guide a frozen SAM2 model. Without fine-tuning either backbone, ATLAS outperforms frozen-backbone methods and remains competitive with fully fine-tuned approaches, showing that LVLM attentions contain rich localization cues that can be unlocked through learned adaptation. ATLAS, however, adapts attention rather than correcting LVLM reasoning, so severe reasoning failures may still limit localization. It also assumes access to intermediate visual attentions and uses uniform keyframe sampling. Future work could improve reasoning, support models with restricted attention access, and explore adaptive keyframe selection for long or dy-namic videos. 8References 
+
+[1] Samira Abnar and Willem Zuidema. Quantifying attention flow in transformers. In Annual Meeting of the Association for Computational Linguistics (ACL) , 2020. 2 [2] Shuai Bai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng, Lianghao Deng, Wei Ding, Chang Gao, Chunjiang Ge, et al. Qwen3-vl technical report. arXiv preprint arXiv:2511.21631 , 2025. 1 [3] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun Tang, et al. Qwen2.5-VL technical report. arXiv preprint arXiv:2502.13923 , 2025. 1, 2, 5 [4] Zechen Bai, Tong He, Haiyang Mei, Pichao Wang, Ziteng Gao, Joya Chen, Lei Liu, Zheng Zhang, and Mike Z Shou. One token to seg them all: Language instructed reasoning segmentation in videos. Advances in Neural Information Processing Systems , 37:6833–6859, 2024. 1, 2, 5, 6, 7 [5] Adam Botach, Evgenii Zheltonozhskii, and Chaim Baskin. End-to-end referring video object segmentation with multi-modal transformers. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 4985–4995, 2022. 2 [6] Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, Guo Chen, Sen Xing, Muyan Zhong, Qinglong Zhang, Xizhou Zhu, Lewei Lu, et al. Internvl: Scaling up vision foundation mod-els and aligning for generic visual-linguistic tasks. In Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 24185–24198, 2024. 1 [7] Ali Cheraghian, Hamidreza Dastmalchi, Hamed Barzamini, Morteza Saberi, Mojtaba Golzan, Shafin Rahman, and Hos-sein Rahmani. Beyond global editing: Per-instance disen-tangled subspaces for training-free hallucination mitigation in lvlms. arXiv preprint arXiv:2608.09344 , 2026. 1 [8] Ali Cheraghian, Hamidreza Dastmalchi, Abdelwahed Khamis, Morteza Saberi, Aijun An, and Lars Petersson. Steerseg: Attention steering for reasoning video segmenta-tion. arXiv preprint arXiv:2605.14908 , 2026. 2 [9] Hamidreza Dastmalchi, Aijun An, Ali Cheraghian, and Hamed Barzamini. Fighting hallucinations with counterfac-tuals: Diffusion-guided perturbations for lvlm hallucination suppression. arXiv preprint arXiv:2603.10470 , 2026. 1 [10] Henghui Ding, Chang Liu, Shuting He, Xudong Jiang, and Chen Change Loy. Mevis: A large-scale benchmark for video segmentation with motion expressions. In Proceed-ings of the IEEE/CVF international conference on computer vision , pages 2694–2703, 2023. 5, 6, 7 [11] Sitong Gong, Lu Zhang, Yunzhi Zhuge, Xu Jia, Pingping Zhang, and Huchuan Lu. Reinforcing video reasoning segmentation to think before it segments. arXiv preprint arXiv:2508.11538 , 2025. 6, 7 [12] Sitong Gong, Yunzhi Zhuge, Lu Zhang, Zongxin Yang, Ping-ping Zhang, and Huchuan Lu. The devil is in temporal token: High quality video reasoning segmentation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pat-tern Recognition , pages 29183–29192, 2025. 1, 2, 6, 7 [13] Su Ho Han, Jeongseok Hyun, Pilhyeon Lee, Minho Shim, Dongyoon Wee, and Seon Joo Kim. Decomposed attention fusion in mllms for training-free video reasoning segmenta-tion. arXiv preprint arXiv:2510.19592 , 2025. 2, 3, 4, 5, 6, 7, 8[14] Seil Kang, Jinyeong Kim, Junhyeok Kim, and Seong Jae Hwang. Your large vision-language model only needs a few attention heads for visual grounding. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 9339–9350, 2025. 2, 3, 5, 6, 7 [15] Anna Khoreva, Anna Rohrbach, and Bernt Schiele. Video object segmentation with language referring expressions. In Asian conference on computer vision , pages 123–141. Springer, 2018. 5, 6 [16] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura Gustafson, Tete Xiao, Spencer White-head, Alexander C Berg, Wan-Yen Lo, et al. Segment any-thing. In Proceedings of the IEEE/CVF international confer-ence on computer vision , pages 4015–4026, 2023. 1, 2 [17] Xin Lai, Zhuotao Tian, Yukang Chen, Yanwei Li, Yuhui Yuan, Shu Liu, and Jiaya Jia. Lisa: Reasoning segmentation via large language model. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pages 9579–9589, 2024. 2, 6 [18] Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen Zhang, Peiyuan Zhang, Yanwei Li, Zi-wei Liu, et al. Llava-onevision: Easy visual task transfer. 
+
+arXiv preprint arXiv:2408.03326 , 2024. 5 [19] Yi Li, Hualiang Wang, Xinpeng Ding, Haonan Wang, and Xiaomeng Li. Token activation map to visually explain mul-timodal llms. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 48–58, 2025. 2 [20] Tianming Liang, Kun-Yu Lin, Chaolei Tan, Jianguo Zhang, Wei-Shi Zheng, and Jian-Fang Hu. Referdino: Referring video object segmentation with visual grounding founda-tions. In Proceedings of the IEEE/CVF International Con-ference on Computer Vision , pages 20009–20019, 2025. 2 [21] Lang Lin, Xueyang Yu, Ziqi Pang, and Yu-Xiong Wang. Glus: Global-local reasoning unified into a single large lan-guage model for video segmentation. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 8658–8667, 2025. 1, 6, 7 [22] Zhiwei Lin, Yongtao Wang, and Zhi Tang. Training-free open-ended object detection and segmentation via attention as prompts. Advances in Neural Information Processing Sys-tems , 37:69588–69606, 2024. 2 [23] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee. Visual instruction tuning. Advances in neural information processing systems , 36:34892–34916, 2023. 1, 2 [24] Haotian Liu, Chunyuan Li, Yuheng Li, and Yong Jae Lee. Improved baselines with visual instruction tuning. In Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 26296–26306, 2024. 2 [25] Zuyan Liu, Yuhao Dong, Ziwei Liu, Winston Hu, Jiwen Lu, and Yongming Rao. Oryx mllm: On-demand spatial-temporal understanding at arbitrary resolution. In Inter-national Conference on Learning Representations , pages 85485–85507, 2025. 1 [26] Zhuoyan Luo, Yicheng Xiao, Yong Liu, Shuyan Li, Yi-tong Wang, Yansong Tang, Xiu Li, and Yujiu Yang. Soc: 
+
+9Semantic-assisted object cluster for referring video object segmentation. Advances in Neural Information Processing Systems , 36:26425–26437, 2023. 2 [27] Fausto Milletari, Nassir Navab, and Seyed-Ahmad Ahmadi. V-net: Fully convolutional neural networks for volumetric medical image segmentation. In 2016 fourth international conference on 3D vision (3DV) , pages 565–571. Ieee, 2016. 4[28] Ethan Perez, Florian Strub, Harm De Vries, Vincent Du-moulin, and Aaron Courville. Film: Visual reasoning with a general conditioning layer. In Proceedings of the AAAI con-ference on artificial intelligence , 2018. 4, 5 [29] Nikhila Ravi, Valentin Gabeur, Yuan-Ting Hu, Ronghang Hu, Chaitanya Ryali, Tengyu Ma, Haitham Khedr, Roman R¨ adle, Chloe Rolland, Laura Gustafson, et al. Sam 2: Seg-ment anything in images and videos. In International Con-ference on Learning Representations , pages 28085–28128, 2025. 1, 2, 5 [30] Zhongwei Ren, Zhicheng Huang, Yunchao Wei, Yao Zhao, Dongmei Fu, Jiashi Feng, and Xiaojie Jin. Pixellm: Pixel reasoning with large multimodal model. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 26374–26383, 2024. 2 [31] Seonguk Seo, Joon-Young Lee, and Bohyung Han. Urvos: Unified referring video object segmentation network with a large-scale benchmark. In European conference on computer vision , pages 208–223. Springer, 2020. 2, 5, 6, 7 [32] Yiqing Shen, Bohan Liu, Chenjia Li, Lalithkumar Seeni-vasan, and Mathias Unberath. Online reasoning video seg-mentation with just-in-time digital twins. In Proceedings of the IEEE/CVF International Conference on Computer Vi-sion , pages 24698–24706, 2025. 1 [33] Mehran Tamjidi, Hamidreza Dastmalchi, Ali Cheraghian, Mohammadreza Alimoradijazi, Aijun An, and Hossein Rah-mani. Test-time hallucination control in large vision-language models. arXiv preprint arXiv:2608.11474 , 2026. 1[34] Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, et al. Qwen2-vl: Enhancing vision-language model’s perception of the world at any resolution. arXiv preprint arXiv:2409.12191 , 2024. 1, 2, 5 [35] Jiannan Wu, Yi Jiang, Peize Sun, Zehuan Yuan, and Ping Luo. Language as queries for referring video object seg-mentation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 4974– 4984, 2022. 2 [36] Size Wu, Sheng Jin, Wenwei Zhang, Lumin Xu, Wentao Liu, Wei Li, and Chen Change Loy. F-lmm: Grounding frozen large multimodal models. In 2025 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 24710–24721. IEEE, 2025. 2, 3, 7 [37] Cilin Yan, Haochen Wang, Shilin Yan, Xiaolong Jiang, Yao Hu, Guoliang Kang, Weidi Xie, and Efstratios Gavves. Visa: Reasoning video object segmentation via large language models. In European Conference on Computer Vision , pages 98–115. Springer, 2024. 1, 2, 5, 6, 7 [38] Rongkun Zheng, Lu Qi, Xi Chen, Yi Wang, Kun Wang, and Hengshuang Zhao. Villa: Video reasoning segmentation with large language model. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 23667– 23677, 2025. 1, 2 [39] Jinguo Zhu, Weiyun Wang, Zhe Chen, Zhaoyang Liu, Shen-glong Ye, Lixin Gu, Hao Tian, Yuchen Duan, Weijie Su, Jie Shao, et al. Internvl3: Exploring advanced training and test-time recipes for open-source multimodal models. arXiv preprint arXiv:2504.10479 , 2025. 1, 5 
+
+10 A. Object Extraction Prompt 
+
+Object Extraction Prompt Input Expression 
+
+{Expression }
+
+Prompt     
+
+> What is the main object (or objects) referred to in the given expression or question? Focus on the primary subject or agent involved in the described action or behavior. Respond with a single word (e.g., “cat”, “per-son”, “dog”) that best describes the target ob-ject(s). Figure 5. Prompt used to extract the target object from the refer-ring expression.
+
+To obtain informative visual attention maps from the frozen LVLM, we first augment the referring expression with a fixed object extraction prompt. Rather than directly prompting the model to localize the referred object, we ask it to identify the primary object category mentioned in the expression and generate a single response token (Figure 5). We then extract the attention of this generated token to all visual tokens across transformer layers and attention heads. 
+
+## B. More Implementation Details 
+
+The training hyperparameters of the proposed attention adapter are summarized in Table 9. We optimize the net-work using AdamW with an initial learning rate of 10 −4
+
+that linearly decays to 10 −5 over 20 epochs. A weight de-cay of 10 −4 is applied for regularization, and training is per-formed with a batch size of eight video clips. The network is supervised using a combination of binary cross-entropy with logits and Soft Dice loss, which jointly encourage ac-curate pixel-wise classification and robust mask overlap. Table 10 summarizes the architecture of the proposed at-tention adaptation network. The network follows a U-Net-style encoder–decoder design operating on concatenated frame- and video-level LVLM attention features. Given 
+
+C=392 channels from each modality, the input contains 
+
+2C=784 channels over a 24 ×42 spatial grid. The first en-coder stage applies two 3×3 convolutions to produce 128 channels, followed by 2×2 max pooling. The second en-coder stage increases the feature dimension to 256 channels at half the spatial resolution. At the bottleneck, two additional 3×3 convolutions pro-duce a 512-channel representation. To capture temporal dependencies across keyframes, the bottleneck feature of           
+
+> Table 9. Training hyperparameters of the ATLAS adapter.
+> Hyperparameter Value
+> Optimizer AdamW Learning rate 10 −4→10 −5(linear decay) Weight decay 10 −4
+> Epochs 20 Batch size 8 clips Segmentation loss BCE-with-Logits + Soft Dice
+
+each frame is globally average pooled and passed through a two-layer, four-head temporal transformer. Its output is mapped to FiLM parameters γ and β, which modulate the 512-channel bottleneck features channel-wise. This con-ditions the spatial decoding of each frame on information from the full video sequence rather than processing frames independently. The decoder then progressively restores the spatial res-olution using transposed convolutions and U-Net skip con-nections. The first upsampling stage fuses the temporally modulated bottleneck with Encoder-2 features and reduces the representation to 256 channels. The second stage com-bines it with Encoder-1 features and restores the original 
+
+Rf ×Wf resolution with 128 channels. Finally, a 1×1 con-volution produces a single-channel localization logit map, which provides object-centric spatial cues for the frozen SAM2 model. 
+
+## C. Training Dynamics 
+
+Figure 6 shows stable adapter training, with the total, binary cross-entropy, and Soft Dice losses decreasing consistently. Qualitatively, the adapter progressively transforms diffuse LVLM attentions into object-centric localization maps by suppressing background responses and concentrating on the referred object, producing accurate cues for the frozen SAM2 model. 
+
+## D. Additional Qualitative Results 
+
+Figure 7-15 provide additional qualitative examples, demonstrating that ATLAS consistently produces object-centric attention maps that guide accurate segmentation. 
+
+## E. Failure cases 
+
+We add a quantitative failure analysis on ReasonVOS us-ing Qwen2.5-VL-7B. Failures ( J &F < 0.5; 149 /458 sam-ples) are reported in the following table: 11 Table 10. ATLAS Temporal FiLM FV U-Net architecture ( C=392 , grid Rf ×Wf =24 ×42 ). 
+
+Stage Operation Output Spec. 
+
+Input Frame / Frame+Video Attn. 2C × Rf × Wf 784 × 24 × 42 
+
+Encoder-1 3×3 Conv ×2 128 × Rf × Wf BN + ReLU Downsample 2×2 MaxPool 128 × Rf /2 × Wf /2 –Encoder-2 3×3 Conv ×2 256 × Rf /2 × Wf /2 BN + ReLU Bottleneck 3×3 Conv ×2 512 × Rf /2 × Wf /2 –Temporal GAP → Transformer 512 2 layers, 4 heads FiLM γ, β 512 Channel-wise modulation Upsample-2 Transposed Conv + skip (enc2) 256 × Rf /2 × Wf /2 Concat skip Decoder-2 3×3 Conv ×2 256 × Rf /2 × Wf /2 BN + ReLU Upsample-1 Transposed Conv + skip (enc1) 128 × Rf × Wf Concat skip Decoder-1 3×3 Conv ×2 128 × Rf × Wf BN + ReLU Output 1×1 Conv 1 × Rf × Wf Segmentation logits Sampled keyframes 
+
+> U-Net output before training
+> U-Net output
+> before training  Train loss
+> Loss components
+
+Figure 6. Training convergence of the U-Net adapter and qualitative outputs before and after training. First failing stage % of failures Object extraction (LVLM) 33.6 Localization (adapter) 59.7 Tracklet selection 6.7 SAM2 propagation 0.0 
+
+Localization is the main bottleneck, accounting for 
+
+59 .7% of failures, followed by object extraction at 33 .6% .Here, object extraction refers to whether the LVLM cor-rectly identifies the target category implied by the query be-fore localization begins. Localization failures occur when the correct category is identified but the adapted attention map does not sufficiently isolate the referred object. Track-let selection contributes only 6.7% , indicating that once a reliable localization map is available, candidate ranking is generally robust. SAM2 is never the first failing stage, sug-gesting that propagation errors typically originate from an incorrect or ambiguous seed rather than from SAM2 itself. 12 Expression: “Longevity is a trait associated with certain marine species. Which creature here exemplifies that quality?” 
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 7. Additional qualitative example. From top to bottom: input frames, raw averaged attention maps, adapted attention maps produced by ATLAS, and the corresponding SAM2 segmentation masks. Expression: “Which item would assist in transporting bulky objects?” 
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 8. Additional qualitative example. From top to bottom: input frames, raw averaged attention maps, adapted attention maps produced by ATLAS, and the corresponding SAM2 segmentation masks. Expression: “For the task of moving furniture, which vehicle would provide the most convenience?” 
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 9. Additional qualitative example. From top to bottom: input frames, raw averaged attention maps, adapted attention maps produced by ATLAS, and the corresponding SAM2 segmentation masks. 
+
+13 Expression: “My cats have distinct personalities. Could you identify the calmer one for me?” 
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 10. Additional qualitative example. From top to bottom: input frames, raw averaged attention maps, adapted attention maps produced by ATLAS, and the corresponding SAM2 segmentation masks. Expression: “Observing the group dynamics, who appears to be the lead singer taking the spotlight?” 
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 11. Additional qualitative example. From top to bottom: input frames, raw averaged attention maps, adapted attention maps produced by ATLAS, and the corresponding SAM2 segmentation masks. Expression: “The referee standing among the men in this view.” 
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 12. Additional qualitative example. From top to bottom: input frames, raw averaged attention maps, adapted attention maps produced by ATLAS, and the corresponding SAM2 segmentation masks. 
+
+14 Expression: “a red bmx bike.” 
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 13. Additional qualitative example. From top to bottom: input frames, raw averaged attention maps, adapted attention maps produced by ATLAS, and the corresponding SAM2 segmentation masks. Expression: “a white dog with grey patches.” 
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 14. Additional qualitative example. From top to bottom: input frames, raw averaged attention maps, adapted attention maps produced by ATLAS, and the corresponding SAM2 segmentation masks. Expression: “the biggest goldfish.” 
+
+> U-Net outputs  attention maps  keyframes GT masks
+
+Figure 15. Additional qualitative example. From top to bottom: input frames, raw averaged attention maps, adapted attention maps produced by ATLAS, and the corresponding SAM2 segmentation masks. 
+
+15

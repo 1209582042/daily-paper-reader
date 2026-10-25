@@ -1,0 +1,1044 @@
+R4DGS: Referring Segmentation in 4D Gaussian Splatting
+Bangpu Chen∗
+China University of Geosciences
+Wuhan, China
+Yaxuan Li∗
+Xinjiang University
+Urumqi, China
+Shirui Peng
+University of Nottingham Ningbo
+China
+Ningbo, China
+Xiangtian Si
+China University of Geosciences
+Wuhan, China
+Liuxin Chu
+China University of Geosciences
+Wuhan, China
+Xitong Cao
+China University of Geosciences
+Wuhan, China
+Hongbo Jin
+Peking University
+Shenzhen, China
+Jiayu Ding✉
+Peking University
+Shenzhen, China
+Figure 1: Example visualizations of ReferGaussian for dynamic and multi-target referring in 4D scenes.
+Abstract
+Dynamic representations based on 4D Gaussian Splatting (4DGS)
+have shown strong capabilities in reconstruction and rendering,
+yet current methods remain limited in supporting complex natural-
+language referring in dynamic scenes. Existing 4D Gaussian meth-
+ods are primarily designed for rendering-oriented dynamic model-
+ing, while current semantic extensions often rely on scene-specific
+semantic optimization or are evaluated on relatively simple query
+settings. In this paper, we study Referring 4D Gaussian Splatting
+∗Both authors contributed equally to this research.
+This work is licensed under a Creative Commons Attribution 4.0 International License.
+MM ’26, Rio de Janeiro, Brazil
+© 2026 Copyright held by the owner/author(s).
+ACM ISBN 979-8-4007-2213-4/2026/11
+https://doi.org/10.1145/3767308.3836021
+(R4DGS), a task for grounding temporally varying, multi-target or
+reasoning-intensive, and zero-target or distractor expressions in
+dynamic 4D scenes. To support this task, we introduce R4D-Bench-
+QA, a benchmark with structured query annotations. We further
+present ReferGaussian, a unified framework built upon 4DGS that
+converts low-level dynamic Gaussians into persistent, language-
+addressable entities for training-free referring inference. ReferGaus-
+sian organizes mask-supported Gaussian entities in an EntityBank,
+uses Multimodal Large Language Models (MLLMs) to decompose
+complex queries into trackable object phrases and structured refer-
+ring constraints, and performs constraint-aware grounding without
+scene-specific semantic optimization. Experiments on R4D-Bench-
+QA and the 4D LangSplat protocol demonstrate improved temporal
+target selection and competitive spatiotemporal grounding without
+scene-specific semantic training. Project resources are available at
+https://chenbangpu.github.io/R4DGS/.
+arXiv:2610.30326v1  [cs.CV]  21 Oct 2026
+
+
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+Bangpu Chen et al.
+CCS Concepts
+• Computing methodologies →Computer vision; Computer
+vision representations; Natural language processing.
+Keywords
+4D Gaussian Splatting, referring understanding, dynamic scene
+grounding, training-free grounding
+ACM Reference Format:
+Bangpu Chen, Yaxuan Li, Shirui Peng, Xiangtian Si, Liuxin Chu, Xitong Cao,
+Hongbo Jin, and Jiayu Ding. 2026. R4DGS: Referring Segmentation in 4D
+Gaussian Splatting. In Proceedings of the 34th ACM International Conference
+on Multimedia (MM ’26), November 10–14, 2026, Rio de Janeiro, Brazil. ACM,
+New York, NY, USA, 10 pages. https://doi.org/10.1145/3767308.3836021
+1
+Introduction
+3D Gaussian Splatting (3DGS) has become a powerful represen-
+tation for static scene reconstruction and novel-view rendering,
+offering high visual fidelity and efficient rasterization [13]. Build-
+ing on this foundation, recent dynamic Gaussian methods extend
+Gaussian primitives across time through deformation, temporal
+conditioning, or explicit spacetime modeling, substantially advanc-
+ing dynamic scene reconstruction and free-viewpoint rendering
+[18, 23, 39, 42, 43]. Among these developments, 4D Gaussian Splat-
+ting (4DGS) has emerged as an effective representation for dynamic
+scene modeling, enabling high-fidelity rendering with strong effi-
+ciency [39, 43]. Together, these advances establish Gaussian splat-
+ting as a practical substrate for dynamic visual modeling.
+At the same time, recent work has begun to study language
+grounding and semantic reasoning on Gaussian representations.
+In static 3D scenes, methods such as LangSplat [31], Gaussian
+Grouping [44], OpenGaussian [41], Dr. Splat [12], Segment then
+Splat [22], and ReferSplat [7] connect Gaussian primitives with
+language or segmentation supervision. In dynamic settings, SA4D
+[8] and 4D LangSplat [17] extend Gaussian-based semantics to
+time-varying scenes. However, many existing methods are opti-
+mized for category-level querying, scene-specific semantic fitting,
+or mask prediction, and are not designed for expressions involving
+temporal state changes, interaction cues, multi-target reasoning, or
+deliberately absent targets.
+This gap becomes critical when the query involves temporal
+states, relations, or set-level constraints. A practical model should
+handle expressions such as the cookie broken into smaller pieces, the
+complete lemon before the cut, all objects except the hand and the metal
+cup, or descriptions with no valid referent. These queries require
+temporal reasoning, entity disambiguation, set-level constraints,
+and uncertainty-aware rejection. Figure 2 summarizes the transition
+from conventional semantic querying to dynamic referring.
+Figure 1 provides example visualizations of ReferGaussian for
+dynamic and multi-target referring in 4D scenes.
+To address these limitations, we define Referring 4D Gaussian
+Splatting (R4DGS), which requires a 4D Gaussian system to resolve
+complex natural-language referring expressions in dynamic scenes
+and produce temporally grounded, set-valued segmentation masks.
+Recognizing the lack of a benchmark for this task, we introduce
+R4D-Bench-QA (QA denotes Query Annotations), which evaluates
+Figure 2: Task comparison between Gaussian semantic
+queries and R4DGS. R4DGS resolves temporal, relational,
+exclusion, and cardinality constraints into zero-, one-, or
+multi-target mask sequences.
+three challenging categories: 4D-varying queries, multi-target or
+reasoning queries, and zero-target or distractor queries.
+These observations reveal an abstraction gap between low-level
+Gaussian primitives and the entity-level units referred to by natu-
+ral language. Dynamic Gaussian backbones provide efficient time-
+conditioned scene representations, but their primitives are not
+directly organized into persistent, language-addressable entities.
+Meanwhile, SA4D and 4D LangSplat enrich dynamic scenes with
+segmentation identities or learned language fields [8, 17], yet re-
+main primarily oriented toward segmentation-centric outputs or
+scene-specific semantic fitting. Consequently, temporal-state com-
+position, multi-entity selection, and zero-target rejection are not
+naturally supported within a unified referring protocol.
+Motivated by this gap, we propose ReferGaussian, a training-free
+referring framework built upon 4DGS. Starting from a reconstructed
+4D Gaussian scene, it uses mask-supported multi-view evidence to
+form persistent Gaussian entities, records their appearance, motion,
+relations, and valid temporal support in an EntityBank, and resolves
+structured referring constraints over this bank. MLLMs serve as
+the Refer-Planner for query decomposition and constraint extrac-
+tion, while Grounded-SAM supplies 2D mask evidence. The final
+prediction is produced through explicit and inspectable entity-level
+selection, without scene-specific semantic training.
+Our contributions are summarized as follows:
+(1) We formulate Referring 4D Gaussian Splatting (R4DGS), a
+novel task for language-grounded dynamic scene under-
+standing involving temporal state changes, multi-target rea-
+soning, and distractor rejection.
+(2) We establish R4D-Bench-QA, the first benchmark for R4DGS,
+featuring structured query annotations and pixel-level spa-
+tiotemporal supervision to address the current lack of eval-
+uation standards.
+(3) We propose ReferGaussian, a training-free framework that
+organizes low-level dynamic Gaussians into persistent enti-
+ties addressable through language and performs constraint-
+aware 4D referring over an EntityBank.
+
+
+R4DGS: Referring Segmentation in 4D Gaussian Splatting
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+Figure 3: Construction pipeline of R4D-Bench-QA for track
+extraction, entity-centric annotation, and quality control.
+These stages convert source videos into trackable entities
+and verified entity-centric query annotations.
+Figure 4: Statistics of R4D-Bench-QA across vocabulary,
+query types, and expression length. The bars summarize
+three query categories and two scene sources.
+2
+Related Work
+Dynamic Scene Reconstruction. NeRF [25] and its dynamic
+variants [3, 19, 26, 27, 30] laid the foundation for neural dynamic
+view synthesis. 3D Gaussian Splatting [13] replaced volumetric
+rendering with explicit anisotropic Gaussian primitives, making
+real-time rendering practical. Recent work extends Gaussian splat-
+ting to dynamic scenes through deformation, canonicalization, or
+explicit spacetime modeling, including Dynamic 3D Gaussians [23],
+Deformable 3D Gaussians [42], 4D Gaussian Splatting [39], Real-
+time Photorealistic Dynamic Scene Representation and Rendering
+with 4D Gaussian Splatting [43], and Spacetime Gaussian Feature
+Splatting [18]. These methods deliver strong rendering quality, yet
+their objective remains view synthesis. Our target is language-
+conditioned reasoning over dynamic entities. This requires tem-
+poral support that remains stable across rendering, downstream
+grouping, candidate ranking, and set-level decisions under ambigu-
+ous natural language. In practice, this difference is critical when
+multiple visually similar candidates coexist but only one satisfies
+temporal or relational constraints across a full event window.
+Language-Grounded Semantic Reasoning. Visual semantic rea-
+soning has advanced across various domains. In 2D video un-
+derstanding, several works explore semantic tasks such as open-
+vocabulary and referring segmentation [9–11, 24, 34, 35, 38, 40]. For
+static 3D scenes, current research explores two primary directions:
+open-vocabulary understanding and segmentation [5, 6, 12, 14, 22,
+28, 29, 31, 41, 44, 45], and referring expression grounding repre-
+sented by ReferSplat [7]. In dynamic contexts, while SA4D [8] and
+4D LangSplat [17] enable time-sensitive language querying, they
+primarily focus on semantic segmentation, with limited coverage
+of complex referring understanding. To our knowledge, referring
+grounding in dynamic Gaussian scenes has not been systemati-
+cally formulated or evaluated. Unlike existing methods that rely
+on scene-specific semantic retraining or learned language fields,
+ReferGaussian resolves referents through entity-level matching
+within a query-reusable structure. This training-free design sup-
+ports robust reasoning over temporal states and set-valued targets
+through persistent entity records and explicit constraints.
+Foundation Models. Large vision-language and segmentation
+foundation models provide strong building blocks for language-
+grounded scene reasoning. Qwen3-VL [1] supports structured inter-
+pretation of natural-language expressions, while Grounding DINO
+[21], Segment Anything [15], and Grounded-SAM [33] enable text-
+conditioned mask extraction. Recent multimodal systems [4, 20, 37]
+further improve prompt following and visual grounding. ReferGaus-
+sian uses these models as modular components for query parsing
+and visual evidence extraction within a structured entity-centric
+pipeline. This decomposition improves diagnostic ability: query
+decomposition errors, mask evidence errors, and entity association
+errors can be analyzed separately.
+3
+Task and Benchmark
+In this section, we first formalize Referring 4D Gaussian Splatting
+(R4DGS) and clarify its task setting. We then introduce R4D-Bench-
+QA, our benchmark for dynamic 4D referring understanding, to-
+gether with its construction pipeline, annotation protocol, query
+taxonomy, and evaluation metrics.
+3.1
+Referring 4D Gaussian Splatting (R4DGS)
+Given a multi-view dynamic video, a precomputed 4D Gaussian
+scene representation, and a natural-language query 𝑞, R4DGS iden-
+tifies the referred entities and produces their frame-aligned segmen-
+tation masks. The referent may be a single entity, multiple entities,
+or an empty set, depending on the spatiotemporal, relational, and
+set-level constraints expressed by the query.
+R4DGS adds three requirements to conventional referring: (1)
+Temporally varying queries specify an event stage or a state before
+or after a transition. (2) Set-valued and reasoning-intensive queries
+express conjunction, exclusion, quantification, or relations among
+entities. (3) Zero-target and distractor queries may describe no valid
+referent and therefore return an empty prediction.
+3.2
+R4D-Bench-QA
+To evaluate R4DGS systematically, we construct R4D-Bench-QA,
+a query-annotation benchmark with deliberate coverage of three
+
+
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+Bangpu Chen et al.
+Table 1: Comparison of representative Gaussian-language benchmarks, domains, and query support. Checkmarks denote
+supported capabilities.
+Dataset
+Source
+Scenes
+Query Scale
+Domain Task Type
+Temporal Sentence-level
+Referring
+Dynamic
+Semantics
+Temp.
+Query
+Spa.
+Query
+LERF
+LangSplat
+4
+208 words
+2D
+Open-vocab seg.
+×
+×
+×
+×
+✓
+Ref-LERF
+ReferSplat
+4
+63 inst.
+2D
+Ref. seg.
+×
+×
+×
+×
+✓
+ScanNet
+OpenGaussian
+10
+84 words
+3D
+Open-vocab seg.
+×
+×
+×
+×
+×
+lerf_ovs_
+langsplat
+Segment then
+Splat
+5
+208 words
+3D
+Open-vocab seg.
+×
+×
+×
+×
+✓
+HyperNeRF-
+Annotation
+4D LangSplat
+4
+13 sentences
+4D
+Open-vocab seg.
+✓
+×
+✓
+✓
+✓
+R4D-Bench (Ours) R4DGS
+12
+89 sentences 4D
+Ref. seg.
+✓
+✓
+✓
+✓
+✓
+query categories and pixel-level spatiotemporal annotations. Its 12
+scenes come from two dynamic-scene sources: six HyperNeRF [27]
+scenes provide 47 queries, and six Neu3D [16] scenes provide 42
+queries, for 89 densely annotated sentence-level queries in total. Ta-
+ble 1 compares R4D-Bench-QA with representative datasets used by
+Gaussian-language methods. Existing resources are either limited
+to static 2D/3D scenes or primarily designed for open-vocabulary
+segmentation, with limited support for sentence-level dynamic re-
+ferring. R4D-Bench-QA jointly supports dynamic scenes, sentence-
+level referring, time-varying semantics, temporal constraints, and
+spatial grounding.
+Benchmark Construction. As illustrated in Figure 3, the bench-
+mark is constructed in three stages. In Stage 1, each dynamic video is
+processed to obtain temporally associated mask tracks and a vocab-
+ulary of trackable object candidates. Segmentation models provide
+frame-level mask evidence, while an MLLM assists in identifying
+concise object phrases that remain visually traceable throughout
+the sequence.
+In Stage 2, annotators inspect the mask overlays and divide each
+sequence into semantically meaningful temporal segments accord-
+ing to object-state changes, interactions, and event boundaries. Key
+frames are selected from each segment to summarize its visual
+content. Based on the tracked objects and temporal segments, anno-
+tators construct entity-centric referring expressions and associate
+each expression with its complete target set, valid temporal sup-
+port, and frame-aligned masks. Multi-target annotations include
+the complete set of entities satisfying the query.
+Stage 3 performs query-specific quality control. Temporally vary-
+ing queries are checked for unambiguous state descriptions and
+valid event boundaries. Multi-target queries are checked for rela-
+tional consistency and completeness of the annotated target set.
+Zero-target queries are retained only when no annotated entity
+satisfies all query constraints. Three expert annotators perform ver-
+ification, while MLLM-based checks flag ambiguous or inconsistent
+cases for human inspection.
+Query Construction and Taxonomy. R4D-Bench-QA covers
+three categories: 4D variation, multi-target reasoning, and zero-
+target or distractor cases. Together, they span state transitions,
+temporal ordering, conjunction, disjunction, exclusion, object inter-
+actions, and target-cardinality constraints. Query wording is varied
+through attributes, relational phrases, event descriptions, and refer-
+ring structures while preserving the underlying target semantics.
+This controlled variation prevents evaluation from depending on a
+narrow set of prompt templates.
+Figure 4 summarizes the benchmark vocabulary, query-category
+composition, and expression-length distribution. Together, these
+statistics show that R4D-Bench-QA contains both concise object ref-
+erences and longer compositional expressions involving temporal
+or set-level constraints.
+Annotation Representation. For each query 𝑞, the annotation
+contains the relevant frame set F𝑞, the target entities, and a binary
+ground-truth mask 𝑀∗
+𝑞,𝑡for every evaluated frame 𝑡∈F𝑞. For a
+multi-target query, 𝑀∗
+𝑞,𝑡is the frame-wise union of the masks of
+all valid target entities. A zero-target query has 𝑀∗
+𝑞,𝑡= ∅for all
+evaluated frames. Predictions are represented analogously by ˆ𝑀𝑞,𝑡,
+obtained by rasterizing the selected Gaussian entities.
+3.3
+Evaluation Metrics
+We adopt the time-sensitive protocol of 4D LangSplat [17]. It evalu-
+ates temporal target activation and spatial mask quality, with Acc
+denoting frame-wise temporal activation accuracy. Let the ground-
+truth and predicted active-frame sets be T ∗
+𝑞= {𝑡∈F𝑞: |𝑀∗
+𝑞,𝑡| > 0}
+and ˆT𝑞= {𝑡∈F𝑞: | ˆ𝑀𝑞,𝑡| > 0}.
+Temporal Accuracy. The temporal accuracy of query 𝑞is
+Acc(𝑞) =
+1
+|F𝑞|
+∑︁
+𝑡∈F𝑞
+⊮
+
+⊮[𝑡∈ˆT𝑞] = ⊮[𝑡∈T ∗
+𝑞]
+
+.
+(1)
+This metric penalizes both missed valid intervals and false activa-
+tions outside the annotated temporal support.
+Video IoU. Following the same protocol, video IoU is
+vIoU(𝑞) =
+
+
+1
+| ˆT𝑞∪T ∗
+𝑞|
+∑︁
+𝑡∈ˆT𝑞∩T∗
+𝑞
+| ˆ𝑀𝑞,𝑡∩𝑀∗
+𝑞,𝑡|
+| ˆ𝑀𝑞,𝑡∪𝑀∗
+𝑞,𝑡|
+,
+| ˆT𝑞∪T ∗
+𝑞| > 0,
+1,
+| ˆT𝑞∪T ∗
+𝑞| = 0.
+(2)
+Frames outside the temporal intersection contribute zero, so vIoU
+penalizes temporal errors, false targets, and inaccurate mask bound-
+aries. For a valid zero-target query, vIoU is one only when the pre-
+diction remains empty. ZeroAcc is the percentage of zero-target
+
+
+R4DGS: Referring Segmentation in 4D Gaussian Splatting
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+Figure 5: Overview of ReferGaussian, from Gaussian entity construction to constraint-aware spatiotemporal reasoning. The
+three stages discover persistent entities, organize reusable evidence, and resolve structured queries.
+queries with empty predictions throughout the evaluated frames.
+Incomplete or unresolved outputs count as failures.
+The reported Acc and vIoU average their query-level scores:
+Acc =
+1
+|Q|
+∑︁
+𝑞∈Q
+Acc(𝑞),
+vIoU =
+1
+|Q|
+∑︁
+𝑞∈Q
+vIoU(𝑞).
+(3)
+For multi-target queries, evaluation uses the frame-wise union of
+all selected and annotated target masks.
+We also report Acc and vIoU for each of the three query cat-
+egories separately on HyperNeRF and Neu3D. These six source-
+category slices expose whether a model’s behavior is consistent
+across both scene sources and all query types; Figure 7 visualizes
+this breakdown for the planner analysis.
+4
+Method
+ReferGaussian addresses the abstraction gap between low-level
+dynamic Gaussian primitives and the entity-level units referred
+to by natural language. Given a precomputed 4D Gaussian scene,
+our method constructs persistent Gaussian entities from multi-
+frame visual evidence, organizes them into an EntityBank, and
+performs constraint-aware referent selection without optimizing
+an additional scene-specific semantic field.
+4.1
+Preliminaries
+3D Gaussian Splatting. 3D Gaussian Splatting represents a scene
+with a collection of anisotropic Gaussians 𝑔𝑖= (𝝁𝑖, r𝑖, s𝑖, c𝑖, 𝛼𝑖),
+where 𝝁𝑖is the center, r𝑖and s𝑖parameterize rotation and scale, and
+c𝑖and 𝛼𝑖denote color and opacity, respectively [13]. The covariance
+is 𝚺𝑖= R𝑖S𝑖S⊤
+𝑖R⊤
+𝑖, where R𝑖and S𝑖are constructed from r𝑖and s𝑖.
+After projection, the color at pixel p is alpha-composited in depth
+order:
+C(p) =
+𝑁
+∑︁
+𝑖=1
+𝑇𝑖(p)𝛼𝑖(p)c𝑖,
+𝑇𝑖(p) =
+Ö
+𝑗<𝑖
+ 1 −𝛼𝑗(p) .
+(4)
+4D Gaussian Splatting. Dynamic Gaussian methods condition
+Gaussian primitives on time. A common formulation predicts posi-
+tion, rotation, and scale offsets with a temporal deformation func-
+tion D𝜃[39, 42]:
+D𝜃(𝑔𝑖,𝑡) = (Δ𝝁𝑡
+𝑖, Δr𝑡
+𝑖, Δs𝑡
+𝑖),
+(𝝁𝑡
+𝑖, r𝑡
+𝑖, s𝑡
+𝑖) = (𝝁𝑖, r𝑖, s𝑖) + D𝜃(𝑔𝑖,𝑡).
+(5)
+Equation (4) then applies to the time-conditioned primitives. In this
+work, the reconstructed 4D Gaussian scene is provided as input, and
+our contribution begins with organizing its primitives for referring
+understanding.
+Language-Grounded Gaussian Fields. LangSplat attaches a lan-
+guage feature to each Gaussian and renders it with the alpha-
+compositing weights used for color [31]:
+F(p,𝑡) =
+𝑁
+∑︁
+𝑖=1
+𝑇𝑖(p,𝑡)𝛼𝑖(p,𝑡)f𝑖(𝑡).
+(6)
+4D LangSplat extends language splatting to dynamic scenes with
+object-wise MLLM descriptions and time-dependent features for
+object status changes [17]. It produces a learned language field
+for open-vocabulary segmentation. R4DGS uses explicit referential
+
+
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+Bangpu Chen et al.
+Table 2: Quantitative comparison on R4D-Bench-QA. Acc
+is frame-wise temporal activation accuracy; vIoU combines
+temporal localization and mask overlap.
+Method
+R4D-Bench-QA
+Acc (%) ↑
+vIoU (%) ↑
+Segment then Splat
+55.6
+28.4
+4D LangSplat
+58.4
+32.1
+ReferGaussian (Ours)
+76.5
+34.4
+units that support joint temporal, relational, cardinality, exclusion,
+and empty-target constraints.
+4.2
+Framework
+Given dynamic Gaussians G, calibrated video frames {I𝑡}, and a
+query 𝑞, ReferGaussian follows three semantic stages.
+Stage 1: query-guided entity discovery uses an MLLM-based Refer-
+Planner to extract trackable subject phrases and coarse temporal
+cues. Grounded-SAM2 produces phrase-conditioned mask tracks,
+which are iteratively lifted from sampled frames into Gaussian-
+supported candidate entities.
+Stage 2: EntityBank construction summarizes each candidate using
+representative observations, active temporal segments, appearance
+and state descriptions, motion cues, and relations. These records
+form an inspectable EntityBank over the reconstructed scene.
+Stage 3: constraint-aware referent selection validates the structured
+query and selects candidate entities and temporal segments under
+identity, temporal, relational, cardinality, exclusion, and zero-target
+constraints. The selected Gaussian supports are finally rasterized
+to produce frame-aligned masks.
+Figure 5 illustrates the overall pipeline. This decomposition
+changes the reasoning unit from a pixel or frame-wise feature
+match to an entity with persistent Gaussian support. Stage 1 estab-
+lishes spatial and temporal correspondence between 2D evidence
+and 4D primitives, Stage 2 makes the entities language-addressable,
+and Stage 3 produces a globally consistent set-valued answer.
+4.3
+Mask-Supported Persistent Entity
+Construction
+For a subject phrase produced by the Refer-Planner, let M𝑡be its
+tracked mask and Π𝑡(𝑔𝑖) the projected footprint of Gaussian 𝑔𝑖. We
+aggregate mask agreement over sampled frames with one score:
+𝑆𝑖(T) =
+∑︁
+𝑡∈T
+𝑢𝑡
+𝑖
+|Π𝑡(𝑔𝑖) ∩M𝑡|
+|Π𝑡(𝑔𝑖)| + 𝜖
+∑︁
+𝑡∈T
+𝑢𝑡
+𝑖+ 𝜖
+.
+(7)
+Here, 𝑢𝑡
+𝑖is a projection-validity indicator. It is active when the
+Gaussian has positive depth, its projected center lies inside the
+image, and its rasterized footprint contributes alpha mass. This
+definition follows the visibility checks used by the 4DGS renderer.
+Algorithm 1 iteratively updates a support-ranked candidate and
+validates it by rendering its mask back to the sampled frames. Each
+round uses six active frames, or all active frames when fewer are
+Algorithm 1 Mask-supported Gaussian entity selection with six-
+frame iterative validation and render-back stopping.
+Require: Gaussians G; tracked masks {M𝑡}; projections {Π𝑡}; active frames
+T+
+Ensure: selected Gaussian entity Gsel
+1: initialize candidate Gsel, best candidate Gbest, best IoU 𝑏←−1, and stale
+count 𝑐←0
+2: for 𝑟= 1 to 10 do
+3:
+sample T𝑟⊆T+, where | T𝑟| ≤min(| T+|, 6)
+4:
+update Gaussian support using Eq. (7) and the accumulated evidence
+5:
+update Gsel from the support ranking and render-back feedback
+6:
+rasterize Gsel and compute mean mask IoU on T𝑟
+7:
+if IoU > 𝑏then
+8:
+𝑏←IoU; Gbest ←Gsel; 𝑐←0
+9:
+else
+10:
+𝑐←𝑐+ 1
+11:
+end if
+12:
+if IoU ≥0.70 or 𝑐≥3 then
+13:
+break
+14:
+end if
+15: end for
+16: return Gbest
+available. We run at most ten rounds, stop when mean render-back
+IoU reaches 0.70, and also stop after three validation rounds without
+improvement. The best validated candidate is retained.
+The selected Gaussian set becomes a candidate entity 𝑒𝑚with
+support G𝑚. Its temporal support T𝑚is inherited from the active
+frames of the associated Stage 1 mask track, with adjacent active
+frames grouped into connected segments. The track identity is pre-
+served during lifting. Appearance, motion, and temporal overlap
+connect recurring observations; incompatible tracks or trajecto-
+ries remain separate. The resulting entity represents a physical
+candidate together with one or more temporally valid states.
+4.4
+EntityBank Construction and
+Constraint-Aware Querying
+In Stage 2, each candidate is stored as
+𝑒𝑚=  id𝑚, G𝑚, T𝑚, X𝑚, A𝑚, R𝑚
+,
+(8)
+where G𝑚is its Gaussian support, T𝑚contains candidate active
+segments, X𝑚contains representative crops and track summaries,
+and A𝑚and R𝑚contain appearance or state attributes and inter-
+entity relations. The collection B = {𝑒𝑚}𝑀
+𝑚=1 forms EntityBank.
+Constructed entity records and visual evidence are cached and
+reused when subsequent queries involve the same tracked objects.
+The MLLM-based Refer-Planner converts each query into a
+schema containing trackable subject phrases, identity and state
+attributes, relational and exclusion constraints, temporal predicates,
+optional target cardinality, and an explicit zero-target flag. Schema
+validation rejects malformed outputs, unknown EntityBank identi-
+fiers, and incomplete fields, then requests a corrected plan.
+In Stage 3, the Refer-Planner performs closed-set selection over
+the identifiers and temporal segments supplied by EntityBank. It
+jointly checks identity, temporal, relational, cardinality, and exclu-
+sion constraints, so every prediction remains grounded in supported
+candidates. An explicitly absent target, or the absence of any candi-
+date set satisfying all constraints, produces an empty selection. The
+selected Gaussian supports are rasterized only within their chosen
+
+
+R4DGS: Referring Segmentation in 4D Gaussian Splatting
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+Table 3: Quantitative comparison of time-sensitive querying on the 4D LangSplat HyperNeRF protocol, with per-scene and
+average Acc and vIoU.
+Method
+americano
+chickchicken
+split-cookie
+espresso
+Average
+Acc
+vIoU
+Acc
+vIoU
+Acc
+vIoU
+Acc
+vIoU
+Acc
+vIoU
+LangSplat [31]
+45.19
+23.16
+53.26
+18.20
+73.58
+33.08
+44.03
+16.15
+54.01
+22.65
+4D LangSplat [17]
+89.42
+66.07
+96.73
+90.62
+95.28
+83.14
+81.89
+49.20
+90.83
+72.26
+ReferGaussian (Ours)
+99.43
+68.13
+82.89
+60.87
+90.91
+55.79
+98.80
+67.01
+93.01
+62.95
+Figure 6: Qualitative comparison on R4D-Bench-QA for temporal-state and exclusion queries. Columns show query types, and
+rows compare frame-aligned predictions.
+temporal segments, and masks from multiple selected entities are
+combined frame by frame. This yields the final spatiotemporal seg-
+mentation while keeping the query interpretation, entity evidence,
+and referent decision inspectable.
+5
+Experiments
+5.1
+Experimental Setup
+We evaluate ReferGaussian on R4D-Bench-QA and the four-scene
+4D LangSplat protocol [17]. All methods use the same scene inputs,
+query annotations, and evaluation protocols. We compare with
+4D LangSplat and Segment then Splat [22], the language-field and
+segmentation-first baselines. ReferGaussian uses Qwen3-VL-8B [1]
+as the Refer-Planner and Grounded SAM 2 [21, 32, 33] to obtain
+phrase-conditioned mask tracks. The foundation models are used
+without additional training, and ReferGaussian performs no scene-
+specific semantic optimization.
+Qwen3-VL-8B is the default planner. The planner analysis addi-
+tionally evaluates Qwen3-VL-4B [1], Qwen2.5-VL-7B [2], Qwen2-
+VL-7B [36], and InternVL3-8B [46] under the same pipeline.
+5.2
+Main Results
+R4D-Bench-QA. Table 2 shows that ReferGaussian reaches 76.5%
+Acc and 34.4% vIoU, surpassing both baselines on R4D-Bench-QA,
+which covers temporal, multi-target, and distractor queries.
+4D LangSplat protocol. Table 3 reports Acc and vIoU for the
+four-scene protocol. ReferGaussian reaches 93.01% average Acc
+and 62.95% vIoU. Its Acc is 2.18 points above 4D LangSplat, without
+per-scene semantic fitting.
+5.3
+Qualitative Results
+Figure 6 shows coherent transition timing and clean exclusion
+results from entity-level temporal and set reasoning. Its columns
+show temporal-state and exclusion queries, while the rows compare
+RGB input, ground truth, ReferGaussian, Segment then Splat, and
+
+
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+Bangpu Chen et al.
+Figure 7: Refer-Planner comparison by query category and
+scene source. Each panel reports six Acc or vIoU axes.
+Figure 8: Runtime for initial and cached queries, showing
+the benefit of EntityBank reuse. Colored segments report the
+cost of each pipeline component.
+Table 4: Ablations of entity construction and mask evidence.
+Rows report vIoU for lifting variants and controlled mask
+perturbations.
+Group
+Setting
+vIoU (%)
+Entity
+Direct GSAM mask reference
+57.4
+Entity
+Framewise tracklet association
+38.2
+Entity
+One-pass Gaussian voting
+12.4
+Entity
+Iterative Gaussian lifting
+34.4
+Mask
+Original masks
+34.4
+Mask
+Erosion, radius 3/5
+33.8/32.1
+Mask
+Dilation, radius 5
+32.6
+Mask
+Drop 10%/25% proposals
+33.9/32.5
+Mask
+Merge/split errors
+19.4/22.7
+4D LangSplat. In the liquid query, ReferGaussian follows the active
+filling interval; in the exclusion query, it preserves the requested
+objects while removing the hand that applies force. These examples
+illustrate temporal activation and set exclusion within the same
+entity-level inference process.
+5.4
+Ablation and Analysis
+We analyze ReferGaussian from four perspectives: Refer-Planner
+choice, Gaussian entity construction, robustness to mask-evidence
+errors, and the efficiency gained through EntityBank reuse.
+Refer-Planner sensitivity. Figure 7 compares five MLLMs on 4D-
+varying, multi-target/reasoning, and zero-target/distractor queries.
+Acc and vIoU are reported separately on HyperNeRF and Neu3D,
+producing six source-category axes in each metric panel. Qwen3-
+VL-8B gives the strongest overall profile with stable trends across
+both scene sources.
+Table 4 consolidates the functional-interface ablations. Direct
+GSAM masks and framewise tracklet association isolate the 2D
+evidence and temporal-association interfaces, while the Gaussian
+variants test how that evidence becomes persistent 4D support. It-
+erative lifting raises vIoU from 12.4 to 34.4 over one-pass voting by
+revisiting support with render-back feedback. Under mask pertur-
+bations, erosion, dilation, and proposal dropping retain 32.1–33.9
+vIoU, remaining within 2.3 points of the original masks. Merge and
+split errors fall to 19.4 and 22.7 because they change entity identity
+and propagate to later constraints. The contrast separates tolerance
+to local mask noise from sensitivity to incorrect entity composition.
+Efficiency and reuse. EntityBank reuse cuts runtime from about
+600 to 200 seconds and local MLLM calls from six to three (Figure 8)
+using local inference. The initial query is dominated by mask de-
+tection and entity construction, while cached queries reuse tracks,
+visual evidence, and entity descriptions. The remaining work is
+concentrated in query planning, semantic assignment, selection,
+and final rendering.
+Failure modes. Remaining failures involve crowded contact events,
+ambiguous long queries, breakage, and severe occlusion. These
+cases combine rapid topology changes and uncertain identity bound-
+aries, motivating stronger temporal association and calibrated un-
+certainty.
+6
+Conclusion
+We formulated Referring 4D Gaussian Splatting (R4DGS), a new
+task for grounding complex natural-language expressions in dy-
+namic Gaussian scenes, and introduced R4D-Bench-QA to evaluate
+temporal-state, multi-target, and zero-target referring. We further
+presented ReferGaussian, a training-free Gaussian-to-Entity frame-
+work that organizes dynamic Gaussian primitives into persistent,
+language-addressable entities and performs constraint-aware refer-
+ent selection through EntityBank. Experiments on R4D-Bench-QA
+and the 4D LangSplat protocol demonstrate the effectiveness of
+entity-level reasoning for complex spatiotemporal grounding with-
+out scene-specific semantic optimization. Together, R4DGS, R4D-
+Bench-QA, and ReferGaussian establish a foundation for language-
+guided interaction and structured reasoning over dynamic 4D scene
+representations.
+
+
+R4DGS: Referring Segmentation in 4D Gaussian Splatting
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+References
+[1] Shuai Bai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng,
+Lianghao Deng, Wei Ding, Chang Gao, Chunjiang Ge, et al. 2025. Qwen3-vl
+technical report. arXiv preprint arXiv:2511.21631.
+[2] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, et al.
+2025. Qwen2.5-VL Technical Report. arXiv preprint arXiv:2502.13923 (2025).
+[3] Ang Cao and Justin Johnson. 2023. HexPlane: A Fast Representation for Dynamic
+Scenes. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR). IEEE Computer Society, Los Alamitos, CA, USA, 130–141.
+[4] Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, Guo Chen, Sen Xing, Muyan
+Zhong, Qinglong Zhang, Xizhou Zhu, Lewei Lu, et al. 2024. Internvl: Scaling
+up vision foundation models and aligning for generic visual-linguistic tasks. In
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition.
+IEEE Computer Society, Los Alamitos, CA, USA, 24185–24198.
+[5] Jiayu Ding, Xinpeng Liu, Zhiyi Pan, Shiqiang Long, and Ge Li. 2026. ExtrinSplat:
+Decoupling Geometry and Semantics for Open-Vocabulary Understanding in 3D
+Gaussian Splatting. arXiv:2509.22225 [cs.CV] https://arxiv.org/abs/2509.22225
+[6] Jiayu Ding, Haoran Tang, Hongbo Jin, Wei Gao, and Ge Li. 2026. 3D Instruction
+Ambiguity Detection. arXiv:2601.05991 [cs.AI] https://arxiv.org/abs/2601.05991
+[7] Shuting He, Guangquan Jie, Changshuo Wang, Yun Zhou, Shuming Hu, Guanbin
+Li, and Henghui Ding. 2025. ReferSplat: Referring segmentation in 3d gaussian
+splatting. arXiv preprint arXiv:2508.08252.
+[8] Shengxiang Ji, Guanjun Wu, Jiemin Fang, Jiazhong Cen, Taoran Yi, Wenyu Liu,
+Qi Tian, and Xinggang Wang. 2024. Segment Any 4D Gaussians. arXiv preprint
+arXiv:2407.04504.
+[9] Hongbo Jin, Jiayu Ding, Siyi Xie, Guibo Luo, and Ge Li. 2026. VISTA: Mitigating
+Semantic Inertia in Video-LLMs via Training-Free Dynamic Chain-of-Thought
+Routing. arXiv:2505.11830 [cs.CV] https://arxiv.org/abs/2505.11830
+[10] Hongbo Jin, Siyi Xie, Jiayu Ding, Kuanwei Lin, and Ge Li. 2026. TIR-Flow:
+Active Video Search and Reasoning with Frozen VLMs. arXiv:2601.06176 [cs.CV]
+https://arxiv.org/abs/2601.06176
+[11] Hongbo Jin, Rongpeng Zhu, Jiayu Ding, Wenhao Zhang, and Ge Li. 2026.
+HiMAC: Hierarchical Macro-Micro Learning for Long-Horizon LLM Agents.
+arXiv:2603.00977 [cs.AI] https://arxiv.org/abs/2603.00977
+[12] Kim Jun-Seong, GeonU Kim, Kim Yu-Ji, Yu-Chiang Frank Wang, Jaesung Choe,
+and Tae-Hyun Oh. 2025. Dr. splat: Directly referring 3D gaussian splatting via
+direct language embedding registration. In Proceedings of the Computer Vision
+and Pattern Recognition Conference. IEEE Computer Society, Los Alamitos, CA,
+USA, 14137–14146.
+[13] Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis.
+2023. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM
+Transactions on Graphics 42, 4, Article 139 (July 2023), 14 pages. doi:10.1145/
+3592433
+[14] Justin Kerr, Chung Min Kim, Ken Goldberg, Angjoo Kanazawa, and Matthew
+Tancik. 2023. LERF: Language Embedded Radiance Fields. In International Con-
+ference on Computer Vision (ICCV). IEEE Computer Society, Los Alamitos, CA,
+USA, 19729–19739.
+[15] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura
+Gustafson, Tete Xiao, Spencer Whitehead, Alexander C. Berg, Wan-Yen Lo, Piotr
+Dollár, and Ross Girshick. 2023. Segment anything. In Proceedings of the IEEE/CVF
+international conference on computer vision. IEEE Computer Society, Los Alamitos,
+CA, USA, 4015–4026.
+[16] Tianye Li, Mira Slavcheva, Michael Zollhöfer, Simon Green, Christoph Lassner,
+Changil Kim, Tanner Schmidt, Steven Lovegrove, Michael Goesele, Richard New-
+combe, and Zhaoyang Lv. 2022. Neural 3D Video Synthesis From Multi-View
+Video. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition. IEEE Computer Society, Los Alamitos, CA, USA, 5521–5531.
+[17] Wanhua Li, Renping Zhou, Jiawei Zhou, Yingwei Song, Johannes Herter, Minghan
+Qin, Gao Huang, and Hanspeter Pfister. 2025. 4D LangSplat: 4D Language
+Gaussian Splatting via Multimodal Large Language Models. In Proceedings of the
+IEEE/CVF Conference on Computer Vision and Pattern Recognition. IEEE Computer
+Society, Los Alamitos, CA, USA, 22001–22011.
+[18] Zhan Li, Zhang Chen, Zhong Li, and Yi Xu. 2024. Spacetime Gaussian Feature
+Splatting for Real-Time Dynamic View Synthesis. In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition. IEEE Computer Society,
+Los Alamitos, CA, USA, 8508–8520.
+[19] Zhengqi Li, Simon Niklaus, Noah Snavely, and Oliver Wang. 2021. Neural Scene
+Flow Fields for Space-Time View Synthesis of Dynamic Scenes. In Proceedings
+of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. IEEE
+Computer Society, Los Alamitos, CA, USA, 6498–6508.
+[20] Haotian Liu, Chunyuan Li, Yuheng Li, and Yong Jae Lee. 2024. Improved baselines
+with visual instruction tuning. In Proceedings of the IEEE/CVF conference on
+computer vision and pattern recognition. IEEE Computer Society, Los Alamitos,
+CA, USA, 26296–26306.
+[21] Shilong Liu, Zhaoyang Zeng, Tianhe Ren, Feng Li, Hao Zhang, Jie Yang, Qing
+Jiang, Chunyuan Li, Jianwei Yang, Hang Su, et al. 2024. Grounding dino: Marry-
+ing dino with grounded pre-training for open-set object detection. In European
+conference on computer vision. Springer, 38–55.
+[22] Yiren Lu, Yunlai Zhou, Yiran Qiao, Chaoda Song, Tuo Liang, Jing Ma, and Yu
+Yin. 2025. Segment then Splat: A Unified Approach for 3D Open-Vocabulary
+Segmentation based on Gaussian Splatting. arXiv preprint arXiv:2503.22204.
+[23] Jonathon Luiten, Georgios Kopanas, Bastian Leibe, and Deva Ramanan. 2024.
+Dynamic 3D Gaussians: Tracking by Persistent Dynamic View Synthesis. In
+International Conference on 3D Vision. IEEE, Piscataway, NJ, USA, 800–809. doi:10.
+1109/3DV62453.2024.00044
+[24] Zhuoyan Luo, Yicheng Xiao, Yong Liu, Shuyan Li, Yitong Wang, Yansong Tang,
+Xiu Li, and Yujiu Yang. 2023. SOC: Semantic-Assisted Object Cluster for Referring
+Video Object Segmentation. Advances in Neural Information Processing Systems
+36 (2023), 26425–26437.
+[25] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi
+Ramamoorthi, and Ren Ng. 2020. NeRF: Representing Scenes as Neural Radiance
+Fields for View Synthesis. In European Conference on Computer Vision. Springer,
+Cham, Switzerland, 405–421.
+[26] Keunhong Park, Utkarsh Sinha, Jonathan T. Barron, Sofien Bouaziz, Dan B Gold-
+man, Steven M. Seitz, and Ricardo Martin-Brualla. 2021. Nerfies: Deformable
+Neural Radiance Fields. In Proceedings of the IEEE/CVF International Conference
+on Computer Vision (ICCV). IEEE Computer Society, Los Alamitos, CA, USA,
+5865–5874.
+[27] Keunhong Park, Utkarsh Sinha, Peter Hedman, Jonathan T. Barron, Sofien
+Bouaziz, Dan B. Goldman, Ricardo Martin-Brualla, and Steven M. Seitz. 2021.
+HyperNeRF: A Higher-Dimensional Representation for Topologically Varying
+Neural Radiance Fields. ACM Trans. Graph. 40, 6, Article 238 (dec 2021), 12 pages.
+doi:10.1145/3478513.3480487
+[28] Songyou Peng, Kyle Genova, Chiyu “Max” Jiang, Andrea Tagliasacchi, Marc
+Pollefeys, and Thomas Funkhouser. 2023. OpenScene: 3D Scene Understanding
+with Open Vocabularies. In Proceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition. IEEE Computer Society, Los Alamitos, CA, USA,
+815–824.
+[29] Jens Piekenbrinck, Christian Schmidt, Alexander Hermans, Narunas Vaskevicius,
+Timm Linder, and Bastian Leibe. 2025. Opensplat3d: Open-vocabulary 3d instance
+segmentation using gaussian splatting. In 2025 IEEE/CVF Conference on Computer
+Vision and Pattern Recognition Workshops (CVPRW). IEEE, 5246–5255.
+[30] Albert Pumarola, Enric Corona, Gerard Pons-Moll, and Francesc Moreno-Noguer.
+2021. D-NeRF: Neural Radiance Fields for Dynamic Scenes. In Proceedings of the
+IEEE/CVF Conference on Computer Vision and Pattern Recognition. IEEE Computer
+Society, Los Alamitos, CA, USA, 10318–10327.
+[31] Minghan Qin, Wanhua Li, Jiawei Zhou, Haoqian Wang, and Hanspeter Pfister.
+2024. LangSplat: 3D Language Gaussian Splatting. In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition. IEEE Computer Society,
+Los Alamitos, CA, USA, 20051–20060.
+[32] Nikhila Ravi, Valentin Gabeur, Yuan-Ting Hu, Ronghang Hu, Chaitanya Ryali,
+Tengyu Ma, Haitham Khedr, Roman Rädle, et al. 2025. SAM 2: Segment Anything
+in Images and Videos. In International Conference on Learning Representations.
+[33] Tianhe Ren, Shilong Liu, Ailing Zeng, Jing Lin, Kunchang Li, He Cao, et al. 2024.
+Grounded SAM: Assembling Open-World Models for Diverse Visual Tasks. arXiv
+preprint arXiv:2401.14159.
+[34] Seonguk Seo, Joon-Young Lee, and Bohyung Han. 2020. URVOS: Unified Referring
+Video Object Segmentation Network with a Large-Scale Benchmark. In European
+Conference on Computer Vision. Springer, Cham, Switzerland, 208–223.
+[35] Jiajin Tang, Ge Zheng, and Sibei Yang. 2023. Temporal Collection and Distribution
+for Referring Video Object Segmentation. In Proceedings of the IEEE/CVF Interna-
+tional Conference on Computer Vision. IEEE Computer Society, Los Alamitos, CA,
+USA, 15466–15476.
+[36] Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin
+Chen, Xuejing Liu, et al. 2024. Qwen2-VL: Enhancing Vision-Language Model’s
+Perception of the World at Any Resolution. arXiv preprint arXiv:2409.12191
+(2024).
+[37] Weihan Wang, Qingsong Lv, Wenmeng Yu, Wenyi Hong, Ji Qi, Yan Wang, Junhui
+Ji, Zhuoyi Yang, Lei Zhao, Xixuan Song, et al. 2024. Cogvlm: Visual expert for
+pretrained language models. Advances in Neural Information Processing Systems
+37 (2024), 121475–121499.
+[38] Dongming Wu, Tiancai Wang, Yuang Zhang, Xiangyu Zhang, and Jianbing Shen.
+2023. OnlineRefer: A Simple Online Baseline for Referring Video Object Seg-
+mentation. In Proceedings of the IEEE/CVF International Conference on Computer
+Vision. IEEE Computer Society, Los Alamitos, CA, USA, 2761–2770.
+[39] Guanjun Wu, Taoran Yi, Jiemin Fang, Lingxi Xie, Xiaopeng Zhang, Wei Wei,
+Wenyu Liu, Qi Tian, and Xinggang Wang. 2024. 4D Gaussian Splatting for Real-
+Time Dynamic Scene Rendering. In Proceedings of the IEEE/CVF Conference on
+Computer Vision and Pattern Recognition (CVPR). IEEE Computer Society, Los
+Alamitos, CA, USA, 20310–20320.
+[40] Jiannan Wu, Yi Jiang, Peize Sun, Zehuan Yuan, and Ping Luo. 2022. Language as
+Queries for Referring Video Object Segmentation. In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition. IEEE Computer Society,
+Los Alamitos, CA, USA, 4974–4984.
+
+
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+Bangpu Chen et al.
+[41] Yanmin Wu, Jiarui Meng, Haijie Li, Chenming Wu, Yahao Shi, Xinhua Cheng,
+Chen Zhao, Haocheng Feng, Errui Ding, Jingdong Wang, et al. 2024. Opengaus-
+sian: Towards point-level 3d gaussian-based open vocabulary understanding.
+Advances in Neural Information Processing Systems 37 (2024), 19114–19138.
+[42] Ziyi Yang, Xinyu Gao, Wen Zhou, Shaohui Jiao, Yuqing Zhang, and Xiaogang
+Jin. 2024. Deformable 3d gaussians for high-fidelity monocular dynamic scene
+reconstruction. In Proceedings of the IEEE/CVF conference on computer vision and
+pattern recognition. IEEE Computer Society, Los Alamitos, CA, USA, 20331–20341.
+[43] Zeyu Yang, Hongye Yang, Zijie Pan, and Li Zhang. 2024. Real-time Photorealis-
+tic Dynamic Scene Representation and Rendering with 4D Gaussian Splatting.
+International Conference on Learning Representations.
+[44] Mingqiao Ye, Martin Danelljan, Fisher Yu, and Lei Ke. 2024. Gaussian grouping:
+Segment and edit anything in 3D scenes. In European conference on computer
+vision. Springer, Cham, Switzerland, 162–179.
+[45] Jiaxin Zhang, Junjun Jiang, Youyu Chen, Kui Jiang, and Xianming Liu. 2025. COB-
+GS: Clear Object Boundaries in 3DGS Segmentation Based on Boundary-Adaptive
+Gaussian Splitting. In Proceedings of the Computer Vision and Pattern Recognition
+Conference. IEEE Computer Society, Los Alamitos, CA, USA, 19335–19344.
+[46] Jinguo Zhu, Weiyun Wang, Zhe Chen, Zhaoyang Liu, Shenglong Ye, Lixin Gu,
+Hao Tian, Yuchen Duan, Weijie Su, Jie Shao, et al. 2025. Internvl3: Exploring
+advanced training and test-time recipes for open-source multimodal models.
+arXiv preprint arXiv:2504.10479 (2025).

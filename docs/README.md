@@ -48,17 +48,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-10-24</span>
+      <span class="dpr-home-dashboard-kicker">2026-10-25</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 15 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 12 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>4</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>2</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>10</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-10-24 21:35:50 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-10-25 21:34:40 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,7 +69,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今天扫完 15 篇新论文，精读 4 篇、速读 11 篇，重点锁定视频时空事件理解与位置编码两条线。最值得看的是《SENRI》对真实视频“空间—事件”关系的建模，以及《HRoPE》用单应性做相对位置编码的思路，两篇均 8.0 分。普通读者可先读这两篇的引言与图示建立直觉，再按兴趣跟进速读中《Query-adaptive Recurrent Tokenization》等 7 分工作。</p>
+<p>今日筛选12篇论文、精读2篇，聚焦机器人控制中的动作表征与规划推理。最值得看的是两篇8.0分精读：inr2action用神经隐式表征编码机器人片段以支持回忆与动作，Plan First, Act Later以流式推理构建可执行记忆。普通读者可先读这两篇精读，再按兴趣浏览速读中的流式视频生成与3D证据评估。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -78,12 +78,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">4 篇</strong>
+    <strong class="dpr-home-dashboard-count">2 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="SENRI: Understanding the Space-Event Nexus in Real-Life Videos">SENRI: Understanding the Space-Event Nexus in Real-Life Videos</span></li><li><span class="dpr-home-dashboard-paper-title" title="HRoPE: Homography Relative Positional Encoding">HRoPE: Homography Relative Positional Encoding</span></li><li><span class="dpr-home-dashboard-paper-title" title="GazeLens for Efficient Egocentric Video Question Answering with Simple Gaze-Driven Adaptive Token Reduction">GazeLens for Efficient Egocentric Video Question Answering with Simple Gaze-Driven Adaptive Token Reduction</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="inr2action: Encoding Robot Episodes as Neural Implicit Representations for Recall and Action">inr2action: Encoding Robot Episodes as Neural Implicit Representations for Recall and Action</span></li><li><span class="dpr-home-dashboard-paper-title" title="Plan First, Act Later: Streaming Reasoning for Executable Memory in Robot Control">Plan First, Act Later: Streaming Reasoning for Executable Memory in Robot Control</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>4</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>2</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -91,12 +91,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">11 篇</strong>
+    <strong class="dpr-home-dashboard-count">10 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Query-adaptive Recurrent Tokenization">Query-adaptive Recurrent Tokenization</span></li><li><span class="dpr-home-dashboard-paper-title" title="LonGaussian: Tracking Foundation Priors for Long-Context Feedforward Gaussian Reconstruction">LonGaussian: Tracking Foundation Priors for Long-Context Feedforward Gaussian Reconstruction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Persistent Planar Memory for Video World Models">Persistent Planar Memory for Video World Models</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Attn-Forcing: Learning Full-Context Attention Proxies for Streaming Video Generation">Attn-Forcing: Learning Full-Context Attention Proxies for Streaming Video Generation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Do 3D Large Language Models Really Use 3D Evidence?">Do 3D Large Language Models Really Use 3D Evidence?</span></li><li><span class="dpr-home-dashboard-paper-title" title="ATLAS: Learning to Adapt LVLM Attention for Reasoning Video Segmentation">ATLAS: Learning to Adapt LVLM Attention for Reasoning Video Segmentation</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>11</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vsr <strong>10</strong></span></div>
 </section>
 </div>
 
