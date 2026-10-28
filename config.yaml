@@ -197,61 +197,68 @@ subscriptions:
               [-0.018347,-0.034703,0.033154,0.033789,-0.021877,-0.017247,-0.016304,0.01075,-0.038961,-0.001319,-0.002582,-0.117085,0.052186,0.102899,0.048663,0.011599,-0.018028,0.089729,-0.001666,-0.055065,0.031285,-0.057861,-0.020589,0.002169,-0.038713,0.047003,-0.023205,-0.048636,-0.016632,-0.207315,0.022365,0.018737,0.004011,0.007794,-0.044046,-0.023107,-0.021211,0.039706,0.029176,0.008848,-0.012135,0.025443,-0.014991,-0.021869,0.016056,-0.016732,-0.015116,-0.004574,-0.053503,-0.054776,-0.032168,-0.087213,-0.023834,-0.003905,0.012003,0.077503,0.02793,0.052245,-0.009834,-0.004856,0.046095,0.034193,-0.087742,0.076037,-0.014796,0.047389,-0.052646,-0.048011,0.004134,0.045834,0.029988,0.040509,0.007493,0.011376,0.043876,-0.029815,-0.018006,-0.009738,-0.009311,-0.084626,0.014006,0.022772,-0.005636,-0.003862,0.008967,-0.000386,-0.032868,0.011429,-0.012148,-0.002695,-0.035814,-0.017387,-0.042555,0.008864,0.009269,-0.043132,0.033631,-0.015392,-0.003439,0.328327,-0.006171,-0.005905,0.032999,-0.047831,-0.000939,-0.04449,0.004606,-0.025612,-0.045845,0.006191,-0.027567,0.019683,-0.055322,0.030227,0.013754,0.026899,0.082439,-0.01565,0.012357,-0.017007,0.004157,0.071008,-0.008727,-0.045746,-0.011743,-0.068485,0.004387,0.095413,0.031331,0.015036,0.065616,0.058935,0.013786,0.040863,0.027751,0.040689,0.072011,-0.008651,-0.032143,0.028271,0.015261,-0.007606,0.046259,-0.005939,-0.035586,0.106043,-0.080643,-0.001309,-0.056785,-0.03253,0.104162,0.057399,0.00855,-0.062788,-0.002168,-0.017207,0.016723,-0.031097,-0.076654,0.034954,-0.025586,0.01469,-0.056842,0.100269,-0.03067,-0.065787,-0.043102,-0.028761,-0.008062,-0.03534,0.038539,0.027054,0.030739,0.048308,-0.001261,0.062842,-0.109199,-0.00488,0.001606,0.002959,0.013756,-0.093916,0.015876,-0.034682,-0.0329,-0.075336,0.017961,-0.019887,-0.001046,0.017731,0.029024,0.040309,-0.039838,0.020888,0.015569,-0.005744,0.02543,0.032341,-0.046356,-0.000532,0.027767,-0.00534,-0.042878,-0.047051,0.021683,-0.01927,0.028212,0.048106,0.027476,0.045494,-0.009707,-0.063554,-0.016655,-0.033902,0.02314,-0.076275,0.010707,0.004495,-0.07798,0.01417,-0.03912,-0.021984,-0.017112,-0.286636,0.026133,0.033992,-0.008523,-0.022288,-0.04948,-0.028927,0.001292,0.064427,0.041571,0.02808,-0.012184,0.012282,0.001066,0.005828,-0.008239,0.017871,0.05149,-0.039297,-0.044445,0.024037,0.062116,-0.018663,-0.108263,0.069956,-0.005887,0.177916,-0.029365,0.00144,-0.050666,0.036547,0.017006,-0.026583,-0.04582,0.077026,0.013786,0.026541,0.048809,-0.030731,0.010599,-0.008504,0.018535,0.004786,-0.085777,-0.050034,-0.00609,-0.035035,0.040423,0.025673,0.051303,-0.00486,-0.047061,0.010827,-0.004145,-0.043988,0.023693,-0.061213,-0.016208,-0.071806,0.015996,0.016091,-0.011074,0.001246,0.00173,0.061563,0.01316,-0.024829,-0.04139,-0.026029,0.034848,-0.049894,0.072582,-0.027131,0.031677,0.076091,0.036842,0.093263,0.038458,-0.029407,-0.048832,0.120281,0.013078,0.044685,-0.038075,0.106384,0.005686,0.056832,-0.037062,-0.003601,0.029714,0.008985,0.039898,-0.012696,-0.051214,0.045896,-0.025097,-0.230641,0.019198,0.041816,0.043741,-0.023193,0.008126,0.045709,-0.075266,0.008305,-0.094855,-0.059836,0.058661,0.065743,-0.016015,-0.03921,0.016733,0.082868,-0.00203,0.097067,-0.003055,0.027694,0.051292,0.15051,-0.024288,0.015428,-0.035365,-0.014937,-0.091333,0.011375,0.057705,-0.045082,0.046568,0.076417,-0.005613,-0.020439,0.073179,0.015798,0.012154,0.059639,0.014525,0.013743,0.009815,0.013474,-0.013543,0.021475,0.057894,0.021349,0.049345,-0.069203,-0.032575,0.017146,-0.025401,-0.029637,-0.004742,0.013925,-0.022131,0.01751,-0.05475,-0.083525,0.003049,-0.004138,-0.103455,0.012797,-0.016017,-0.048064]
             updated_at: '2026-10-21T22:30:23.839629+00:00'
       updated_at: '2026-10-21T08:02:48.515Z'
-    - tag: vhi
-      description: 关注虚拟人的语言—动作—位置协同生成、空间感知与实时多模态交互，以及虚实融合中的智能教师、教学演示和沉浸体验。
+    - tag: embodied-eca
+      description: 智能虚拟人、数字人与多模态人机交互，聚焦大语言模型、多模态模型和生成模型驱动的具身交流，覆盖语言与身体行为协同、空间感知与场景适应、实时连续互动、智能虚拟教师与沉浸式教学。
       enabled: true
       paper_sources:
         - arxiv
       keywords:
-        - keyword: embodied pedagogical agents
-          keyword_cn: 具身教学智能体
-          query: embodied pedagogical agents
-        - keyword: scene-aware motion generation
-          keyword_cn: 场景感知动作生成
-          query: scene-aware motion generation
+        - keyword: embodied conversational agent
+          keyword_cn: 具身对话智能体
+          query: >-
+            embodied conversational agents coordinating speech, gesture, gaze, facial expression, and whole-body motion
+            during sustained interaction
+        - keyword: multimodal human-agent interaction
+          keyword_cn: 多模态人机交互
+          query: >-
+            multimodal human-agent interaction integrating language, vision, speech, and user motion for intelligent
+            virtual humans
         - keyword: co-speech gesture generation
           keyword_cn: 伴随语音手势生成
-          query: semantic and temporally consistent co-speech gesture generation conditioned on speech and dialogue context
-        - keyword: human-avatar interaction
-          keyword_cn: 人与虚拟角色交互
-          query: human-avatar interaction
-        - keyword: embodied conversational agents
-          keyword_cn: 具身会话智能体
-          query: embodied conversational agents
-        - keyword: virtual humans
-          keyword_cn: 虚拟人
-          query: virtual humans
+          query: co-speech gesture generation with semantic and temporal alignment between spoken content and body movement
+        - keyword: semantic gesture synthesis
+          keyword_cn: 语义手势合成
+          query: semantic gesture synthesis for open-domain question answering and nonverbal feedback in virtual agents
+        - keyword: spatial grounding dialogue
+          keyword_cn: 空间 grounding 对话
+          query: >-
+            spatially grounded dialogue for object reference, joint attention, pointing, viewpoint, and occlusion in
+            mixed reality
+        - keyword: situated interaction
+          keyword_cn: 情境化交互
+          query: >-
+            situated interaction where virtual humans adapt expression and movement to user position and environment
+            changes
       intent_queries:
         - query: >-
-            Find embodied virtual teachers in AR, MR, or VR that coordinate explanations and bodily behavior with
-            interactive demonstrations, including evaluations of social presence, spatial coherence, comprehension, or
-            learning.
-          query_cn: ''
+            Find papers on virtual humans that jointly generate speech, gestures, gaze, and body motion with cross modal
+            semantic and temporal consistency.
+          query_cn: 查找联合生成语音、手势、视线和身体动作，并保持跨模态语义与时间一致性的虚拟人论文。
           enabled: true
           source: manual
           note: ''
         - query: >-
-            Find methods for real time multimodal human avatar interaction, including full duplex dialogue, turn taking,
-            backchannels, interruption handling, interaction memory, and low latency adaptive behavior generation.
-          query_cn: ''
+            Find methods for spatial scene adaptation in virtual human interaction, including object referring, joint
+            attention, pointing, viewpoint, occlusion, and repositioning.
+          query_cn: 查找虚拟人交互中的空间场景适应方法，包括对象指称、共同注意、指向、视角、遮挡和站位移动。
           enabled: true
           source: manual
           note: ''
         - query: >-
-            Find scene aware virtual humans that ground communication and actions in spatial context, including object
-            reference, joint attention, pointing, positioning, and locomotion around people and objects.
-          query_cn: ''
+            Find real time continuous interaction systems for virtual humans with full duplex dialogue, turn taking,
+            listening feedback, interruption recovery, and multi turn memory.
+          query_cn: 查找面向虚拟人的实时连续互动系统，涵盖全双工对话、轮次管理、倾听反馈、打断恢复和多轮记忆。
           enabled: true
           source: manual
           note: ''
         - query: >-
-            Find models that jointly generate conversational responses, speech, gestures, gaze, or full body motion for
-            virtual humans, with semantic and temporal coordination across modalities.
-          query_cn: ''
+            Find intelligent virtual teachers in AR, MR, or VR with coordinated verbal and nonverbal presentation,
+            environment adaptation, and user studies on co presence and learning outcomes.
+          query_cn: 查找 AR、MR 或 VR 中的智能虚拟教师，关注语言与非语言表达协同、环境适应以及共同在场感和学习效果的用户研究。
           enabled: true
           source: manual
           note: ''
-      updated_at: '2026-10-28T05:54:36.702Z'
+      updated_at: '2026-10-28T05:56:35.802Z'
 source_backends:
   arxiv:
     papers_table: arxiv_papers
